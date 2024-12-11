@@ -20,30 +20,41 @@ import com.ctre.phoenix6.configs.Pigeon2Configuration;
 import com.ctre.phoenix6.hardware.Pigeon2;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.util.Units;
-import edu.wpi.first.units.measure.Angle;
-import edu.wpi.first.units.measure.AngularVelocity;
-import frc.robot.generated.TunerConstants;
+import java.util.OptionalDouble;
 import java.util.Queue;
 
-/** IO implementation for Pigeon 2. */
+/** IO implementation for Pigeon2 */
 public class GyroIOPigeon2 implements GyroIO {
-  private final Pigeon2 pigeon =
-      new Pigeon2(
-          TunerConstants.DrivetrainConstants.Pigeon2Id,
-          TunerConstants.DrivetrainConstants.CANBusName);
-  private final StatusSignal<Angle> yaw = pigeon.getYaw();
+  private final Pigeon2 pigeon = new Pigeon2(20);
+  private final StatusSignal<Double> yaw = pigeon.getYaw();
   private final Queue<Double> yawPositionQueue;
   private final Queue<Double> yawTimestampQueue;
-  private final StatusSignal<AngularVelocity> yawVelocity = pigeon.getAngularVelocityZWorld();
+  private final StatusSignal<Double> yawVelocity = pigeon.getAngularVelocityZWorld();
 
-  public GyroIOPigeon2() {
+  public GyroIOPigeon2(boolean phoenixDrive) {
     pigeon.getConfigurator().apply(new Pigeon2Configuration());
     pigeon.getConfigurator().setYaw(0.0);
-    yaw.setUpdateFrequency(Drive.ODOMETRY_FREQUENCY);
-    yawVelocity.setUpdateFrequency(50.0);
+    yaw.setUpdateFrequency(Module.ODOMETRY_FREQUENCY);
+    yawVelocity.setUpdateFrequency(100.0);
     pigeon.optimizeBusUtilization();
-    yawTimestampQueue = PhoenixOdometryThread.getInstance().makeTimestampQueue();
-    yawPositionQueue = PhoenixOdometryThread.getInstance().registerSignal(pigeon.getYaw());
+    if (phoenixDrive) {
+      yawTimestampQueue = PhoenixOdometryThread.getInstance().makeTimestampQueue();
+      yawPositionQueue =
+          PhoenixOdometryThread.getInstance().registerSignal(pigeon, pigeon.getYaw());
+    } else {
+      yawTimestampQueue = SparkMaxOdometryThread.getInstance().makeTimestampQueue();
+      yawPositionQueue =
+          SparkMaxOdometryThread.getInstance()
+              .registerSignal(
+                  () -> {
+                    boolean valid = yaw.refresh().getStatus().isOK();
+                    if (valid) {
+                      return OptionalDouble.of(yaw.getValueAsDouble());
+                    } else {
+                      return OptionalDouble.empty();
+                    }
+                  });
+    }
   }
 
   @Override

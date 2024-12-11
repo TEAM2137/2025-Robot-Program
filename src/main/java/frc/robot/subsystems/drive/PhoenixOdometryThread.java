@@ -16,16 +16,14 @@ package frc.robot.subsystems.drive;
 import com.ctre.phoenix6.BaseStatusSignal;
 import com.ctre.phoenix6.CANBus;
 import com.ctre.phoenix6.StatusSignal;
-import edu.wpi.first.units.measure.Angle;
-import edu.wpi.first.wpilibj.RobotController;
-import frc.robot.generated.TunerConstants;
+import com.ctre.phoenix6.hardware.ParentDevice;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Queue;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
-import java.util.function.DoubleSupplier;
+import org.littletonrobotics.junction.Logger;
 
 /**
  * Provides an interface for asynchronously reading high-frequency measurements to a set of queues.
@@ -38,14 +36,11 @@ import java.util.function.DoubleSupplier;
 public class PhoenixOdometryThread extends Thread {
   private final Lock signalsLock =
       new ReentrantLock(); // Prevents conflicts when registering signals
-  private BaseStatusSignal[] phoenixSignals = new BaseStatusSignal[0];
-  private final List<DoubleSupplier> genericSignals = new ArrayList<>();
-  private final List<Queue<Double>> phoenixQueues = new ArrayList<>();
-  private final List<Queue<Double>> genericQueues = new ArrayList<>();
+  private BaseStatusSignal[] signals = new BaseStatusSignal[0];
+  private final List<Queue<Double>> queues = new ArrayList<>();
   private final List<Queue<Double>> timestampQueues = new ArrayList<>();
+  private boolean isCANFD = false;
 
-  private static boolean isCANFD =
-      new CANBus(TunerConstants.DrivetrainConstants.CANBusName).isNetworkFD();
   private static PhoenixOdometryThread instance = null;
 
   public static PhoenixOdometryThread getInstance() {
@@ -67,17 +62,17 @@ public class PhoenixOdometryThread extends Thread {
     }
   }
 
-  /** Registers a Phoenix signal to be read from the thread. */
-  public Queue<Double> registerSignal(StatusSignal<Angle> signal) {
+  public Queue<Double> registerSignal(ParentDevice device, StatusSignal<Double> signal) {
     Queue<Double> queue = new ArrayBlockingQueue<>(20);
     signalsLock.lock();
     Drive.odometryLock.lock();
     try {
-      BaseStatusSignal[] newSignals = new BaseStatusSignal[phoenixSignals.length + 1];
-      System.arraycopy(phoenixSignals, 0, newSignals, 0, phoenixSignals.length);
-      newSignals[phoenixSignals.length] = signal;
-      phoenixSignals = newSignals;
-      phoenixQueues.add(queue);
+      isCANFD = CANBus.isNetworkFD(device.getNetwork());
+      BaseStatusSignal[] newSignals = new BaseStatusSignal[signals.length + 1];
+      System.arraycopy(signals, 0, newSignals, 0, signals.length);
+      newSignals[signals.length] = signal;
+      signals = newSignals;
+      queues.add(queue);
     } finally {
       signalsLock.unlock();
       Drive.odometryLock.unlock();
@@ -85,22 +80,6 @@ public class PhoenixOdometryThread extends Thread {
     return queue;
   }
 
-  /** Registers a generic signal to be read from the thread. */
-  public Queue<Double> registerSignal(DoubleSupplier signal) {
-    Queue<Double> queue = new ArrayBlockingQueue<>(20);
-    signalsLock.lock();
-    Drive.odometryLock.lock();
-    try {
-      genericSignals.add(signal);
-      genericQueues.add(queue);
-    } finally {
-      signalsLock.unlock();
-      Drive.odometryLock.unlock();
-    }
-    return queue;
-  }
-
-  /** Returns a new queue that returns timestamp values for each sample. */
   public Queue<Double> makeTimestampQueue() {
     Queue<Double> queue = new ArrayBlockingQueue<>(20);
     Drive.odometryLock.lock();
@@ -118,14 +97,15 @@ public class PhoenixOdometryThread extends Thread {
       // Wait for updates from all signals
       signalsLock.lock();
       try {
-        if (isCANFD && phoenixSignals.length > 0) {
-          BaseStatusSignal.waitForAll(2.0 / Drive.ODOMETRY_FREQUENCY, phoenixSignals);
+        if (isCANFD) {
+          BaseStatusSignal.waitForAll(2.0 / Module.ODOMETRY_FREQUENCY, signals);
         } else {
-          // "waitForAll" does not support blocking on multiple signals with a bus
-          // that is not CAN FD, regardless of Pro licensing. No reasoning for this
-          // behavior is provided by the documentation.
-          Thread.sleep((long) (1000.0 / Drive.ODOMETRY_FREQUENCY));
-          if (phoenixSignals.length > 0) BaseStatusSignal.refreshAll(phoenixSignals);
+          // "waitForAll" does not support blocking on multiple
+          // signals with a bus that is not CAN FD, regardless
+          // of Pro licensing. No reasoning for this behavior
+          // is provided by the documentation.
+          Thread.sleep((long) (1000.0 / Module.ODOMETRY_FREQUENCY));
+          if (signals.length > 0) BaseStatusSignal.refreshAll(signals);
         }
       } catch (InterruptedException e) {
         e.printStackTrace();
@@ -136,24 +116,16 @@ public class PhoenixOdometryThread extends Thread {
       // Save new data to queues
       Drive.odometryLock.lock();
       try {
-        // Sample timestamp is current FPGA time minus average CAN latency
-        //     Default timestamps from Phoenix are NOT compatible with
-        //     FPGA timestamps, this solution is imperfect but close
-        double timestamp = RobotController.getFPGATime() / 1e6;
+        double timestamp = Logger.getRealTimestamp() / 1e6;
         double totalLatency = 0.0;
-        for (BaseStatusSignal signal : phoenixSignals) {
+        for (BaseStatusSignal signal : signals) {
           totalLatency += signal.getTimestamp().getLatency();
         }
-        if (phoenixSignals.length > 0) {
-          timestamp -= totalLatency / phoenixSignals.length;
+        if (signals.length > 0) {
+          timestamp -= totalLatency / signals.length;
         }
-
-        // Add new samples to queues
-        for (int i = 0; i < phoenixSignals.length; i++) {
-          phoenixQueues.get(i).offer(phoenixSignals[i].getValueAsDouble());
-        }
-        for (int i = 0; i < genericSignals.size(); i++) {
-          genericQueues.get(i).offer(genericSignals.get(i).getAsDouble());
+        for (int i = 0; i < signals.length; i++) {
+          queues.get(i).offer(signals[i].getValueAsDouble());
         }
         for (int i = 0; i < timestampQueues.size(); i++) {
           timestampQueues.get(i).offer(timestamp);

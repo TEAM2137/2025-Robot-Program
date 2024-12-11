@@ -1,6 +1,6 @@
 plugins {
     id "java"
-    id "edu.wpi.first.GradleRIO" version "2025.1.1-beta-2"
+    id "edu.wpi.first.GradleRIO" version "2024.3.2"
     id "com.peterabeles.gversion" version "1.10"
     id "com.diffplug.spotless" version "6.12.0"
 }
@@ -29,26 +29,12 @@ deploy {
                 // getTargetTypeClass is a shortcut to get the class type using a string
 
                 frcJava(getArtifactTypeClass('FRCJavaArtifact')) {
-                    jvmArgs.add("-XX:+UnlockExperimentalVMOptions")
-                    jvmArgs.add("-XX:GCTimeRatio=5")
-                    jvmArgs.add("-XX:+UseSerialGC")
-                    jvmArgs.add("-XX:MaxGCPauseMillis=50")
-
-                    // The options below may improve performance, but should only be enabled on the RIO 2
-                    //
-                    // final MAX_JAVA_HEAP_SIZE_MB = 100;
-                    // jvmArgs.add("-Xmx" + MAX_JAVA_HEAP_SIZE_MB + "M")
-                    // jvmArgs.add("-Xms" + MAX_JAVA_HEAP_SIZE_MB + "M")
-                    // jvmArgs.add("-XX:+AlwaysPreTouch")
                 }
 
                 // Static files artifact
                 frcStaticFileDeploy(getArtifactTypeClass('FileTreeArtifact')) {
                     files = project.fileTree('src/main/deploy')
                     directory = '/home/lvuser/deploy'
-                    // Change to true to delete files on roboRIO that no
-                    // longer exist in deploy directory on roboRIO
-                    deleteOldFiles = false
                 }
             }
         }
@@ -75,15 +61,19 @@ repositories {
     mavenLocal()
 }
 
-task(replayWatch, type: JavaExec) {
-    mainClass = "org.littletonrobotics.junction.ReplayWatch"
+configurations.all {
+    exclude group: "edu.wpi.first.wpilibj"
+}
+
+task(checkAkitInstall, dependsOn: "classes", type: JavaExec) {
+    mainClass = "org.littletonrobotics.junction.CheckInstall"
     classpath = sourceSets.main.runtimeClasspath
 }
+compileJava.finalizedBy checkAkitInstall
 
 // Defining my dependencies. In this case, WPILib (+ friends), and vendor libraries.
 // Also defines JUnit 4.
 dependencies {
-    annotationProcessor wpi.java.deps.wpilibAnnotations()
     implementation wpi.java.deps.wpilib()
     implementation wpi.java.vendor.java()
 
@@ -105,7 +95,7 @@ dependencies {
     testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
 
     def akitJson = new groovy.json.JsonSlurper().parseText(new File(projectDir.getAbsolutePath() + "/vendordeps/AdvantageKit.json").text)
-    annotationProcessor "org.littletonrobotics.akit:akit-autolog:$akitJson.version"
+    annotationProcessor "org.littletonrobotics.akit.junction:junction-autolog:$akitJson.version"
 }
 
 test {
@@ -152,39 +142,6 @@ gversion {
     timeZone     = "America/New_York"
     indent       = "  "
 }
-
-// Create commit with working changes on event branches
-task(eventDeploy) {
-    doLast {
-        if (project.gradle.startParameter.taskNames.any({ it.toLowerCase().contains("deploy") })) {
-            def branchPrefix = "event"
-            def branch = 'git branch --show-current'.execute().text.trim()
-            def commitMessage = "Update at '${new Date().toString()}'"
-
-            if (branch.startsWith(branchPrefix)) {
-                exec {
-                    workingDir(projectDir)
-                    executable 'git'
-                    args 'add', '-A'
-                }
-                exec {
-                    workingDir(projectDir)
-                    executable 'git'
-                    args 'commit', '-m', commitMessage
-                    ignoreExitValue = true
-                }
-
-                println "Committed to branch: '$branch'"
-                println "Commit message: '$commitMessage'"
-            } else {
-                println "Not on an event branch, skipping commit"
-            }
-        } else {
-            println "Not running deploy task, skipping commit"
-        }
-    }
-}
-createVersionFile.dependsOn(eventDeploy)
 
 // Spotless formatting
 project.compileJava.dependsOn(spotlessApply)
