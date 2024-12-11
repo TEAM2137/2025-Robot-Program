@@ -1,16 +1,3 @@
-// Copyright 2021-2024 FRC 6328
-// http://github.com/Mechanical-Advantage
-//
-// This program is free software; you can redistribute it and/or
-// modify it under the terms of the GNU General Public License
-// version 3 as published by the Free Software Foundation or
-// available in the root directory of this project.
-//
-// This program is distributed in the hope that it will be useful,
-// but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-// GNU General Public License for more details.
-
 package frc.robot.subsystems.drive;
 
 import com.ctre.phoenix6.BaseStatusSignal;
@@ -37,16 +24,16 @@ public class PhoenixOdometryThread extends Thread {
   private final Lock signalsLock =
       new ReentrantLock(); // Prevents conflicts when registering signals
   private BaseStatusSignal[] signals = new BaseStatusSignal[0];
+
   private final List<Queue<Double>> queues = new ArrayList<>();
   private final List<Queue<Double>> timestampQueues = new ArrayList<>();
+
   private boolean isCANFD = false;
 
   private static PhoenixOdometryThread instance = null;
 
   public static PhoenixOdometryThread getInstance() {
-    if (instance == null) {
-      instance = new PhoenixOdometryThread();
-    }
+    if (instance == null) instance = new PhoenixOdometryThread();
     return instance;
   }
 
@@ -57,9 +44,7 @@ public class PhoenixOdometryThread extends Thread {
 
   @Override
   public void start() {
-    if (timestampQueues.size() > 0) {
-      super.start();
-    }
+    if (timestampQueues.size() > 0) super.start();
   }
 
   public Queue<Double> registerSignal(ParentDevice device, StatusSignal<Double> signal) {
