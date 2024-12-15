@@ -17,17 +17,18 @@ import frc.robot.subsystems.drive.GyroIOPigeon2;
 import frc.robot.subsystems.drive.ModuleIO;
 import frc.robot.subsystems.drive.ModuleIOSim;
 import frc.robot.subsystems.drive.ModuleIOTalonFX;
+import frc.robot.subsystems.vision.Vision;
+import frc.robot.subsystems.vision.VisionConstants;
+import frc.robot.subsystems.vision.VisionIO;
+import frc.robot.subsystems.vision.VisionIOLimelight;
+import frc.robot.subsystems.vision.VisionIOPhotonVisionSim;
+
 import org.littletonrobotics.junction.networktables.LoggedDashboardChooser;
 
-/**
- * This class is where the bulk of the robot should be declared. Since Command-based is a
- * "declarative" paradigm, very little robot logic should actually be handled in the {@link Robot}
- * periodic methods (other than the scheduler calls). Instead, the structure of the robot (including
- * subsystems, commands, and button mappings) should be declared here.
- */
 public class RobotContainer {
     // Subsystems
     private final Drive drive;
+    private final Vision vision;
 
     // Controller
     private final CommandXboxController controller = new CommandXboxController(0);
@@ -38,38 +39,59 @@ public class RobotContainer {
     /** The container for the robot. Contains subsystems, OI devices, and commands. */
     public RobotContainer() {
         switch (Constants.currentMode) {
-            case REAL:
-                // Real robot, instantiate hardware IO implementations
-                drive = new Drive(
-                    new GyroIOPigeon2(),
-                    new ModuleIOTalonFX(TunerConstants.FrontLeft),
-                    new ModuleIOTalonFX(TunerConstants.FrontRight),
-                    new ModuleIOTalonFX(TunerConstants.BackLeft),
-                    new ModuleIOTalonFX(TunerConstants.BackRight)
-                );
-                break;
+        case REAL:
+            // Real robot, instantiate hardware IO implementations
+            drive = new Drive(
+                new GyroIOPigeon2(),
+                new ModuleIOTalonFX(TunerConstants.FrontLeft),
+                new ModuleIOTalonFX(TunerConstants.FrontRight),
+                new ModuleIOTalonFX(TunerConstants.BackLeft),
+                new ModuleIOTalonFX(TunerConstants.BackRight)
+            );
 
-            case SIM:
-                // Sim robot, instantiate physics sim IO implementations
-                drive = new Drive(
-                    new GyroIO() {},
-                    new ModuleIOSim(TunerConstants.FrontLeft),
-                    new ModuleIOSim(TunerConstants.FrontRight),
-                    new ModuleIOSim(TunerConstants.BackLeft),
-                    new ModuleIOSim(TunerConstants.BackRight)
-                );
-                break;
+            vision = new Vision(
+                drive::addVisionMeasurement,
+                new VisionIOLimelight(VisionConstants.cam0, drive::getRotation),
+                new VisionIOLimelight(VisionConstants.cam1, drive::getRotation)
+            );
+        
+            break;
 
-            default:
-                // Replayed robot, disable IO implementations
-                drive = new Drive(
-                    new GyroIO() {},
-                    new ModuleIO() {},
-                    new ModuleIO() {},
-                    new ModuleIO() {},
-                    new ModuleIO() {}
-                );
-                break;
+        case SIM:
+            // Sim robot, instantiate physics sim IO implementations
+            drive = new Drive(
+                new GyroIO() {},
+                new ModuleIOSim(TunerConstants.FrontLeft),
+                new ModuleIOSim(TunerConstants.FrontRight),
+                new ModuleIOSim(TunerConstants.BackLeft),
+                new ModuleIOSim(TunerConstants.BackRight)
+            );
+
+            vision = new Vision(
+                drive::addVisionMeasurement,
+                new VisionIOPhotonVisionSim(VisionConstants.cam0, VisionConstants.robotToCamera0, drive::getPose),
+                new VisionIOPhotonVisionSim(VisionConstants.cam1, VisionConstants.robotToCamera1, drive::getPose)
+            );
+
+            break;
+
+        default:
+            // Replayed robot, disable IO implementations
+            drive = new Drive(
+                new GyroIO() {},
+                new ModuleIO() {},
+                new ModuleIO() {},
+                new ModuleIO() {},
+                new ModuleIO() {}
+            );
+
+            vision = new Vision(
+                drive::addVisionMeasurement,
+                new VisionIO() {},
+                new VisionIO() {}
+            );
+
+            break;
         }
 
         // Set up auto routines

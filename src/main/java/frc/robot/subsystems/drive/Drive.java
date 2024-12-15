@@ -155,8 +155,7 @@ public class Drive extends SubsystemBase {
         }
 
         // Update odometry
-        double[] sampleTimestamps =
-            modules[0].getOdometryTimestamps(); // All signals are sampled together
+        double[] sampleTimestamps = modules[0].getOdometryTimestamps(); // All signals are sampled together
         int sampleCount = sampleTimestamps.length;
 
         for (int i = 0; i < sampleCount; i++) {
