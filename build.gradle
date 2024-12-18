@@ -195,8 +195,8 @@ spotless {
             exclude "**/build/**", "**/build-*/**"
         }
         toggleOffOn()
-        googleJavaFormat()
         removeUnusedImports()
+        indentWithSpaces(4)
         trimTrailingWhitespace()
         endWithNewline()
     }
@@ -215,7 +215,7 @@ spotless {
             include "**/*.json"
             exclude "**/build/**", "**/build-*/**"
         }
-        gson().indentWithSpaces(2)
+        gson().indentWithSpaces(4)
     }
     format "misc", {
         target fileTree(".") {
@@ -223,7 +223,7 @@ spotless {
             exclude "**/build/**", "**/build-*/**"
         }
         trimTrailingWhitespace()
-        indentWithSpaces(2)
+        indentWithSpaces(4)
         endWithNewline()
     }
 }

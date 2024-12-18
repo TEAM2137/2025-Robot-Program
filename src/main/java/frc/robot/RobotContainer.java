@@ -33,7 +33,7 @@ public class RobotContainer {
 
     // Controller
     private final CommandXboxController controller = new CommandXboxController(0);
-    
+
     // Bindings
     public final Trigger resetGyro = controller.start();
     public final Trigger xLock = controller.x();
@@ -60,7 +60,7 @@ public class RobotContainer {
                 new VisionIOLimelight(VisionConstants.cam0, drive::getRotation),
                 new VisionIOLimelight(VisionConstants.cam1, drive::getRotation)
             );
-        
+
             break;
 
         case SIM:
