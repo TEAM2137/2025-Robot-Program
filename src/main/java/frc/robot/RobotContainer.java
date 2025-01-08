@@ -18,6 +18,10 @@ import frc.robot.subsystems.drive.GyroIOPigeon2;
 import frc.robot.subsystems.drive.ModuleIO;
 import frc.robot.subsystems.drive.ModuleIOSim;
 import frc.robot.subsystems.drive.ModuleIOTalonFX;
+import frc.robot.subsystems.elevator.Elevator;
+import frc.robot.subsystems.elevator.ElevatorIO;
+import frc.robot.subsystems.elevator.ElevatorIOSim;
+import frc.robot.subsystems.elevator.ElevatorIOTalonFX;
 import frc.robot.subsystems.vision.Vision;
 import frc.robot.subsystems.vision.VisionConstants;
 import frc.robot.subsystems.vision.VisionIO;
@@ -30,6 +34,7 @@ public class RobotContainer {
     // Subsystems
     private final Drive drive;
     private final Vision vision;
+    private final Elevator elevator;
 
     // Controller
     private final CommandXboxController controller = new CommandXboxController(0);
@@ -38,6 +43,7 @@ public class RobotContainer {
     public final Trigger resetGyro = controller.start();
     public final Trigger xLock = controller.x();
     public final Trigger rotationLock = controller.leftTrigger();
+    public final Trigger resetElevatorPosition = controller.a();
 
     // Dashboard inputs
     private final LoggedDashboardChooser<Command> autoChooser;
@@ -61,6 +67,10 @@ public class RobotContainer {
                 new VisionIOLimelight(VisionConstants.cam1, drive::getRotation)
             );
 
+            elevator = new Elevator(
+                new ElevatorIOTalonFX()
+            );
+
             break;
 
         case SIM:
@@ -79,6 +89,10 @@ public class RobotContainer {
                 new VisionIOPhotonVisionSim(VisionConstants.cam1, VisionConstants.robotToCamera1, drive::getPose)
             );
 
+            elevator = new Elevator(
+                new ElevatorIOSim()
+            );
+
             break;
 
         default:
@@ -95,6 +109,10 @@ public class RobotContainer {
                 drive::addVisionMeasurement,
                 new VisionIO() {},
                 new VisionIO() {}
+            );
+
+            elevator = new Elevator(
+                new ElevatorIO() {}
             );
 
             break;
@@ -140,6 +158,8 @@ public class RobotContainer {
         // Reset gyro to 0°
         resetGyro.onTrue(Commands.runOnce(() ->drive.setPose(new Pose2d(drive.getPose().getTranslation(), new Rotation2d())),drive)
                 .ignoringDisable(true));
+
+        resetElevatorPosition.onTrue(elevator.resetPositionCommand());
     }
 
     /**
