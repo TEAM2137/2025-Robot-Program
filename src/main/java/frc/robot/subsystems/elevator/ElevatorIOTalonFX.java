@@ -2,6 +2,7 @@ package frc.robot.subsystems.elevator;
 
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
 import com.ctre.phoenix6.controls.PositionVoltage;
+import com.ctre.phoenix6.controls.VoltageOut;
 import com.ctre.phoenix6.hardware.TalonFX;
 import com.ctre.phoenix6.signals.NeutralModeValue;
 
@@ -31,6 +32,6 @@ public class ElevatorIOTalonFX implements ElevatorIO {
 
     @Override
     public void setVolts(double appliedVolts) {
-
+        motor.setControl(new VoltageOut(appliedVolts));
     }
 }
