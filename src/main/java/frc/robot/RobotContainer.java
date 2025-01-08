@@ -8,7 +8,6 @@ import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
-import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
 import frc.robot.commands.DriveCommands;
 import frc.robot.generated.TunerConstants;
 import frc.robot.subsystems.drive.Drive;
@@ -27,7 +26,6 @@ import frc.robot.subsystems.vision.VisionIO;
 import frc.robot.subsystems.vision.VisionIOLimelight;
 import frc.robot.subsystems.vision.VisionIOPhotonVisionSim;
 
-import org.littletonrobotics.junction.networktables.LoggedDashboardChooser;
 
 public class RobotContainer {
     // Subsystems
@@ -42,7 +40,12 @@ public class RobotContainer {
     public final Trigger resetGyro = controller.start();
     public final Trigger xLock = controller.x();
     public final Trigger rotationLock = controller.leftTrigger();
-    public final Trigger resetElevatorPosition = controller.a();
+
+    public final Trigger l1 = controller.x();
+    public final Trigger l2 = controller.a();
+    public final Trigger l3 = controller.b();
+    public final Trigger l4 = controller.y();
+    public final Trigger coralStation = l1.or(l2).or(l3).or(l4);
 
     // Dashboard inputs
     // private final LoggedDashboardChooser<Command> autoChooser;
@@ -141,14 +144,14 @@ public class RobotContainer {
     private void configureButtonBindings() {
         // Default command, normal field-relative drive
         drive.setDefaultCommand(DriveCommands.joystickDrive(drive,
-                () -> -controller.getLeftY(),
-                () -> -controller.getLeftX(),
+                () -> controller.getLeftY(),
+                () -> controller.getLeftX(),
                 () -> -controller.getRightX()));
 
         // Lock rotation to 0°
         rotationLock.whileTrue(DriveCommands.joystickDriveAtAngle(drive,
-                () -> -controller.getLeftY(),
-                () -> -controller.getLeftX(),
+                () -> controller.getLeftY(),
+                () -> controller.getLeftX(),
                 () -> new Rotation2d()));
 
         // Switch to X pattern
@@ -158,7 +161,11 @@ public class RobotContainer {
         resetGyro.onTrue(Commands.runOnce(() ->drive.setPose(new Pose2d(drive.getPose().getTranslation(), new Rotation2d())),drive)
                 .ignoringDisable(true));
 
-        resetElevatorPosition.onTrue(elevator.resetPositionCommand());
+        l1.onTrue(elevator.setPositionCommand(Elevator.Constants.L1));
+        l2.onTrue(elevator.setPositionCommand(Elevator.Constants.L2));
+        l3.onTrue(elevator.setPositionCommand(Elevator.Constants.L3));
+        l4.onTrue(elevator.setPositionCommand(Elevator.Constants.L4));
+        coralStation.whileFalse(elevator.setPositionCommand(Elevator.Constants.CORAL_STATION));
     }
 
     /**
