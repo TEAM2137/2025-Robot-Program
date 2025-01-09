@@ -3,8 +3,6 @@ package frc.robot.subsystems.drive;
 import static edu.wpi.first.units.Units.*;
 
 import com.ctre.phoenix6.CANBus;
-import com.pathplanner.lib.config.ModuleConfig;
-import com.pathplanner.lib.config.RobotConfig;
 
 import choreo.trajectory.SwerveSample;
 import edu.wpi.first.hal.FRCNetComm.tInstances;
@@ -23,7 +21,6 @@ import edu.wpi.first.math.kinematics.SwerveModulePosition;
 import edu.wpi.first.math.kinematics.SwerveModuleState;
 import edu.wpi.first.math.numbers.N1;
 import edu.wpi.first.math.numbers.N3;
-import edu.wpi.first.math.system.plant.DCMotor;
 import edu.wpi.first.wpilibj.Alert;
 import edu.wpi.first.wpilibj.Alert.AlertType;
 import edu.wpi.first.wpilibj.DriverStation;
@@ -34,7 +31,6 @@ import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
 import frc.robot.Constants;
 import frc.robot.Constants.Mode;
 import frc.robot.generated.TunerConstants;
-import frc.robot.util.LocalADStarAK;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 import org.littletonrobotics.junction.AutoLogOutput;
@@ -54,21 +50,21 @@ public class Drive extends SubsystemBase {
         );
 
     // PathPlanner config constants
-    private static final double ROBOT_MASS_KG = 74.088;
-    private static final double ROBOT_MOI = 6.883;
-    private static final double WHEEL_COF = 1.2;
-    private static final RobotConfig PP_CONFIG = new RobotConfig(
-        ROBOT_MASS_KG, ROBOT_MOI,
-        new ModuleConfig(
-            TunerConstants.FrontLeft.WheelRadius,
-            TunerConstants.kSpeedAt12Volts.in(MetersPerSecond),
-            WHEEL_COF,
-            DCMotor.getKrakenX60Foc(1)
-                .withReduction(TunerConstants.FrontLeft.DriveMotorGearRatio),
-            TunerConstants.FrontLeft.SlipCurrent, 1
-        ),
-        getModuleTranslations()
-    );
+    // private static final double ROBOT_MASS_KG = 74.088;
+    // private static final double ROBOT_MOI = 6.883;
+    // private static final double WHEEL_COF = 1.2;
+    // private static final RobotConfig PP_CONFIG = new RobotConfig(
+    //     ROBOT_MASS_KG, ROBOT_MOI,
+    //     new ModuleConfig(
+    //         TunerConstants.FrontLeft.WheelRadius,
+    //         TunerConstants.kSpeedAt12Volts.in(MetersPerSecond),
+    //         WHEEL_COF,
+    //         DCMotor.getKrakenX60Foc(1)
+    //             .withReduction(TunerConstants.FrontLeft.DriveMotorGearRatio),
+    //         TunerConstants.FrontLeft.SlipCurrent, 1
+    //     ),
+    //     getModuleTranslations()
+    // );
 
     static final Lock odometryLock = new ReentrantLock();
     private final GyroIO gyroIO;

@@ -1,8 +1,5 @@
 package frc.robot;
 
-import com.pathplanner.lib.auto.AutoBuilder;
-
-import choreo.auto.AutoFactory;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.wpilibj.GenericHID;
@@ -11,7 +8,6 @@ import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
-import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
 import frc.robot.commands.DriveCommands;
 import frc.robot.generated.TunerConstants;
 import frc.robot.subsystems.drive.Drive;
@@ -26,12 +22,10 @@ import frc.robot.subsystems.vision.VisionIO;
 import frc.robot.subsystems.vision.VisionIOLimelight;
 import frc.robot.subsystems.vision.VisionIOPhotonVisionSim;
 
-import org.littletonrobotics.junction.networktables.LoggedDashboardChooser;
-
 public class RobotContainer {
     // Subsystems
-    private final Drive drive;
-    private final Vision vision;
+    public final Drive drive;
+    public final Vision vision;
 
     // Controller
     private final CommandXboxController controller = new CommandXboxController(0);
@@ -41,11 +35,8 @@ public class RobotContainer {
     public final Trigger xLock = controller.x();
     public final Trigger rotationLock = controller.leftTrigger();
 
-    // Dashboard inputs
-    private final LoggedDashboardChooser<Command> autoChooser;
-
     // Auto
-    private final AutoFactory autoFactory;
+    private final Autonomous autonomous;
 
     /** The container for the robot. Contains subsystems, OI devices, and commands. */
     public RobotContainer() {
@@ -105,25 +96,8 @@ public class RobotContainer {
             break;
         }
 
-        // Configure AutoFactory for Choreo
-        autoFactory = new AutoFactory(
-            drive::getPose, // A function that returns the current robot pose
-            drive::setPose, // A function that resets the current robot pose to the provided Pose2d
-            drive::followTrajectory, // The drive subsystem trajectory follower 
-            true, // If alliance flipping should be enabled 
-            drive // The drive subsystem
-        );
-
-        // Set up auto routines
-        autoChooser = new LoggedDashboardChooser<>("Auto Choices", AutoBuilder.buildAutoChooser());
-
-        // Set up SysId routines
-        autoChooser.addOption("Drive Wheel Radius Characterization", DriveCommands.wheelRadiusCharacterization(drive));
-        autoChooser.addOption("Drive Simple FF Characterization", DriveCommands.feedforwardCharacterization(drive));
-        autoChooser.addOption("Drive SysId (Quasistatic Forward)", drive.sysIdQuasistatic(SysIdRoutine.Direction.kForward));
-        autoChooser.addOption("Drive SysId (Quasistatic Reverse)", drive.sysIdQuasistatic(SysIdRoutine.Direction.kReverse));
-        autoChooser.addOption("Drive SysId (Dynamic Forward)", drive.sysIdDynamic(SysIdRoutine.Direction.kForward));
-        autoChooser.addOption("Drive SysId (Dynamic Reverse)", drive.sysIdDynamic(SysIdRoutine.Direction.kReverse));
+        // Setup autonomous features
+        autonomous = new Autonomous(this);
 
         // Configure the button bindings
         configureButtonBindings();
@@ -162,6 +136,6 @@ public class RobotContainer {
      * @return the command to run in autonomous
      */
     public Command getAutonomousCommand() {
-        return autoChooser.get();
+        return autonomous.getSelectedAuto();
     }
 }
