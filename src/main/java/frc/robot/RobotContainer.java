@@ -1,6 +1,5 @@
 package frc.robot;
 
-import com.pathplanner.lib.auto.AutoBuilder;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.wpilibj.GenericHID;
@@ -9,9 +8,11 @@ import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
-import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
 import frc.robot.commands.DriveCommands;
 import frc.robot.generated.TunerConstants;
+import frc.robot.subsystems.algae.AlgaeIntake;
+import frc.robot.subsystems.algae.AlgaeIntakeIO;
+import frc.robot.subsystems.algae.AlgaeIntakeIOSim;
 import frc.robot.subsystems.drive.Drive;
 import frc.robot.subsystems.drive.GyroIO;
 import frc.robot.subsystems.drive.GyroIOPigeon2;
@@ -24,12 +25,12 @@ import frc.robot.subsystems.vision.VisionIO;
 import frc.robot.subsystems.vision.VisionIOLimelight;
 import frc.robot.subsystems.vision.VisionIOPhotonVisionSim;
 
-import org.littletonrobotics.junction.networktables.LoggedDashboardChooser;
 
 public class RobotContainer {
     // Subsystems
     private final Drive drive;
     private final Vision vision;
+    private final AlgaeIntake algae;
 
     // Controller
     private final CommandXboxController controller = new CommandXboxController(0);
@@ -39,8 +40,12 @@ public class RobotContainer {
     public final Trigger xLock = controller.x();
     public final Trigger rotationLock = controller.leftTrigger();
 
+    public final Trigger intake = controller.a();
+    public final Trigger outtake = controller.b();
+    public final Trigger intakeDown = controller.x();
+
     // Dashboard inputs
-    private final LoggedDashboardChooser<Command> autoChooser;
+    // private final LoggedDashboardChooser<Command> autoChooser;
 
     /** The container for the robot. Contains subsystems, OI devices, and commands. */
     public RobotContainer() {
@@ -61,6 +66,10 @@ public class RobotContainer {
                 new VisionIOLimelight(VisionConstants.cam1, drive::getRotation)
             );
 
+            algae = new AlgaeIntake(
+                new AlgaeIntakeIO() {}
+            );
+
             break;
 
         case SIM:
@@ -77,6 +86,10 @@ public class RobotContainer {
                 drive::addVisionMeasurement,
                 new VisionIOPhotonVisionSim(VisionConstants.cam0, VisionConstants.robotToCamera0, drive::getPose),
                 new VisionIOPhotonVisionSim(VisionConstants.cam1, VisionConstants.robotToCamera1, drive::getPose)
+            );
+
+            algae = new AlgaeIntake(
+                new AlgaeIntakeIOSim()
             );
 
             break;
@@ -97,19 +110,23 @@ public class RobotContainer {
                 new VisionIO() {}
             );
 
+            algae = new AlgaeIntake(
+                new AlgaeIntakeIO() {}
+            );
+
             break;
         }
 
         // Set up auto routines
-        autoChooser = new LoggedDashboardChooser<>("Auto Choices", AutoBuilder.buildAutoChooser());
+        // autoChooser = new LoggedDashboardChooser<>("Auto Choices", AutoBuilder.buildAutoChooser());
 
         // Set up SysId routines
-        autoChooser.addOption("Drive Wheel Radius Characterization", DriveCommands.wheelRadiusCharacterization(drive));
-        autoChooser.addOption("Drive Simple FF Characterization", DriveCommands.feedforwardCharacterization(drive));
-        autoChooser.addOption("Drive SysId (Quasistatic Forward)", drive.sysIdQuasistatic(SysIdRoutine.Direction.kForward));
-        autoChooser.addOption("Drive SysId (Quasistatic Reverse)", drive.sysIdQuasistatic(SysIdRoutine.Direction.kReverse));
-        autoChooser.addOption("Drive SysId (Dynamic Forward)", drive.sysIdDynamic(SysIdRoutine.Direction.kForward));
-        autoChooser.addOption("Drive SysId (Dynamic Reverse)", drive.sysIdDynamic(SysIdRoutine.Direction.kReverse));
+        // autoChooser.addOption("Drive Wheel Radius Characterization", DriveCommands.wheelRadiusCharacterization(drive));
+        // autoChooser.addOption("Drive Simple FF Characterization", DriveCommands.feedforwardCharacterization(drive));
+        // autoChooser.addOption("Drive SysId (Quasistatic Forward)", drive.sysIdQuasistatic(SysIdRoutine.Direction.kForward));
+        // autoChooser.addOption("Drive SysId (Quasistatic Reverse)", drive.sysIdQuasistatic(SysIdRoutine.Direction.kReverse));
+        // autoChooser.addOption("Drive SysId (Dynamic Forward)", drive.sysIdDynamic(SysIdRoutine.Direction.kForward));
+        // autoChooser.addOption("Drive SysId (Dynamic Reverse)", drive.sysIdDynamic(SysIdRoutine.Direction.kReverse));
 
         // Configure the button bindings
         configureButtonBindings();
@@ -140,6 +157,14 @@ public class RobotContainer {
         // Reset gyro to 0°
         resetGyro.onTrue(Commands.runOnce(() ->drive.setPose(new Pose2d(drive.getPose().getTranslation(), new Rotation2d())),drive)
                 .ignoringDisable(true));
+
+        intake.onTrue(algae.setRollerVoltage(12));
+        outtake.onTrue(algae.setRollerVoltage(-12));
+        intake.onFalse(algae.setRollerVoltage(0));
+        outtake.onFalse(algae.setRollerVoltage(0));
+
+        intakeDown.onTrue(algae.setPivotPosition(90));
+        intakeDown.onFalse(algae.setPivotPosition(0));
     }
 
     /**
@@ -148,6 +173,6 @@ public class RobotContainer {
      * @return the command to run in autonomous
      */
     public Command getAutonomousCommand() {
-        return autoChooser.get();
+        return null;
     }
 }
