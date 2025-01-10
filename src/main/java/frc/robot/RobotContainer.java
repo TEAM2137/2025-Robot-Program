@@ -10,6 +10,8 @@ import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
 import frc.robot.commands.DriveCommands;
 import frc.robot.generated.TunerConstants;
+import frc.robot.subsystems.coral.Coral;
+import frc.robot.subsystems.coral.CoralIO;
 import frc.robot.subsystems.drive.Drive;
 import frc.robot.subsystems.drive.GyroIO;
 import frc.robot.subsystems.drive.GyroIOPigeon2;
@@ -32,6 +34,7 @@ public class RobotContainer {
     private final Drive drive;
     private final Vision vision;
     private final Elevator elevator;
+    private final Coral coral;
 
     // Controller
     private final CommandXboxController controller = new CommandXboxController(0);
@@ -46,6 +49,7 @@ public class RobotContainer {
     public final Trigger l3 = controller.b();
     public final Trigger l4 = controller.y();
     public final Trigger coralStation = l1.or(l2).or(l3).or(l4);
+    public final Trigger coralRollers = controller.rightBumper();
 
     // Dashboard inputs
     // private final LoggedDashboardChooser<Command> autoChooser;
@@ -72,6 +76,7 @@ public class RobotContainer {
             elevator = new Elevator(
                 new ElevatorIOTalonFX()
             );
+            coral = new Coral(null);
 
             break;
 
@@ -95,6 +100,8 @@ public class RobotContainer {
                 new ElevatorIOSim()
             );
 
+            coral  = new Coral(null);
+
             break;
 
         default:
@@ -116,6 +123,10 @@ public class RobotContainer {
             elevator = new Elevator(
                 new ElevatorIO() {}
             );
+
+            coral = new Coral(new CoralIO() {
+
+            });
 
             break;
         }
@@ -166,6 +177,8 @@ public class RobotContainer {
         l3.onTrue(elevator.setPositionCommand(Elevator.Constants.L3));
         l4.onTrue(elevator.setPositionCommand(Elevator.Constants.L4));
         coralStation.whileFalse(elevator.setPositionCommand(Elevator.Constants.CORAL_STATION));
+        coralRollers.onTrue(coral.setRollerVoltage(12));
+        coralRollers.onFalse(coral.setRollerVoltage(0));
     }
 
     /**
