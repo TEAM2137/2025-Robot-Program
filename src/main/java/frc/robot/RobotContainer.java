@@ -13,6 +13,7 @@ import frc.robot.generated.TunerConstants;
 import frc.robot.subsystems.coral.Coral;
 import frc.robot.subsystems.coral.CoralIO;
 import frc.robot.subsystems.coral.CoralIOSim;
+import frc.robot.subsystems.coral.CoralIOTalonFX;
 import frc.robot.subsystems.drive.Drive;
 import frc.robot.subsystems.drive.GyroIO;
 import frc.robot.subsystems.drive.GyroIOPigeon2;
@@ -78,7 +79,7 @@ public class RobotContainer {
                 new ElevatorIOTalonFX()
             );
 
-            coral = new Coral(new CoralIO() {});
+            coral = new Coral(new CoralIOTalonFX());
 
             break;
 
