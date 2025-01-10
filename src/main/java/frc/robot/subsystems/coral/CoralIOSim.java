@@ -11,7 +11,7 @@ public class CoralIOSim implements CoralIO{
         this.sim = new DCMotorSim(
             LinearSystemId.createDCMotorSystem(
                 DCMotor.getKrakenX60(1),1.0,3.0),
-                DCMotor.getKrakenX60(1)
+            DCMotor.getKrakenX60(1)
         );
     }
 

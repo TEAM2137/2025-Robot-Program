@@ -8,11 +8,10 @@ import edu.wpi.first.wpilibj2.command.SubsystemBase;
 public class Coral extends SubsystemBase{
     private final CoralIO io;
     private final CoralIOInputsAutoLogged inputs;
+
     public Coral(CoralIO io){
         this.io = io;
         this.inputs = new CoralIOInputsAutoLogged();
-
-
     }
 
     @Override
@@ -26,5 +25,4 @@ public class Coral extends SubsystemBase{
             io.setRollerVoltage(voltage);
         });
     }
-
 }
