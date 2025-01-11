@@ -1,13 +1,14 @@
 package frc.robot;
 
+
 import choreo.auto.AutoChooser;
 import choreo.auto.AutoFactory;
 import choreo.auto.AutoRoutine;
 import choreo.auto.AutoTrajectory;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
-import edu.wpi.first.wpilibj2.command.CommandScheduler;
 import edu.wpi.first.wpilibj2.command.Commands;
+import edu.wpi.first.wpilibj2.command.SequentialCommandGroup;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
 import frc.robot.commands.DriveCommands;
 import frc.robot.subsystems.drive.Drive;
@@ -39,9 +40,10 @@ public class Autonomous {
 
         // Put the auto chooser on the dashboard
         SmartDashboard.putData("Auto Chooser", chooser);
+        chooser.select("Example Auto (5 cycles)");
 
         // Assign auto commands to autonomous trigger
-        GameEvents.autonomous().whileTrue(exampleAuto().cmd());
+        GameEvents.autonomous().whileTrue(getSelectedAuto());
     }
 
     /** @return A command to schedule the auto selected on the chooser */
@@ -60,27 +62,41 @@ public class Autonomous {
         chooser.addCmd("Drive SysId (Dynamic Reverse)", () -> drive.sysIdDynamic(SysIdRoutine.Direction.kReverse));
 
         // Testing Autos
-        chooser.addRoutine("Example Auto", this::exampleAuto);
+        chooser.addRoutine("Example Auto (5 cycles)", () -> exampleAuto(5));
     }
 
-    public AutoRoutine exampleAuto() {
+    public AutoRoutine exampleAuto(int cycles) {
         AutoRoutine routine = factory.newRoutine("example-auto");
 
         // Load the routine's trajectories
         AutoTrajectory scorePreloaded = routine.trajectory("score-preloaded");
-        AutoTrajectory reefToCoral = routine.trajectory("reef-to-coral-station");
+        AutoTrajectory preloadToCoral = routine.trajectory("preload-to-coral-station");
         AutoTrajectory coralToReef = routine.trajectory("coral-station-to-reef");
 
         // When the routine begins, reset odometry and start the first trajectory
         routine.active().onTrue(
-            Commands.sequence(
+            cycleAfter(cycles - 1, Commands.sequence(
                 scorePreloaded.resetOdometry(),
                 scorePreloaded.cmd(),
-                reefToCoral.cmd(),
+                preloadToCoral.cmd(),
                 coralToReef.cmd()
-            )
+            ), routine)
         );
 
         return routine;
+    }
+
+    public Command cycleAfter(int cycles, Command base, AutoRoutine routine) {
+        if (cycles <= 0) return base;
+
+        AutoTrajectory reefToCoral = routine.trajectory("reef-to-coral-station");
+        AutoTrajectory coralToReef = routine.trajectory("coral-station-to-reef");
+        SequentialCommandGroup group = new SequentialCommandGroup(base);
+
+        for (int i = 0; i < cycles; i++) {
+            group.addCommands(reefToCoral.cmd(), coralToReef.cmd());
+        }
+
+        return group;
     }
 }
