@@ -6,6 +6,7 @@ import choreo.auto.AutoRoutine;
 import choreo.auto.AutoTrajectory;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
+import edu.wpi.first.wpilibj2.command.CommandScheduler;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
 import frc.robot.commands.DriveCommands;
@@ -16,9 +17,11 @@ public class Autonomous {
     public final AutoFactory factory;
 
     private final AutoChooser chooser;
+    private final RobotContainer robot;
     private final Drive drive;
 
     public Autonomous(RobotContainer robot) {
+        this.robot = robot;
         this.drive = robot.drive;
 
         // Configure Choreo AutoFactory
@@ -35,10 +38,10 @@ public class Autonomous {
         this.registerAutos();
 
         // Put the auto chooser on the dashboard
-        SmartDashboard.putData(chooser);
+        SmartDashboard.putData("Auto Chooser", chooser);
 
         // Assign auto commands to autonomous trigger
-        GameEvents.autonomous().whileTrue(chooser.selectedCommandScheduler());
+        GameEvents.autonomous().whileTrue(exampleAuto().cmd());
     }
 
     /** @return A command to schedule the auto selected on the chooser */
@@ -61,22 +64,22 @@ public class Autonomous {
     }
 
     public AutoRoutine exampleAuto() {
-        AutoRoutine routine = factory.newRoutine("pickupAndScore");
+        AutoRoutine routine = factory.newRoutine("example-auto");
 
         // Load the routine's trajectories
-        AutoTrajectory traj1 = routine.trajectory("test-trajectory");
-        AutoTrajectory traj2 = routine.trajectory("test-trajectory");
+        AutoTrajectory scorePreloaded = routine.trajectory("score-preloaded");
+        AutoTrajectory reefToCoral = routine.trajectory("reef-to-coral-station");
+        AutoTrajectory coralToReef = routine.trajectory("coral-station-to-reef");
 
         // When the routine begins, reset odometry and start the first trajectory
         routine.active().onTrue(
             Commands.sequence(
-                traj1.resetOdometry(),
-                traj1.cmd()
+                scorePreloaded.resetOdometry(),
+                scorePreloaded.cmd(),
+                reefToCoral.cmd(),
+                coralToReef.cmd()
             )
         );
-
-        // When the first trajectory ends, run the second one
-        traj1.done().onTrue(traj2.cmd());
 
         return routine;
     }
