@@ -9,6 +9,7 @@ import edu.wpi.first.hal.FRCNetComm.tInstances;
 import edu.wpi.first.hal.FRCNetComm.tResourceType;
 import edu.wpi.first.hal.HAL;
 import edu.wpi.first.math.Matrix;
+import edu.wpi.first.math.Pair;
 import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.math.estimator.SwerveDrivePoseEstimator;
 import edu.wpi.first.math.geometry.Pose2d;
@@ -21,6 +22,8 @@ import edu.wpi.first.math.kinematics.SwerveModulePosition;
 import edu.wpi.first.math.kinematics.SwerveModuleState;
 import edu.wpi.first.math.numbers.N1;
 import edu.wpi.first.math.numbers.N3;
+import edu.wpi.first.networktables.NetworkTableInstance;
+import edu.wpi.first.networktables.StructPublisher;
 import edu.wpi.first.wpilibj.Alert;
 import edu.wpi.first.wpilibj.Alert.AlertType;
 import edu.wpi.first.wpilibj.DriverStation;
@@ -31,6 +34,9 @@ import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
 import frc.robot.Constants;
 import frc.robot.Constants.Mode;
 import frc.robot.generated.TunerConstants;
+import frc.robot.util.FieldPOIs;
+
+import java.util.List;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 import org.littletonrobotics.junction.AutoLogOutput;
@@ -48,23 +54,6 @@ public class Drive extends SubsystemBase {
                 Math.hypot(TunerConstants.BackLeft.LocationX, TunerConstants.BackLeft.LocationY),
                 Math.hypot(TunerConstants.BackRight.LocationX, TunerConstants.BackRight.LocationY))
         );
-
-    // PathPlanner config constants
-    // private static final double ROBOT_MASS_KG = 74.088;
-    // private static final double ROBOT_MOI = 6.883;
-    // private static final double WHEEL_COF = 1.2;
-    // private static final RobotConfig PP_CONFIG = new RobotConfig(
-    //     ROBOT_MASS_KG, ROBOT_MOI,
-    //     new ModuleConfig(
-    //         TunerConstants.FrontLeft.WheelRadius,
-    //         TunerConstants.kSpeedAt12Volts.in(MetersPerSecond),
-    //         WHEEL_COF,
-    //         DCMotor.getKrakenX60Foc(1)
-    //             .withReduction(TunerConstants.FrontLeft.DriveMotorGearRatio),
-    //         TunerConstants.FrontLeft.SlipCurrent, 1
-    //     ),
-    //     getModuleTranslations()
-    // );
 
     static final Lock odometryLock = new ReentrantLock();
     private final GyroIO gyroIO;
@@ -168,6 +157,56 @@ public class Drive extends SubsystemBase {
 
         // Update gyro alert
         gyroDisconnectedAlert.set(!gyroInputs.connected && Constants.currentMode != Mode.SIM);
+
+        // Post nearest poles in NetworkTables
+        getNearestLeftPole();
+        getNearestRightPole();
+    }
+
+    private static StructPublisher<Pose2d> closestLeftPolePublisher = NetworkTableInstance.getDefault()
+            .getStructTopic("ClosestLeftPole", Pose2d.struct).publish();
+    private static StructPublisher<Pose2d> closestRightPolePublisher = NetworkTableInstance.getDefault()
+            .getStructTopic("ClosestRightPole", Pose2d.struct).publish();
+
+    public int getNearestLeftPole() {
+        return getNearestPole(FieldPOIs.REEF_LOCATIONS_LEFT, closestLeftPolePublisher);
+    }
+
+    public int getNearestRightPole() {
+        return getNearestPole(FieldPOIs.REEF_LOCATIONS_RIGHT, closestRightPolePublisher);
+    }
+
+    public int getNearestPole(List<Pose2d> locations, StructPublisher<Pose2d> publisher) {
+        Pair<Integer, Double> bestResult = new Pair<>(-1, 100.0);
+
+        for (int i = 0; i < locations.size(); i++) {
+            Pose2d position = locations.get(i);
+            double dst = getPose().getTranslation().getDistance(position.getTranslation());
+            if (dst <= bestResult.getSecond()) bestResult = new Pair<>(i, dst);
+        }
+
+        if (bestResult.getFirst() != -1) publisher.accept(locations.get(bestResult.getFirst()));
+        return bestResult.getFirst();
+    }
+
+    /*
+     * Face IDs (blue reef (left), C = center):
+     *  0 1
+     * 5 C 2
+     *  4 3
+     */
+    public int getNearestReefFace() {
+        Translation2d reef = new Translation2d(4.49, 4.03);
+        Translation2d robot = getPose().getTranslation();
+
+        // figure out the angle between the reef and the robot
+        double angle = Math.atan2(reef.getY() - robot.getY(), reef.getX() - robot.getX());;
+        if (angle < 0) angle += 2 * Math.PI;
+        angle -= Math.PI / 6; // the reef has vertical points
+
+        // divide the angle by π/3 to find the reef face
+        int face = ((int) (angle / (Math.PI / 3))) % 6;
+        return face;
     }
 
     /**
