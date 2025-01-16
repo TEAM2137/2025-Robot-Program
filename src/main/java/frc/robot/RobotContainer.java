@@ -21,6 +21,7 @@ import frc.robot.subsystems.vision.VisionConstants;
 import frc.robot.subsystems.vision.VisionIO;
 import frc.robot.subsystems.vision.VisionIOLimelight;
 import frc.robot.subsystems.vision.VisionIOPhotonVisionSim;
+import frc.robot.util.FieldPOIs;
 
 public class RobotContainer {
     // Subsystems
@@ -34,6 +35,8 @@ public class RobotContainer {
     public final Trigger resetGyro = controller.start();
     public final Trigger xLock = controller.x();
     public final Trigger rotationLock = controller.leftTrigger();
+    public final Trigger targetRight = controller.rightBumper();
+    public final Trigger targetLeft = controller.leftBumper();
 
     // Auto
     private final Autonomous autonomous;
@@ -128,6 +131,17 @@ public class RobotContainer {
         // Reset gyro to 0°
         resetGyro.onTrue(Commands.runOnce(() ->drive.setPose(new Pose2d(drive.getPose().getTranslation(), new Rotation2d())),drive)
                 .ignoringDisable(true));
+
+        targetLeft.whileTrue(DriveCommands.joystickDriveAtAngle(drive,
+            () -> -controller.getLeftY(),
+            () -> -controller.getLeftX(),
+            () -> FieldPOIs.REEF_LOCATIONS_LEFT.get(drive.getNearestLeftPole())
+                    .getRotation().plus(Rotation2d.k180deg)));
+        targetRight.whileTrue(DriveCommands.joystickDriveAtAngle(drive,
+            () -> -controller.getLeftY(),
+            () -> -controller.getLeftX(),
+            () -> FieldPOIs.REEF_LOCATIONS_LEFT.get(drive.getNearestRightPole())
+                    .getRotation().plus(Rotation2d.k180deg)));
     }
 
     /**
