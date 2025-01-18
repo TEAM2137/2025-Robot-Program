@@ -98,8 +98,8 @@ public class ModuleIOTalonFX implements ModuleIO {
         driveConfig.CurrentLimits.StatorCurrentLimitEnable = true;
 
         driveConfig.MotorOutput.Inverted = constants.DriveMotorInverted
-            ? InvertedValue.Clockwise_Positive
-            : InvertedValue.CounterClockwise_Positive;
+                ? InvertedValue.Clockwise_Positive
+                : InvertedValue.CounterClockwise_Positive;
 
         tryUntilOk(5, () -> driveTalon.getConfigurator().apply(driveConfig, 0.25));
         tryUntilOk(5, () -> driveTalon.setPosition(0.0, 0.25));
@@ -114,16 +114,15 @@ public class ModuleIOTalonFX implements ModuleIO {
                 case RemoteCANcoder -> FeedbackSensorSourceValue.RemoteCANcoder;
                 case FusedCANcoder -> FeedbackSensorSourceValue.FusedCANcoder;
                 case SyncCANcoder -> FeedbackSensorSourceValue.SyncCANcoder;
+                default -> FeedbackSensorSourceValue.RotorSensor;
             };
         turnConfig.Feedback.RotorToSensorRatio = constants.SteerMotorGearRatio;
         turnConfig.MotionMagic.MotionMagicCruiseVelocity = 100.0 / constants.SteerMotorGearRatio;
-        turnConfig.MotionMagic.MotionMagicAcceleration =
-            turnConfig.MotionMagic.MotionMagicCruiseVelocity / 0.100;
+        turnConfig.MotionMagic.MotionMagicAcceleration = turnConfig.MotionMagic.MotionMagicCruiseVelocity / 0.100;
         turnConfig.MotionMagic.MotionMagicExpo_kV = 0.12 * constants.SteerMotorGearRatio;
         turnConfig.MotionMagic.MotionMagicExpo_kA = 0.1;
         turnConfig.ClosedLoopGeneral.ContinuousWrap = true;
-        turnConfig.MotorOutput.Inverted =
-            constants.SteerMotorInverted
+        turnConfig.MotorOutput.Inverted = constants.SteerMotorInverted
                 ? InvertedValue.Clockwise_Positive
                 : InvertedValue.CounterClockwise_Positive;
         tryUntilOk(5, () -> turnTalon.getConfigurator().apply(turnConfig, 0.25));
@@ -131,8 +130,7 @@ public class ModuleIOTalonFX implements ModuleIO {
         // Configure CANCoder
         CANcoderConfiguration cancoderConfig = constants.EncoderInitialConfigs;
         cancoderConfig.MagnetSensor.MagnetOffset = constants.EncoderOffset;
-        cancoderConfig.MagnetSensor.SensorDirection =
-            constants.EncoderInverted
+        cancoderConfig.MagnetSensor.SensorDirection = constants.EncoderInverted
                 ? SensorDirectionValue.Clockwise_Positive
                 : SensorDirectionValue.CounterClockwise_Positive;
         cancoder.getConfigurator().apply(cancoderConfig);
@@ -185,14 +183,11 @@ public class ModuleIOTalonFX implements ModuleIO {
         inputs.turnCurrentAmps = turnCurrent.getValueAsDouble();
 
         // Update odometry inputs
-        inputs.odometryTimestamps =
-            timestampQueue.stream().mapToDouble((Double value) -> value).toArray();
-        inputs.odometryDrivePositionsRad =
-            drivePositionQueue.stream()
+        inputs.odometryTimestamps = timestampQueue.stream().mapToDouble((Double value) -> value).toArray();
+        inputs.odometryDrivePositionsRad = drivePositionQueue.stream()
                 .mapToDouble((Double value) -> Units.rotationsToRadians(value))
                 .toArray();
-        inputs.odometryTurnPositions =
-            turnPositionQueue.stream()
+        inputs.odometryTurnPositions = turnPositionQueue.stream()
                 .map((Double value) -> Rotation2d.fromRotations(value))
                 .toArray(Rotation2d[]::new);
         timestampQueue.clear();
