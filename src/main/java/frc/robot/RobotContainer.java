@@ -13,7 +13,9 @@ import frc.robot.generated.TunerConstants;
 import frc.robot.subsystems.coral.Coral;
 import frc.robot.subsystems.coral.CoralIO;
 import frc.robot.subsystems.coral.CoralIOSim;
-import frc.robot.subsystems.coral.CoralIOTalonFX;
+import frc.robot.subsystems.algae.AlgaeIntake;
+import frc.robot.subsystems.algae.AlgaeIntakeIO;
+import frc.robot.subsystems.algae.AlgaeIntakeIOSim;
 import frc.robot.subsystems.drive.Drive;
 import frc.robot.subsystems.drive.GyroIO;
 import frc.robot.subsystems.drive.GyroIOPigeon2;
@@ -23,7 +25,6 @@ import frc.robot.subsystems.drive.ModuleIOTalonFX;
 import frc.robot.subsystems.elevator.Elevator;
 import frc.robot.subsystems.elevator.ElevatorIO;
 import frc.robot.subsystems.elevator.ElevatorIOSim;
-import frc.robot.subsystems.elevator.ElevatorIOTalonFX;
 import frc.robot.subsystems.vision.Vision;
 import frc.robot.subsystems.vision.VisionConstants;
 import frc.robot.subsystems.vision.VisionIO;
@@ -37,6 +38,7 @@ public class RobotContainer {
     public final Vision vision;
     public final Elevator elevator;
     public final Coral coral;
+    public final AlgaeIntake algae;
 
     // Controller
     private final CommandXboxController controller = new CommandXboxController(0);
@@ -54,6 +56,9 @@ public class RobotContainer {
     public final Trigger l4 = opController.y();
     public final Trigger coralStation = l1.or(l2).or(l3).or(l4);
     public final Trigger coralRollers = opController.rightBumper();
+    public final Trigger intakeAlgae = controller.a();
+    public final Trigger outtakeAlgae = controller.b();
+    public final Trigger intakeDown = controller.x();
 
     // Auto
     private final Autonomous autonomous;
@@ -77,11 +82,10 @@ public class RobotContainer {
                 new VisionIOLimelight(VisionConstants.cam1, drive::getRotation)
             );
 
-            elevator = new Elevator(
-                new ElevatorIOTalonFX()
-            );
+            elevator = new Elevator(new ElevatorIO() {});
+            coral = new Coral(new CoralIO() {});
 
-            coral = new Coral(new CoralIOTalonFX());
+            algae = new AlgaeIntake(new AlgaeIntakeIO() {});
 
             break;
 
@@ -101,11 +105,10 @@ public class RobotContainer {
                 new VisionIOPhotonVisionSim(VisionConstants.cam1, VisionConstants.robotToCamera1, drive::getPose)
             );
 
-            elevator = new Elevator(
-                new ElevatorIOSim()
-            );
-
+            elevator = new Elevator(new ElevatorIOSim());
             coral = new Coral(new CoralIOSim());
+
+            algae = new AlgaeIntake(new AlgaeIntakeIOSim());
 
             break;
 
@@ -125,13 +128,10 @@ public class RobotContainer {
                 new VisionIO() {}
             );
 
-            elevator = new Elevator(
-                new ElevatorIO() {}
-            );
+            elevator = new Elevator(new ElevatorIO() {});
+            coral = new Coral(new CoralIO() {});
 
-            coral = new Coral(new CoralIO() {
-
-            });
+            algae = new AlgaeIntake(new AlgaeIntakeIO() {});
 
             break;
         }
@@ -188,6 +188,14 @@ public class RobotContainer {
         coralStation.whileFalse(elevator.setPositionCommand(Elevator.Constants.CORAL_STATION));
         coralRollers.onTrue(coral.setRollerVoltage(12));
         coralRollers.onFalse(coral.setRollerVoltage(0));
+
+        intakeAlgae.onTrue(algae.setRollerVoltage(12));
+        outtakeAlgae.onTrue(algae.setRollerVoltage(-12));
+        intakeAlgae.onFalse(algae.setRollerVoltage(0));
+        outtakeAlgae.onFalse(algae.setRollerVoltage(0));
+
+        intakeDown.onTrue(algae.setPivotPosition(90));
+        intakeDown.onFalse(algae.setPivotPosition(0));
     }
 
     /**
