@@ -10,12 +10,20 @@ import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
 import frc.robot.commands.DriveCommands;
 import frc.robot.generated.TunerConstants;
+import frc.robot.subsystems.coral.Coral;
+import frc.robot.subsystems.coral.CoralIO;
+import frc.robot.subsystems.coral.CoralIOSim;
+import frc.robot.subsystems.coral.CoralIOTalonFX;
 import frc.robot.subsystems.drive.Drive;
 import frc.robot.subsystems.drive.GyroIO;
 import frc.robot.subsystems.drive.GyroIOPigeon2;
 import frc.robot.subsystems.drive.ModuleIO;
 import frc.robot.subsystems.drive.ModuleIOSim;
 import frc.robot.subsystems.drive.ModuleIOTalonFX;
+import frc.robot.subsystems.elevator.Elevator;
+import frc.robot.subsystems.elevator.ElevatorIO;
+import frc.robot.subsystems.elevator.ElevatorIOSim;
+import frc.robot.subsystems.elevator.ElevatorIOTalonFX;
 import frc.robot.subsystems.vision.Vision;
 import frc.robot.subsystems.vision.VisionConstants;
 import frc.robot.subsystems.vision.VisionIO;
@@ -27,9 +35,12 @@ public class RobotContainer {
     // Subsystems
     public final Drive drive;
     public final Vision vision;
+    public final Elevator elevator;
+    public final Coral coral;
 
     // Controller
     private final CommandXboxController controller = new CommandXboxController(0);
+    private final CommandXboxController opController = new CommandXboxController(1);
 
     // Bindings
     public final Trigger resetGyro = controller.start();
@@ -37,6 +48,12 @@ public class RobotContainer {
     public final Trigger rotationLock = controller.leftTrigger();
     public final Trigger targetRight = controller.rightBumper();
     public final Trigger targetLeft = controller.leftBumper();
+    public final Trigger l1 = opController.x();
+    public final Trigger l2 = opController.a();
+    public final Trigger l3 = opController.b();
+    public final Trigger l4 = opController.y();
+    public final Trigger coralStation = l1.or(l2).or(l3).or(l4);
+    public final Trigger coralRollers = opController.rightBumper();
 
     // Auto
     private final Autonomous autonomous;
@@ -60,6 +77,12 @@ public class RobotContainer {
                 new VisionIOLimelight(VisionConstants.cam1, drive::getRotation)
             );
 
+            elevator = new Elevator(
+                new ElevatorIOTalonFX()
+            );
+
+            coral = new Coral(new CoralIOTalonFX());
+
             break;
 
         case SIM:
@@ -78,6 +101,12 @@ public class RobotContainer {
                 new VisionIOPhotonVisionSim(VisionConstants.cam1, VisionConstants.robotToCamera1, drive::getPose)
             );
 
+            elevator = new Elevator(
+                new ElevatorIOSim()
+            );
+
+            coral = new Coral(new CoralIOSim());
+
             break;
 
         default:
@@ -95,6 +124,14 @@ public class RobotContainer {
                 new VisionIO() {},
                 new VisionIO() {}
             );
+
+            elevator = new Elevator(
+                new ElevatorIO() {}
+            );
+
+            coral = new Coral(new CoralIO() {
+
+            });
 
             break;
         }
@@ -115,14 +152,14 @@ public class RobotContainer {
     private void configureButtonBindings() {
         // Default command, normal field-relative drive
         drive.setDefaultCommand(DriveCommands.joystickDrive(drive,
-                () -> -controller.getLeftY(),
-                () -> -controller.getLeftX(),
+                () -> controller.getLeftY(),
+                () -> controller.getLeftX(),
                 () -> -controller.getRightX()));
 
         // Lock rotation to 0°
         rotationLock.whileTrue(DriveCommands.joystickDriveAtAngle(drive,
-                () -> -controller.getLeftY(),
-                () -> -controller.getLeftX(),
+                () -> controller.getLeftY(),
+                () -> controller.getLeftX(),
                 () -> new Rotation2d()));
 
         // Switch to X pattern
@@ -142,6 +179,15 @@ public class RobotContainer {
             () -> -controller.getLeftX(),
             () -> FieldPOIs.REEF_LOCATIONS_LEFT.get(drive.getNearestRightPole())
                     .getRotation().plus(Rotation2d.k180deg)));
+
+        l1.onTrue(elevator.setPositionCommand(Elevator.Constants.L1));
+        l2.onTrue(elevator.setPositionCommand(Elevator.Constants.L2));
+        l3.onTrue(elevator.setPositionCommand(Elevator.Constants.L3));
+        l4.onTrue(elevator.setPositionCommand(Elevator.Constants.L4));
+
+        coralStation.whileFalse(elevator.setPositionCommand(Elevator.Constants.CORAL_STATION));
+        coralRollers.onTrue(coral.setRollerVoltage(12));
+        coralRollers.onFalse(coral.setRollerVoltage(0));
     }
 
     /**

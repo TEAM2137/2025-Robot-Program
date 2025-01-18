@@ -3,7 +3,6 @@ package frc.robot.subsystems.drive;
 import static edu.wpi.first.units.Units.*;
 
 import com.ctre.phoenix6.CANBus;
-
 import choreo.trajectory.SwerveSample;
 import edu.wpi.first.hal.FRCNetComm.tInstances;
 import edu.wpi.first.hal.FRCNetComm.tResourceType;
@@ -35,7 +34,6 @@ import frc.robot.Constants;
 import frc.robot.Constants.Mode;
 import frc.robot.generated.TunerConstants;
 import frc.robot.util.FieldPOIs;
-
 import java.util.List;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
@@ -94,7 +92,7 @@ public class Drive extends SubsystemBase {
         PhoenixOdometryThread.getInstance().start();
 
         autoHeadingController.enableContinuousInput(-Math.PI, Math.PI);
-
+        
         // Configure SysId
         sysId = new SysIdRoutine(
             new SysIdRoutine.Config(
