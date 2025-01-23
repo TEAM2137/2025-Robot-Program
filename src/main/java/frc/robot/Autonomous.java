@@ -63,6 +63,11 @@ public class Autonomous {
 
         // Testing Autos
         chooser.addRoutine("Example Auto (5 cycles)", () -> exampleAuto(5));
+        chooser.addRoutine("close start", () -> closeStart(1));
+        chooser.addRoutine("middle start", () -> middleStart(1));
+        chooser.addRoutine("far start", () -> farStart(1));
+
+
     }
 
     public AutoRoutine exampleAuto(int cycles) {
@@ -84,6 +89,71 @@ public class Autonomous {
         );
 
         return routine;
+    }
+    public AutoRoutine closeStart(int cycles) {
+        AutoRoutine routine = factory.newRoutine("close-start");
+
+        // Load the routine's trajectories
+        AutoTrajectory scorePreloaded= routine.trajectory("score-preloaded");
+        AutoTrajectory preloadToCoral = routine.trajectory("preload-to-coral-station");
+        AutoTrajectory coralToReef = routine.trajectory("coral-station-to-reef");
+
+        // When the routine begins, reset odometry and start the first trajectory
+        routine.active().onTrue(
+            cycleAfter(cycles - 1, Commands.sequence(
+                scorePreloaded.resetOdometry(),
+                scorePreloaded.cmd(),
+                preloadToCoral.cmd(),
+                coralToReef.cmd()
+            ), routine)
+        );
+
+         return routine;
+
+    }
+
+    public AutoRoutine middleStart(int cycles) {
+        AutoRoutine routine = factory.newRoutine("middle-start");
+
+        // Load the routine's trajectories
+        AutoTrajectory scorePreloaded= routine.trajectory("middle-score");
+        AutoTrajectory preloadToCoral = routine.trajectory("preload-to-coral-station");
+        AutoTrajectory coralToReef = routine.trajectory("coral-station-to-reef");
+
+        // When the routine begins, reset odometry and start the first trajectory
+        routine.active().onTrue(
+            cycleAfter(cycles - 1, Commands.sequence(
+                scorePreloaded.resetOdometry(),
+                scorePreloaded.cmd(),
+                preloadToCoral.cmd(),
+                coralToReef.cmd()
+            ), routine)
+        );
+
+         return routine;
+
+    }
+
+    public AutoRoutine farStart(int cycles) {
+        AutoRoutine routine = factory.newRoutine("far-start");
+
+        // Load the routine's trajectories
+        AutoTrajectory scorePreloaded= routine.trajectory("far-score");
+        AutoTrajectory preloadToCoral = routine.trajectory("preload-to-coral-station");
+        AutoTrajectory coralToReef = routine.trajectory("coral-station-to-reef");
+
+        // When the routine begins, reset odometry and start the first trajectory
+        routine.active().onTrue(
+            cycleAfter(cycles - 1, Commands.sequence(
+                scorePreloaded.resetOdometry(),
+                scorePreloaded.cmd(),
+                preloadToCoral.cmd(),
+                coralToReef.cmd()
+            ), routine)
+        );
+
+         return routine;
+
     }
 
     public Command cycleAfter(int cycles, Command base, AutoRoutine routine) {
