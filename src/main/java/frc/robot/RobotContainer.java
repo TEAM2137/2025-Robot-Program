@@ -10,6 +10,7 @@ import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
 import frc.robot.commands.DriveCommands;
 import frc.robot.generated.TunerConstants;
+import frc.robot.subsystems.coral.BreakSwitch;
 import frc.robot.subsystems.coral.Coral;
 import frc.robot.subsystems.coral.CoralIO;
 import frc.robot.subsystems.coral.CoralIOSim;
@@ -39,6 +40,7 @@ public class RobotContainer {
     public final Elevator elevator;
     public final Coral coral;
     public final AlgaeIntake algae;
+    public final BreakSwitch BreakSwitch = new BreakSwitch();
 
     // Controller
     private final CommandXboxController controller = new CommandXboxController(0);
@@ -188,7 +190,11 @@ public class RobotContainer {
         coralStation.whileFalse(elevator.setPositionCommand(Elevator.Constants.CORAL_STATION));
         coralRollers.onTrue(coral.setRollerVoltage(12));
         coralRollers.onFalse(coral.setRollerVoltage(0));
+        Trigger initialConveyorDetector = new Trigger(() -> BreakSwitch.getInitialConveyorSensor());
+        initialConveyorDetector.onFalse( coral.setRollerVoltage(12));
+        initialConveyorDetector.onTrue( coral.setRollerVoltage(0));
 
+// TODO fix name
         intakeAlgae.onTrue(algae.setRollerVoltage(12));
         outtakeAlgae.onTrue(algae.setRollerVoltage(-12));
         intakeAlgae.onFalse(algae.setRollerVoltage(0));

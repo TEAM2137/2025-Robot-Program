@@ -92,7 +92,7 @@ public class Drive extends SubsystemBase {
         PhoenixOdometryThread.getInstance().start();
 
         autoHeadingController.enableContinuousInput(-Math.PI, Math.PI);
-        
+
         // Configure SysId
         sysId = new SysIdRoutine(
             new SysIdRoutine.Config(
