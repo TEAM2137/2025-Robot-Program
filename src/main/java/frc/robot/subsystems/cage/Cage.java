@@ -2,6 +2,7 @@ package frc.robot.subsystems.cage;
 
 import org.littletonrobotics.junction.Logger;
 
+import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 
 public class Cage extends SubsystemBase{
@@ -18,4 +19,11 @@ public class Cage extends SubsystemBase{
         io.updateInputs(inputs);
         Logger.processInputs("Cage", inputs);
     }
+
+    public Command setCagePosition(double targetPosition) {
+        return runOnce(() -> {
+            io.setPosition(targetPosition);
+        });
+    }
+
 }
