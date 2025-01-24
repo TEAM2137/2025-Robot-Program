@@ -16,6 +16,8 @@ import frc.robot.subsystems.coral.CoralIOSim;
 import frc.robot.subsystems.algae.AlgaeIntake;
 import frc.robot.subsystems.algae.AlgaeIntakeIO;
 import frc.robot.subsystems.algae.AlgaeIntakeIOSim;
+import frc.robot.subsystems.cage.Cage;
+import frc.robot.subsystems.cage.CageIO;
 import frc.robot.subsystems.drive.Drive;
 import frc.robot.subsystems.drive.GyroIO;
 import frc.robot.subsystems.drive.GyroIOPigeon2;
@@ -39,6 +41,7 @@ public class RobotContainer {
     public final Elevator elevator;
     public final Coral coral;
     public final AlgaeIntake algae;
+    public final Cage cage;
 
     // Controller
     private final CommandXboxController controller = new CommandXboxController(0);
@@ -59,6 +62,7 @@ public class RobotContainer {
     public final Trigger intakeAlgae = controller.a();
     public final Trigger outtakeAlgae = controller.b();
     public final Trigger intakeDown = controller.x();
+    public final Trigger CagePosition = controller.a();
 
     // Auto
     private final Autonomous autonomous;
@@ -87,6 +91,7 @@ public class RobotContainer {
 
             algae = new AlgaeIntake(new AlgaeIntakeIO() {});
 
+            cage = new Cage(new CageIO() {});
             break;
 
         case SIM:
@@ -109,6 +114,9 @@ public class RobotContainer {
             coral = new Coral(new CoralIOSim());
 
             algae = new AlgaeIntake(new AlgaeIntakeIOSim());
+            cage = new Cage(new CageIO() {
+
+            });
 
             break;
 
@@ -132,6 +140,9 @@ public class RobotContainer {
             coral = new Coral(new CoralIO() {});
 
             algae = new AlgaeIntake(new AlgaeIntakeIO() {});
+            cage = new Cage(new CageIO() {
+
+            });
 
             break;
         }
@@ -196,6 +207,9 @@ public class RobotContainer {
 
         intakeDown.onTrue(algae.setPivotPosition(90));
         intakeDown.onFalse(algae.setPivotPosition(0));
+
+        CagePosition.onTrue(cage.setCagePosition(50));
+        CagePosition.onFalse(cage.setCagePosition(0));
     }
 
     /**
