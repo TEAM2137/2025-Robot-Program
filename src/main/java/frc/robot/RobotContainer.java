@@ -13,6 +13,7 @@ import frc.robot.generated.TunerConstants;
 import frc.robot.subsystems.coral.Coral;
 import frc.robot.subsystems.coral.CoralIO;
 import frc.robot.subsystems.coral.CoralIOSim;
+import frc.robot.subsystems.coral.CoralIOTalonFX;
 import frc.robot.subsystems.algae.AlgaeIntake;
 import frc.robot.subsystems.algae.AlgaeIntakeIO;
 import frc.robot.subsystems.algae.AlgaeIntakeIOSim;
@@ -91,7 +92,7 @@ public class RobotContainer {
             );
 
             elevator = new Elevator(new ElevatorIOTalonFX());
-            coral = new Coral(new CoralIO() {});
+            coral = new Coral(new CoralIOTalonFX());
 
             algae = new AlgaeIntake(new AlgaeIntakeIO() {});
 
@@ -166,7 +167,7 @@ public class RobotContainer {
                 () -> driverController.getLeftX(),
                 () -> -driverController.getRightX()));
 
-        elevator.setDefaultCommand(elevator.setVoltage(() -> operatorController.getRightY() * 10));
+        elevator.setDefaultCommand(elevator.setVoltage(() -> operatorController.getRightY() * 6));
 
         // Lock rotation to 0°
         rotationLock.whileTrue(DriveCommands.joystickDriveAtAngle(drive,
@@ -190,7 +191,7 @@ public class RobotContainer {
         l4.onTrue(elevator.setPositionCommand(ElevatorConstants.l4Setpoint));
 
         coralStation.whileFalse(elevator.setPositionCommand(ElevatorConstants.coralStationSetpoint));
-        coralRollers.onTrue(coral.setRollerVoltage(12));
+        coralRollers.onTrue(coral.setRollerVoltage(4));
         coralRollers.onFalse(coral.setRollerVoltage(0));
 
         intakeAlgae.onTrue(algae.setRollerVoltage(12));

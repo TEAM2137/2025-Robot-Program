@@ -1,5 +1,8 @@
 package frc.robot.subsystems.elevator;
 
+import static edu.wpi.first.units.Units.Hertz;
+
+import com.ctre.phoenix6.BaseStatusSignal;
 import com.ctre.phoenix6.configs.MotionMagicConfigs;
 import com.ctre.phoenix6.configs.Slot0Configs;
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
@@ -10,8 +13,8 @@ import com.ctre.phoenix6.hardware.TalonFX;
 import com.ctre.phoenix6.signals.NeutralModeValue;
 
 public class ElevatorIOTalonFX implements ElevatorIO {
-    private TalonFX leadMotor = new TalonFX(ElevatorConstants.leaderID);
-    private TalonFX followMotor = new TalonFX(ElevatorConstants.followerID);
+    private TalonFX leadMotor = new TalonFX(ElevatorConstants.leaderID, "rio");
+    private TalonFX followMotor = new TalonFX(ElevatorConstants.followerID, "rio");
 
     public ElevatorIOTalonFX() {
         // Create TalonFX config
@@ -34,14 +37,27 @@ public class ElevatorIOTalonFX implements ElevatorIO {
         config.Feedback.RotorToSensorRatio = ElevatorConstants.gearing;
         config.MotorOutput.NeutralMode = NeutralModeValue.Brake;
 
+        // Set frequencies of used signals
+        BaseStatusSignal.setUpdateFrequencyForAll(
+            Hertz.of(100),
+            leadMotor.getPosition(),
+            leadMotor.getVelocity(),
+            leadMotor.getMotorVoltage(),
+            leadMotor.getSupplyCurrent(),
+            followMotor.getMotorVoltage(),
+            followMotor.getSupplyCurrent()
+        );
+
         // Apply configurations
         leadMotor.getConfigurator().apply(config);
         followMotor.getConfigurator().apply(config);
+
+        // Clear unused signals
         leadMotor.optimizeBusUtilization();
         followMotor.optimizeBusUtilization();
 
-        // Set followMotor to follow leadMotor with inverted outputs
-        followMotor.setControl(new Follower(leadMotor.getDeviceID(), false));
+        // Set followMotor to follow leadMotor
+        followMotor.setControl(new Follower(leadMotor.getDeviceID(), true));
     }
 
     @Override
