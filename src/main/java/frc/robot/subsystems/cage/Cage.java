@@ -25,5 +25,4 @@ public class Cage extends SubsystemBase{
             io.setPosition(targetPosition);
         });
     }
-
 }
