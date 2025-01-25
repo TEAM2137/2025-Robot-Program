@@ -10,8 +10,8 @@ import com.ctre.phoenix6.hardware.TalonFX;
 import com.ctre.phoenix6.signals.NeutralModeValue;
 
 public class ElevatorIOTalonFX implements ElevatorIO {
-    private TalonFX leadMotor = new TalonFX(0);
-    private TalonFX followMotor = new TalonFX(1);
+    private TalonFX leadMotor = new TalonFX(ElevatorConstants.leaderID);
+    private TalonFX followMotor = new TalonFX(ElevatorConstants.followerID);
 
     public ElevatorIOTalonFX() {
         // Create TalonFX config
@@ -41,7 +41,7 @@ public class ElevatorIOTalonFX implements ElevatorIO {
         followMotor.optimizeBusUtilization();
 
         // Set followMotor to follow leadMotor with inverted outputs
-        followMotor.setControl(new Follower(leadMotor.getDeviceID(), true));
+        followMotor.setControl(new Follower(leadMotor.getDeviceID(), false));
     }
 
     @Override

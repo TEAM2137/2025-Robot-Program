@@ -41,8 +41,6 @@ public class RobotContainer {
     public final Coral coral;
     public final AlgaeIntake algae;
 
-    public final RobotVisualizer visualizer;
-
     // Controller
     private final CommandXboxController driverController = new CommandXboxController(0);
     private final CommandXboxController operatorController = new CommandXboxController(1);
@@ -69,6 +67,9 @@ public class RobotContainer {
 
     // Auto
     private final Autonomous autonomous;
+
+    // Visuals
+    public final RobotVisualizer visualizer;
 
     /** The container for the robot. Contains subsystems, OI devices, and commands. */
     public RobotContainer() {
@@ -164,6 +165,8 @@ public class RobotContainer {
                 () -> driverController.getLeftY(),
                 () -> driverController.getLeftX(),
                 () -> -driverController.getRightX()));
+
+        elevator.setDefaultCommand(elevator.setVoltage(() -> operatorController.getRightY() * 4));
 
         // Lock rotation to 0°
         rotationLock.whileTrue(DriveCommands.joystickDriveAtAngle(drive,

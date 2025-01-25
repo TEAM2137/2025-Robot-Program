@@ -3,6 +3,10 @@ package frc.robot.subsystems.elevator;
 import edu.wpi.first.math.util.Units;
 
 public class ElevatorConstants {
+    // IDs
+    public static final int leaderID = 30;
+    public static final int followerID = 31;
+
     // Ratios
     public static final double gearing = 3.0;
     public static final double motorToElevatorPosition = 1.0; // TODO figure this out when testing

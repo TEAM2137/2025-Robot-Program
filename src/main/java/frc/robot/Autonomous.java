@@ -40,12 +40,12 @@ public class Autonomous {
         );
 
         // Create the sysId command chooser
-        this.sysIdCommandChooser = new LoggedDashboardChooser<>("SysID Command Chooser");                
+        this.sysIdCommandChooser = new LoggedDashboardChooser<>("SysID Command Chooser");
         this.sysIdCommandChooser.addDefaultOption("None", null);
 
         // Create the auto chooser
         this.autoChooser = new LoggedDashboardChooser<>("Auto Chooser");
-        this.autoChooser.addOption("None", null);    
+        this.autoChooser.addDefaultOption("None", null);
         this.registerAutos();
 
         // Assign auto commands to autonomous trigger

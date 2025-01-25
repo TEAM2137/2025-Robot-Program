@@ -1,5 +1,7 @@
 package frc.robot.subsystems.elevator;
 
+import java.util.function.DoubleSupplier;
+
 import org.littletonrobotics.junction.Logger;
 
 import edu.wpi.first.wpilibj2.command.Command;
@@ -34,5 +36,9 @@ public class Elevator extends SubsystemBase {
 
     public double getExtensionMeters() {
         return inputs.elevatorPositionMeters;
+    }
+
+    public Command setVoltage(DoubleSupplier voltageSupplier) {
+        return run(() -> io.setVolts(voltageSupplier.getAsDouble()));
     }
 }
