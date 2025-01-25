@@ -1,0 +1,160 @@
+{
+    "name": "2137 2025 TBD",
+    "rotations": [
+        {
+            "axis": "x",
+            "degrees": 90
+        },
+        {
+            "axis": "z",
+            "degrees": 90
+        }
+    ],
+    "position": [
+        0,
+        0,
+        0
+    ],
+    "components": [
+        {
+            "zeroedRotations": [
+                {
+                    "axis": "x",
+                    "degrees": 90
+                },
+                {
+                    "axis": "y",
+                    "degrees": 0
+                },
+                {
+                    "axis": "z",
+                    "degrees": 90
+                }
+            ],
+            "zeroedPosition": [
+                0,
+                0,
+                0
+            ]
+        },
+        {
+            "zeroedRotations": [
+                {
+                    "axis": "x",
+                    "degrees": 90
+                },
+                {
+                    "axis": "y",
+                    "degrees": 0
+                },
+                {
+                    "axis": "z",
+                    "degrees": 90
+                }
+            ],
+            "zeroedPosition": [
+                0,
+                0,
+                0
+            ]
+        },
+        {
+            "zeroedRotations": [
+                {
+                    "axis": "x",
+                    "degrees": 90
+                },
+                {
+                    "axis": "y",
+                    "degrees": 0
+                },
+                {
+                    "axis": "z",
+                    "degrees": 90
+                }
+            ],
+            "zeroedPosition": [
+                0,
+                0,
+                0
+            ]
+        },
+        {
+            "zeroedRotations": [
+                {
+                    "axis": "x",
+                    "degrees": 90
+                },
+                {
+                    "axis": "y",
+                    "degrees": 0
+                },
+                {
+                    "axis": "z",
+                    "degrees": 90
+                }
+            ],
+            "zeroedPosition": [
+                0,
+                0,
+                0
+            ]
+        }
+    ],
+    "cameras": [
+        {
+            "name": "Left LL",
+            "rotations": [
+                {
+                    "axis": "x",
+                    "degrees": 0
+                },
+                {
+                    "axis": "y",
+                    "degrees": -20
+                },
+                {
+                    "axis": "z",
+                    "degrees": 0
+                }
+            ],
+            "position": [
+                0.23495,
+                0.235126022,
+                0.2159
+            ],
+            "resolution": [
+                640,
+                480
+            ],
+            "fov": 80
+        },
+        {
+            "name": "Right LL",
+            "rotations": [
+                {
+                    "axis": "x",
+                    "degrees": 0
+                },
+                {
+                    "axis": "y",
+                    "degrees": -20
+                },
+                {
+                    "axis": "z",
+                    "degrees": 30
+                }
+            ],
+            "position": [
+                0.2413,
+                -0.2286,
+                0.2159
+            ],
+            "resolution": [
+                640,
+                480
+            ],
+            "fov": 80
+        }
+    ]
+}

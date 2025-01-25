@@ -39,4 +39,8 @@ public class Elevator extends SubsystemBase {
             io.setTargetPosition(targetPosition);
         });
     }
+
+    public double getExtensionMeters() {
+        return inputs.positionMeters;
+    }
 }

@@ -40,6 +40,8 @@ public class RobotContainer {
     public final Coral coral;
     public final AlgaeIntake algae;
 
+    public final RobotVisualizer visualizer;
+
     // Controller
     private final CommandXboxController controller = new CommandXboxController(0);
     private final CommandXboxController opController = new CommandXboxController(1);
@@ -135,6 +137,8 @@ public class RobotContainer {
 
             break;
         }
+
+        visualizer = new RobotVisualizer(elevator::getExtensionMeters, () -> Rotation2d.fromDegrees(45));
 
         // Setup autonomous features
         autonomous = new Autonomous(this);
