@@ -21,7 +21,5 @@ public final class Constants {
         /** Replaying from a log file. */
         REPLAY
     }
-    public static final class ConveyorConstants {
-        public static final int initialConveyorSensor = 0;
-    }
+
 }

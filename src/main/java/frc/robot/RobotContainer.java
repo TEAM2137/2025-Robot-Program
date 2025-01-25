@@ -10,7 +10,6 @@ import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
 import frc.robot.commands.DriveCommands;
 import frc.robot.generated.TunerConstants;
-import frc.robot.subsystems.coral.BreakSwitch;
 import frc.robot.subsystems.coral.Coral;
 import frc.robot.subsystems.coral.CoralIO;
 import frc.robot.subsystems.coral.CoralIOSim;
@@ -40,7 +39,6 @@ public class RobotContainer {
     public final Elevator elevator;
     public final Coral coral;
     public final AlgaeIntake algae;
-    public final BreakSwitch BreakSwitch = new BreakSwitch();
 
     // Controller
     private final CommandXboxController controller = new CommandXboxController(0);
@@ -190,9 +188,10 @@ public class RobotContainer {
         coralStation.whileFalse(elevator.setPositionCommand(Elevator.Constants.CORAL_STATION));
         coralRollers.onTrue(coral.setRollerVoltage(12));
         coralRollers.onFalse(coral.setRollerVoltage(0));
-        Trigger initialConveyorDetector = new Trigger(() -> BreakSwitch.getInitialConveyorSensor());
+        Trigger initialConveyorDetector = new Trigger(() -> coral.getInitialConveyorSensor());
         initialConveyorDetector.onFalse( coral.setRollerVoltage(12));
         initialConveyorDetector.onTrue( coral.setRollerVoltage(0));
+        initialConveyorDetector.onChange(coral.changeStatus( coral.getInitialConveyorSensor()));
 
 // TODO fix name
         intakeAlgae.onTrue(algae.setRollerVoltage(12));
@@ -202,6 +201,8 @@ public class RobotContainer {
 
         intakeDown.onTrue(algae.setPivotPosition(90));
         intakeDown.onFalse(algae.setPivotPosition(0));
+
+
     }
 
     /**

@@ -20,4 +20,9 @@ public class CoralIOTalonFX implements CoralIO {
     public void setRollerVoltage(double voltage) {
         wheels.setControl(new VoltageOut(voltage));
     }
+    @Override
+    public void updateStatus(boolean conveyorStatus, CoralIOInputs inputs) {
+        inputs.switchStatus = conveyorStatus;
+
+    }
 }
