@@ -16,7 +16,7 @@ public class ElevatorIOTalonFX implements ElevatorIO {
     public ElevatorIOTalonFX() {
         // Create TalonFX config
         var config = new TalonFXConfiguration();
-        
+
         // PID and FF settings
         var slot0Configs = config.Slot0;
         slot0Configs.kS = ElevatorConstants.kS;
@@ -33,10 +33,10 @@ public class ElevatorIOTalonFX implements ElevatorIO {
         // Other settings
         config.Feedback.RotorToSensorRatio = ElevatorConstants.gearing;
         config.MotorOutput.NeutralMode = NeutralModeValue.Brake;
-        
+
         // Apply configurations
         leadMotor.getConfigurator().apply(config);
-        followMotor.getConfigurator().apply(config);        
+        followMotor.getConfigurator().apply(config);
         leadMotor.optimizeBusUtilization();
         followMotor.optimizeBusUtilization();
 

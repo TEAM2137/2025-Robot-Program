@@ -26,6 +26,7 @@ import frc.robot.subsystems.elevator.Elevator;
 import frc.robot.subsystems.elevator.ElevatorConstants;
 import frc.robot.subsystems.elevator.ElevatorIO;
 import frc.robot.subsystems.elevator.ElevatorIOSim;
+import frc.robot.subsystems.elevator.ElevatorIOTalonFX;
 import frc.robot.subsystems.vision.Vision;
 import frc.robot.subsystems.vision.VisionConstants;
 import frc.robot.subsystems.vision.VisionIO;
@@ -50,14 +51,18 @@ public class RobotContainer {
     public final Trigger resetGyro = driverController.start();
     public final Trigger xLock = driverController.x();
     public final Trigger rotationLock = driverController.leftTrigger();
+
     public final Trigger targetRight = driverController.rightBumper();
     public final Trigger targetLeft = driverController.leftBumper();
+
     public final Trigger l1 = operatorController.x();
     public final Trigger l2 = operatorController.a();
     public final Trigger l3 = operatorController.b();
     public final Trigger l4 = operatorController.y();
+
     public final Trigger coralStation = l1.or(l2).or(l3).or(l4);
     public final Trigger coralRollers = operatorController.rightBumper();
+
     public final Trigger intakeAlgae = driverController.a();
     public final Trigger outtakeAlgae = driverController.b();
     public final Trigger intakeDown = driverController.x();
@@ -84,7 +89,7 @@ public class RobotContainer {
                 new VisionIOLimelight(VisionConstants.cam1, drive::getRotation)
             );
 
-            elevator = new Elevator(new ElevatorIO() {});
+            elevator = new Elevator(new ElevatorIOTalonFX());
             coral = new Coral(new CoralIO() {});
 
             algae = new AlgaeIntake(new AlgaeIntakeIO() {});

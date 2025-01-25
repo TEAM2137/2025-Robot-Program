@@ -1,11 +1,13 @@
 package frc.robot;
 
 
-import choreo.auto.AutoChooser;
+import java.util.Set;
+
+import org.littletonrobotics.junction.networktables.LoggedDashboardChooser;
+
 import choreo.auto.AutoFactory;
 import choreo.auto.AutoRoutine;
 import choreo.auto.AutoTrajectory;
-import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.SequentialCommandGroup;
@@ -17,7 +19,10 @@ import frc.robot.util.GameEvents;
 public class Autonomous {
     public final AutoFactory factory;
 
-    private final AutoChooser chooser;
+    private final LoggedDashboardChooser<Command> sysIdCommandChooser;
+    private final LoggedDashboardChooser<AutoRoutine> autoChooser;
+
+    @SuppressWarnings("unused")
     private final RobotContainer robot;
     private final Drive drive;
 
@@ -34,13 +39,14 @@ public class Autonomous {
             drive // The drive subsystem
         );
 
-        // Create the auto chooser
-        this.chooser = new AutoChooser();
-        this.registerAutos();
+        // Create the sysId command chooser
+        this.sysIdCommandChooser = new LoggedDashboardChooser<>("SysID Command Chooser");                
+        this.sysIdCommandChooser.addDefaultOption("None", null);
 
-        // Put the auto chooser on the dashboard
-        SmartDashboard.putData("Auto Chooser", chooser);
-        chooser.select("Example Auto (5 cycles)");
+        // Create the auto chooser
+        this.autoChooser = new LoggedDashboardChooser<>("Auto Chooser");
+        this.autoChooser.addOption("None", null);    
+        this.registerAutos();
 
         // Assign auto commands to autonomous trigger
         GameEvents.autonomous().whileTrue(getSelectedAuto());
@@ -48,21 +54,25 @@ public class Autonomous {
 
     /** @return A command to schedule the auto selected on the chooser */
     public Command getSelectedAuto() {
-        return chooser.selectedCommandScheduler();
+        return Commands.defer(() -> {
+            if (autoChooser.get() != null) return autoChooser.get().cmd().asProxy();
+            else if (sysIdCommandChooser.get() != null) return sysIdCommandChooser.get().asProxy();
+            else return Commands.none();
+        }, Set.of());
     }
 
     /** Adds autos to the chooser */
     public void registerAutos() {
         // SysId routines
-        chooser.addCmd("Drive Wheel Radius Characterization", () -> DriveCommands.wheelRadiusCharacterization(drive));
-        chooser.addCmd("Drive Simple FF Characterization", () -> DriveCommands.feedforwardCharacterization(drive));
-        chooser.addCmd("Drive SysId (Quasistatic Forward)", () -> drive.sysIdQuasistatic(SysIdRoutine.Direction.kForward));
-        chooser.addCmd("Drive SysId (Quasistatic Reverse)", () -> drive.sysIdQuasistatic(SysIdRoutine.Direction.kReverse));
-        chooser.addCmd("Drive SysId (Dynamic Forward)", () -> drive.sysIdDynamic(SysIdRoutine.Direction.kForward));
-        chooser.addCmd("Drive SysId (Dynamic Reverse)", () -> drive.sysIdDynamic(SysIdRoutine.Direction.kReverse));
+        sysIdCommandChooser.addOption("Drive Wheel Radius Characterization", DriveCommands.wheelRadiusCharacterization(drive));
+        sysIdCommandChooser.addOption("Drive Simple FF Characterization", DriveCommands.feedforwardCharacterization(drive));
+        sysIdCommandChooser.addOption("Drive SysId (Quasistatic Forward)", drive.sysIdQuasistatic(SysIdRoutine.Direction.kForward));
+        sysIdCommandChooser.addOption("Drive SysId (Quasistatic Reverse)", drive.sysIdQuasistatic(SysIdRoutine.Direction.kReverse));
+        sysIdCommandChooser.addOption("Drive SysId (Dynamic Forward)", drive.sysIdDynamic(SysIdRoutine.Direction.kForward));
+        sysIdCommandChooser.addOption("Drive SysId (Dynamic Reverse)", drive.sysIdDynamic(SysIdRoutine.Direction.kReverse));
 
         // Testing Autos
-        chooser.addRoutine("Example Auto (5 cycles)", () -> exampleAuto(5));
+        autoChooser.addOption("Example Auto (5 cycles)", exampleAuto(5));
     }
 
     public AutoRoutine exampleAuto(int cycles) {
