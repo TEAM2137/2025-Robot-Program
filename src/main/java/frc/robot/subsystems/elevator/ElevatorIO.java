@@ -23,4 +23,8 @@ public interface ElevatorIO {
     public default void setVolts(double appliedVolts) {}
 
     public default void setPIDConstants(double kP, double kD) {}
+
+    public default void setFFConstants(double kS, double kG) {}
+
+    public default void setMMConstants(double v, double a, double j) {}
 }

@@ -176,12 +176,12 @@ public class RobotContainer {
         targetLeft.whileTrue(DriveCommands.driveToNearestPole(drive, false));
         targetRight.whileTrue(DriveCommands.driveToNearestPole(drive, true));
 
-        l1.onTrue(elevator.setPositionCommand(ElevatorConstants.l1ScoreHeight));
-        l2.onTrue(elevator.setPositionCommand(ElevatorConstants.l2ScoreHeight));
-        l3.onTrue(elevator.setPositionCommand(ElevatorConstants.l3ScoreHeight));
-        l4.onTrue(elevator.setPositionCommand(ElevatorConstants.l4ScoreHeight));
+        l1.onTrue(elevator.setPositionCommand(ElevatorConstants.l1Setpoint));
+        l2.onTrue(elevator.setPositionCommand(ElevatorConstants.l2Setpoint));
+        l3.onTrue(elevator.setPositionCommand(ElevatorConstants.l3Setpoint));
+        l4.onTrue(elevator.setPositionCommand(ElevatorConstants.l4Setpoint));
 
-        coralStation.whileFalse(elevator.setPositionCommand(ElevatorConstants.stationPickupHeight));
+        coralStation.whileFalse(elevator.setPositionCommand(ElevatorConstants.coralStationSetpoint));
         coralRollers.onTrue(coral.setRollerVoltage(12));
         coralRollers.onFalse(coral.setRollerVoltage(0));
 
