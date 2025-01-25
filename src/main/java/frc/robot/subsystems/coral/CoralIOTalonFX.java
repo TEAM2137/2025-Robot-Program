@@ -8,8 +8,11 @@ import com.ctre.phoenix6.controls.VoltageOut;
 import com.ctre.phoenix6.hardware.TalonFX;
 import com.ctre.phoenix6.signals.NeutralModeValue;
 
+import edu.wpi.first.wpilibj.DigitalInput;
+
 public class CoralIOTalonFX implements CoralIO {
     public TalonFX rollers = new TalonFX(CoralConstants.rollersID, "rio");
+    public DigitalInput beamBreak = new DigitalInput(9);
 
     public CoralIOTalonFX() {
         // Create TalonFX config
@@ -31,6 +34,7 @@ public class CoralIOTalonFX implements CoralIO {
     public void updateInputs(CoralIOInputs inputs) {
         inputs.appliedVolts = rollers.getMotorVoltage().getValueAsDouble();
         inputs.currentAmps = rollers.getSupplyCurrent().getValueAsDouble();
+        inputs.isBeamBroken = !beamBreak.get();
     }
 
     @Override
