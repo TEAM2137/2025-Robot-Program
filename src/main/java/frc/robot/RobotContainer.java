@@ -31,7 +31,6 @@ import frc.robot.subsystems.vision.VisionConstants;
 import frc.robot.subsystems.vision.VisionIO;
 import frc.robot.subsystems.vision.VisionIOLimelight;
 import frc.robot.subsystems.vision.VisionIOPhotonVisionSim;
-import frc.robot.util.FieldPOIs;
 
 public class RobotContainer {
     // Subsystems
@@ -174,16 +173,8 @@ public class RobotContainer {
         resetGyro.onTrue(Commands.runOnce(() ->drive.setPose(new Pose2d(drive.getPose().getTranslation(), new Rotation2d())),drive)
                 .ignoringDisable(true));
 
-        targetLeft.whileTrue(DriveCommands.joystickDriveAtAngle(drive,
-            () -> -controller.getLeftY(),
-            () -> -controller.getLeftX(),
-            () -> FieldPOIs.REEF_LOCATIONS_LEFT.get(drive.getNearestLeftPole())
-                    .getRotation().plus(Rotation2d.k180deg)));
-        targetRight.whileTrue(DriveCommands.joystickDriveAtAngle(drive,
-            () -> -controller.getLeftY(),
-            () -> -controller.getLeftX(),
-            () -> FieldPOIs.REEF_LOCATIONS_LEFT.get(drive.getNearestRightPole())
-                    .getRotation().plus(Rotation2d.k180deg)));
+        targetLeft.whileTrue(DriveCommands.driveToNearestPole(drive, false));
+        targetRight.whileTrue(DriveCommands.driveToNearestPole(drive, true));
 
         l1.onTrue(elevator.setPositionCommand(ElevatorConstants.L1));
         l2.onTrue(elevator.setPositionCommand(ElevatorConstants.L2));

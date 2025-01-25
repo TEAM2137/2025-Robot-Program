@@ -9,10 +9,12 @@ import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.networktables.NetworkTableInstance;
 
 public class FieldPOIs {
+    private static final double REEF_SCORING_OFFSET_METERS = 1.35;
+
     public static final Pose2d REEF = new Pose2d(new Translation2d(4.49, 4.03), new Rotation2d());
     public static final List<Pose2d> REEF_LOCATIONS = createReefScoringLocations();
-    public static final List<Pose2d> REEF_LOCATIONS_RIGHT = filterEveryOther(0, REEF_LOCATIONS);
-    public static final List<Pose2d> REEF_LOCATIONS_LEFT = filterEveryOther(1, REEF_LOCATIONS);
+    public static final List<Pose2d> REEF_LOCATIONS_RIGHT = filterEveryOther(1, REEF_LOCATIONS);
+    public static final List<Pose2d> REEF_LOCATIONS_LEFT = filterEveryOther(0, REEF_LOCATIONS);
 
     static {
         // Publish values to NT
@@ -32,8 +34,8 @@ public class FieldPOIs {
             angle = angle.plus(Rotation2d.fromRadians(Math.PI / 3));
 
             Translation2d verticalOffset = new Translation2d(
-                angle.getCos() * 0.8625,
-                angle.getSin() * 0.8625
+                angle.getCos() * REEF_SCORING_OFFSET_METERS,
+                angle.getSin() * REEF_SCORING_OFFSET_METERS
             );
 
             Translation2d leftOffset = new Translation2d(
@@ -46,8 +48,8 @@ public class FieldPOIs {
                 angle.plus(Rotation2d.kCW_90deg).getSin() * 0.17
             );
 
-            Pose2d leftPole = new Pose2d(REEF.getTranslation().plus(verticalOffset).plus(leftOffset), angle);
-            Pose2d rightPole = new Pose2d(REEF.getTranslation().plus(verticalOffset).plus(rightOffset), angle);
+            Pose2d leftPole = new Pose2d(REEF.getTranslation().plus(verticalOffset).plus(leftOffset), angle.plus(Rotation2d.k180deg));
+            Pose2d rightPole = new Pose2d(REEF.getTranslation().plus(verticalOffset).plus(rightOffset), angle.plus(Rotation2d.k180deg));
 
             builder.add(leftPole);
             builder.add(rightPole);
