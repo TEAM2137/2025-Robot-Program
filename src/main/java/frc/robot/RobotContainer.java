@@ -43,24 +43,24 @@ public class RobotContainer {
     public final RobotVisualizer visualizer;
 
     // Controller
-    private final CommandXboxController controller = new CommandXboxController(0);
-    private final CommandXboxController opController = new CommandXboxController(1);
+    private final CommandXboxController driverController = new CommandXboxController(0);
+    private final CommandXboxController operatorController = new CommandXboxController(1);
 
     // Bindings
-    public final Trigger resetGyro = controller.start();
-    public final Trigger xLock = controller.x();
-    public final Trigger rotationLock = controller.leftTrigger();
-    public final Trigger targetRight = controller.rightBumper();
-    public final Trigger targetLeft = controller.leftBumper();
-    public final Trigger l1 = opController.x();
-    public final Trigger l2 = opController.a();
-    public final Trigger l3 = opController.b();
-    public final Trigger l4 = opController.y();
+    public final Trigger resetGyro = driverController.start();
+    public final Trigger xLock = driverController.x();
+    public final Trigger rotationLock = driverController.leftTrigger();
+    public final Trigger targetRight = driverController.rightBumper();
+    public final Trigger targetLeft = driverController.leftBumper();
+    public final Trigger l1 = operatorController.x();
+    public final Trigger l2 = operatorController.a();
+    public final Trigger l3 = operatorController.b();
+    public final Trigger l4 = operatorController.y();
     public final Trigger coralStation = l1.or(l2).or(l3).or(l4);
-    public final Trigger coralRollers = opController.rightBumper();
-    public final Trigger intakeAlgae = controller.a();
-    public final Trigger outtakeAlgae = controller.b();
-    public final Trigger intakeDown = controller.x();
+    public final Trigger coralRollers = operatorController.rightBumper();
+    public final Trigger intakeAlgae = driverController.a();
+    public final Trigger outtakeAlgae = driverController.b();
+    public final Trigger intakeDown = driverController.x();
 
     // Auto
     private final Autonomous autonomous;
@@ -156,14 +156,14 @@ public class RobotContainer {
     private void configureButtonBindings() {
         // Default command, normal field-relative drive
         drive.setDefaultCommand(DriveCommands.joystickDrive(drive,
-                () -> controller.getLeftY(),
-                () -> controller.getLeftX(),
-                () -> -controller.getRightX()));
+                () -> driverController.getLeftY(),
+                () -> driverController.getLeftX(),
+                () -> -driverController.getRightX()));
 
         // Lock rotation to 0°
         rotationLock.whileTrue(DriveCommands.joystickDriveAtAngle(drive,
-                () -> controller.getLeftY(),
-                () -> controller.getLeftX(),
+                () -> driverController.getLeftY(),
+                () -> driverController.getLeftX(),
                 () -> new Rotation2d()));
 
         // Switch to X pattern
