@@ -23,6 +23,7 @@ import frc.robot.subsystems.drive.ModuleIO;
 import frc.robot.subsystems.drive.ModuleIOSim;
 import frc.robot.subsystems.drive.ModuleIOTalonFX;
 import frc.robot.subsystems.elevator.Elevator;
+import frc.robot.subsystems.elevator.ElevatorConstants;
 import frc.robot.subsystems.elevator.ElevatorIO;
 import frc.robot.subsystems.elevator.ElevatorIOSim;
 import frc.robot.subsystems.vision.Vision;
@@ -184,12 +185,12 @@ public class RobotContainer {
             () -> FieldPOIs.REEF_LOCATIONS_LEFT.get(drive.getNearestRightPole())
                     .getRotation().plus(Rotation2d.k180deg)));
 
-        l1.onTrue(elevator.setPositionCommand(Elevator.Constants.L1));
-        l2.onTrue(elevator.setPositionCommand(Elevator.Constants.L2));
-        l3.onTrue(elevator.setPositionCommand(Elevator.Constants.L3));
-        l4.onTrue(elevator.setPositionCommand(Elevator.Constants.L4));
+        l1.onTrue(elevator.setPositionCommand(ElevatorConstants.L1));
+        l2.onTrue(elevator.setPositionCommand(ElevatorConstants.L2));
+        l3.onTrue(elevator.setPositionCommand(ElevatorConstants.L3));
+        l4.onTrue(elevator.setPositionCommand(ElevatorConstants.L4));
 
-        coralStation.whileFalse(elevator.setPositionCommand(Elevator.Constants.CORAL_STATION));
+        coralStation.whileFalse(elevator.setPositionCommand(ElevatorConstants.CORAL_STATION));
         coralRollers.onTrue(coral.setRollerVoltage(12));
         coralRollers.onFalse(coral.setRollerVoltage(0));
 
