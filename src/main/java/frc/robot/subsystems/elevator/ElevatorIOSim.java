@@ -32,10 +32,10 @@ public class ElevatorIOSim implements ElevatorIO {
         sim.setInputVoltage(appliedVolts);
         sim.update(0.02);
 
-        inputs.positionMeters = sim.getPositionMeters();
+        inputs.elevatorPositionMeters = sim.getPositionMeters();
         inputs.velocityMetersPerSecond = sim.getVelocityMetersPerSecond();
-        inputs.appliedVolts = appliedVolts;
-        inputs.currentAmps = sim.getCurrentDrawAmps();
+        inputs.leaderAppliedVolts = appliedVolts;
+        inputs.leaderCurrentAmps = sim.getCurrentDrawAmps();
     }
 
     @Override
@@ -48,5 +48,11 @@ public class ElevatorIOSim implements ElevatorIO {
     public void setVolts(double appliedVolts) {
         this.appliedVolts = appliedVolts;
         pidControlEnabled = false;
+    }
+
+        @Override
+    public void setPIDConstants(double kP, double kD) {
+        pid.setP(kP);
+        pid.setD(kD);
     }
 }

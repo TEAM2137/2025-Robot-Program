@@ -6,7 +6,6 @@ import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 
 public class Elevator extends SubsystemBase {
-
     private final ElevatorIO io;
     private final ElevatorIOInputsAutoLogged inputs;
 
@@ -34,6 +33,6 @@ public class Elevator extends SubsystemBase {
     }
 
     public double getExtensionMeters() {
-        return inputs.positionMeters;
+        return inputs.elevatorPositionMeters;
     }
 }
