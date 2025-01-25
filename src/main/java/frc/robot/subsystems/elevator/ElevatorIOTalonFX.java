@@ -1,37 +1,40 @@
 package frc.robot.subsystems.elevator;
 
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
+import com.ctre.phoenix6.controls.Follower;
 import com.ctre.phoenix6.controls.PositionVoltage;
 import com.ctre.phoenix6.controls.VoltageOut;
 import com.ctre.phoenix6.hardware.TalonFX;
 import com.ctre.phoenix6.signals.NeutralModeValue;
 
 public class ElevatorIOTalonFX implements ElevatorIO {
-    private TalonFX motor = new TalonFX(0);
+    private TalonFX leadmotor = new TalonFX(0);
+    private TalonFX followmotor = new TalonFX(1);
 
     public ElevatorIOTalonFX() {
         var config = new TalonFXConfiguration();
         config.MotorOutput.NeutralMode = NeutralModeValue.Brake;
-        motor.getConfigurator().apply(config);
-        motor.optimizeBusUtilization();
+        leadmotor.getConfigurator().apply(config);
+        leadmotor.optimizeBusUtilization();
+        followmotor.setControl(new Follower(leadmotor.getDeviceID(), true));
     }
 
     @Override
     public void updateInputs(ElevatorIOInputs inputs) {
-        inputs.appliedVolts = motor.getMotorVoltage().getValueAsDouble();
-        inputs.currentAmps = motor.getSupplyCurrent().getValueAsDouble();
+        inputs.appliedVolts = leadmotor.getMotorVoltage().getValueAsDouble();
+        inputs.currentAmps = leadmotor.getSupplyCurrent().getValueAsDouble();
         // TODO the following rotational values need to be in meters and m/s
-        inputs.positionMeters = motor.getPosition().getValueAsDouble();
-        inputs.velocityMetersPerSecond = motor.getVelocity().getValueAsDouble();
+        inputs.positionMeters = leadmotor.getPosition().getValueAsDouble();
+        inputs.velocityMetersPerSecond = leadmotor.getVelocity().getValueAsDouble();
     }
 
     @Override
     public void setTargetPosition(double targetPosition) {
-        motor.setControl(new PositionVoltage(targetPosition));
+        leadmotor.setControl(new PositionVoltage(targetPosition));
     }
 
     @Override
     public void setVolts(double appliedVolts) {
-        motor.setControl(new VoltageOut(appliedVolts));
+        leadmotor.setControl(new VoltageOut(appliedVolts));
     }
 }
