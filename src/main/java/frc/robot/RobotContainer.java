@@ -166,7 +166,7 @@ public class RobotContainer {
                 () -> driverController.getLeftX(),
                 () -> -driverController.getRightX()));
 
-        elevator.setDefaultCommand(elevator.setVoltage(() -> operatorController.getRightY() * 4));
+        elevator.setDefaultCommand(elevator.setVoltage(() -> operatorController.getRightY() * 10));
 
         // Lock rotation to 0°
         rotationLock.whileTrue(DriveCommands.joystickDriveAtAngle(drive,
