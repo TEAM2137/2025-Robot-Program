@@ -18,7 +18,7 @@ public class GameEvents {
         GameEvents.isAutonomous = value;
     }
 
-    public void setIsTeleop(boolean value) {
+    public static void setIsTeleop(boolean value) {
         GameEvents.isTeleop = value;
     }
 }

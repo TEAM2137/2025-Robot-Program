@@ -39,6 +39,11 @@ public class ElevatorIOSim implements ElevatorIO {
     }
 
     @Override
+    public void resetPosition() {
+        sim.setState(0.26035, 0);
+    }
+
+    @Override
     public void setTargetPosition(double targetPosition) {
         this.pid.setSetpoint(targetPosition);
         pidControlEnabled = true;

@@ -119,6 +119,7 @@ public class Robot extends LoggedRobot {
     /** This autonomous runs the autonomous command selected by your {@link RobotContainer} class. */
     @Override
     public void autonomousInit() {
+        GameEvents.setIsTeleop(false);
         GameEvents.setIsAutonomous(true);
     }
 
@@ -137,6 +138,12 @@ public class Robot extends LoggedRobot {
     public void teleopInit() {
         // This makes sure that the autonomous stops running when teleop starts running.
         GameEvents.setIsAutonomous(false);
+        GameEvents.setIsTeleop(true);
+    }
+
+    @Override
+    public void teleopExit() {
+        GameEvents.setIsTeleop(false);
     }
 
     /** This function is called periodically during operator control. */

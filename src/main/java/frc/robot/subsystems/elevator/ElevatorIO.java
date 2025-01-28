@@ -5,7 +5,7 @@ import org.littletonrobotics.junction.AutoLog;
 public interface ElevatorIO {
     @AutoLog
     public static class ElevatorIOInputs {
-        public double motorPositionRotations;
+        public double motorPositionRotations = 0.0;
         public double elevatorPositionMeters = 0.0;
         public double velocityMetersPerSecond = 0.0;
 
@@ -27,4 +27,6 @@ public interface ElevatorIO {
     public default void setFFConstants(double kS, double kG) {}
 
     public default void setMMConstants(double v, double a, double j) {}
+
+    public default void resetPosition() {}
 }

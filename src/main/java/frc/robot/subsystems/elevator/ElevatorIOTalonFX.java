@@ -10,6 +10,7 @@ import com.ctre.phoenix6.controls.Follower;
 import com.ctre.phoenix6.controls.PositionVoltage;
 import com.ctre.phoenix6.controls.VoltageOut;
 import com.ctre.phoenix6.hardware.TalonFX;
+import com.ctre.phoenix6.signals.InvertedValue;
 import com.ctre.phoenix6.signals.NeutralModeValue;
 
 public class ElevatorIOTalonFX implements ElevatorIO {
@@ -33,9 +34,23 @@ public class ElevatorIOTalonFX implements ElevatorIO {
         motionMagicConfigs.MotionMagicAcceleration = ElevatorConstants.targetAcceleration;
         motionMagicConfigs.MotionMagicJerk = ElevatorConstants.targetJerk;
 
-        // Other settings
-        config.Feedback.RotorToSensorRatio = ElevatorConstants.gearing;
-        config.MotorOutput.NeutralMode = NeutralModeValue.Brake;
+        // Motor feedback settings
+        var feedbackConfigs = config.Feedback;
+        feedbackConfigs.RotorToSensorRatio = ElevatorConstants.gearing;
+
+        // Current limit settings
+        var currentLimitsConfigs = config.CurrentLimits;
+        currentLimitsConfigs.StatorCurrentLimit = 80;
+        currentLimitsConfigs.StatorCurrentLimitEnable = true;
+
+        // Motor output settings
+        var motorOutputConfig = config.MotorOutput;
+        motorOutputConfig.Inverted = InvertedValue.Clockwise_Positive;
+        motorOutputConfig.NeutralMode = NeutralModeValue.Brake;
+
+        // Apply configurations
+        leadMotor.getConfigurator().apply(config);
+        followMotor.getConfigurator().apply(config);
 
         // Set frequencies of used signals
         BaseStatusSignal.setUpdateFrequencyForAll(
@@ -48,10 +63,6 @@ public class ElevatorIOTalonFX implements ElevatorIO {
             followMotor.getSupplyCurrent()
         );
 
-        // Apply configurations
-        leadMotor.getConfigurator().apply(config);
-        followMotor.getConfigurator().apply(config);
-
         // Clear unused signals
         leadMotor.optimizeBusUtilization();
         followMotor.optimizeBusUtilization();
@@ -63,7 +74,7 @@ public class ElevatorIOTalonFX implements ElevatorIO {
     @Override
     public void updateInputs(ElevatorIOInputs inputs) {
         inputs.motorPositionRotations = leadMotor.getPosition().getValueAsDouble();
-        inputs.elevatorPositionMeters = inputs.motorPositionRotations * ElevatorConstants.motorToElevatorPosition;
+        inputs.elevatorPositionMeters = inputs.motorPositionRotations * ElevatorConstants.spoolDiameter;
         inputs.velocityMetersPerSecond = leadMotor.getVelocity().getValueAsDouble();
 
         inputs.leaderAppliedVolts = leadMotor.getMotorVoltage().getValueAsDouble();
@@ -74,8 +85,13 @@ public class ElevatorIOTalonFX implements ElevatorIO {
     }
 
     @Override
+    public void resetPosition() {
+        leadMotor.setPosition(0);
+    }
+
+    @Override
     public void setTargetPosition(double targetPosition) {
-        leadMotor.setControl(new PositionVoltage(targetPosition));
+        leadMotor.setControl(new PositionVoltage(targetPosition / ElevatorConstants.spoolDiameter));
     }
 
     @Override
@@ -99,5 +115,11 @@ public class ElevatorIOTalonFX implements ElevatorIO {
             .withMotionMagicCruiseVelocity(v)
             .withMotionMagicAcceleration(a)
             .withMotionMagicJerk(j));
+    }
+
+    public double getTuningNumber(String key, double defaultValue) {
+        return defaultValue;
+        // if (!SmartDashboard.containsKey("Coral/" + key)) SmartDashboard.putNumber("Coral/" + key, defaultValue);
+        // return SmartDashboard.getNumber("Coral/" + key, defaultValue);
     }
 }

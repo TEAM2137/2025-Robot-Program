@@ -6,6 +6,7 @@ import org.littletonrobotics.junction.Logger;
 
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
+import frc.robot.util.GameEvents;
 
 public class Elevator extends SubsystemBase {
     private final ElevatorIO io;
@@ -13,7 +14,11 @@ public class Elevator extends SubsystemBase {
 
     public Elevator(ElevatorIO io) {
         this.io = io;
+        this.io.resetPosition();
         this.inputs = new ElevatorIOInputsAutoLogged();
+
+        // Reset elevator position when enabled
+        GameEvents.teleop().or(GameEvents.autonomous()).onTrue(resetPositionCommand());
     }
 
     @Override
@@ -24,7 +29,7 @@ public class Elevator extends SubsystemBase {
 
     public Command resetPositionCommand() {
         return runOnce(() -> {
-            io.setTargetPosition(0);
+            io.resetPosition();
         });
     }
 

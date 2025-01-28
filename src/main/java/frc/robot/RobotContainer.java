@@ -59,6 +59,8 @@ public class RobotContainer {
     public final Trigger l3 = operatorController.b();
     public final Trigger l4 = operatorController.y();
 
+    public final Trigger elevatorManual = operatorController.leftTrigger(0.35);
+
     public final Trigger coralStation = l1.or(l2).or(l3).or(l4);
     public final Trigger coralRollers = operatorController.rightBumper();
 
@@ -167,8 +169,6 @@ public class RobotContainer {
                 () -> driverController.getLeftX(),
                 () -> -driverController.getRightX()));
 
-        elevator.setDefaultCommand(elevator.setVoltage(() -> operatorController.getRightY() * 6));
-
         // Lock rotation to 0°
         rotationLock.whileTrue(DriveCommands.joystickDriveAtAngle(drive,
                 () -> driverController.getLeftY(),
@@ -182,15 +182,20 @@ public class RobotContainer {
         resetGyro.onTrue(Commands.runOnce(() ->drive.setPose(new Pose2d(drive.getPose().getTranslation(), new Rotation2d())),drive)
                 .ignoringDisable(true));
 
-        targetLeft.whileTrue(DriveCommands.driveToNearestPole(drive, false));
-        targetRight.whileTrue(DriveCommands.driveToNearestPole(drive, true));
+        // Hold left trigger to enable elevator manual controls using the right stick.
+        // This should be removed once elevator testing is complete
+        elevatorManual.whileTrue(elevator.setVoltage(() -> -operatorController.getRightY() * 6));
 
         l1.onTrue(elevator.setPositionCommand(ElevatorConstants.l1Setpoint));
         l2.onTrue(elevator.setPositionCommand(ElevatorConstants.l2Setpoint));
         l3.onTrue(elevator.setPositionCommand(ElevatorConstants.l3Setpoint));
         l4.onTrue(elevator.setPositionCommand(ElevatorConstants.l4Setpoint));
 
-        coralStation.whileFalse(elevator.setPositionCommand(ElevatorConstants.coralStationSetpoint));
+        // coralStation.whileFalse(elevator.setPositionCommand(0.1));
+
+        targetLeft.whileTrue(DriveCommands.driveToNearestPole(drive, false));
+        targetRight.whileTrue(DriveCommands.driveToNearestPole(drive, true));
+
         coralRollers.onTrue(coral.setRollerVoltage(4));
         coralRollers.onFalse(coral.setRollerVoltage(0));
 
