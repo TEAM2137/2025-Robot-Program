@@ -184,7 +184,7 @@ public class RobotContainer {
 
         // Hold left trigger to enable elevator manual controls using the right stick.
         // This should be removed once elevator testing is complete
-        elevatorManual.whileTrue(elevator.setVoltage(() -> -operatorController.getRightY() * 6));
+        elevatorManual.whileTrue(elevator.setVoltage(() -> -operatorController.getRightY() * 12));
 
         l1.onTrue(elevator.setPositionCommand(ElevatorConstants.l1Setpoint));
         l2.onTrue(elevator.setPositionCommand(ElevatorConstants.l2Setpoint));

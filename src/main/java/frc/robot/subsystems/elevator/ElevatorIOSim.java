@@ -34,7 +34,7 @@ public class ElevatorIOSim implements ElevatorIO {
 
         inputs.elevatorPositionMeters = sim.getPositionMeters();
         inputs.velocityMetersPerSecond = sim.getVelocityMetersPerSecond();
-        inputs.leaderAppliedVolts = appliedVolts;
+        inputs.leaderOutputVolts = appliedVolts;
         inputs.leaderCurrentAmps = sim.getCurrentDrawAmps();
     }
 

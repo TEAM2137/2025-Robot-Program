@@ -22,7 +22,7 @@ public final class Constants {
         if (currentMode != Mode.SIM) {
             LoggedNetworkString loggedSerialNumber = new LoggedNetworkString(
                     "RioSerialNumber", HALUtil.getSerialNumber());
-            return loggedSerialNumber.get().matches(practiceRioSerialNumber)  
+            return loggedSerialNumber.get().matches(practiceRioSerialNumber)
                     ? RobotType.PRACTICE
                     : RobotType.COMP;
         }

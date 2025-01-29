@@ -9,10 +9,10 @@ public interface ElevatorIO {
         public double elevatorPositionMeters = 0.0;
         public double velocityMetersPerSecond = 0.0;
 
-        public double leaderAppliedVolts = 0.0;
+        public double leaderOutputVolts = 0.0;
         public double leaderCurrentAmps = 0.0;
 
-        public double followerAppliedVolts = 0.0;
+        public double followerOutputVolts = 0.0;
         public double followerCurrentAmps = 0.0;
     }
 
