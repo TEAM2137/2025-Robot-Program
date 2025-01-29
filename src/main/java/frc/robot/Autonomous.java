@@ -11,10 +11,10 @@ import choreo.auto.AutoTrajectory;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.SequentialCommandGroup;
+import edu.wpi.first.wpilibj2.command.button.RobotModeTriggers;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
 import frc.robot.commands.DriveCommands;
 import frc.robot.subsystems.drive.Drive;
-import frc.robot.util.GameEvents;
 
 public class Autonomous {
     public final AutoFactory factory;
@@ -49,7 +49,7 @@ public class Autonomous {
         this.registerAutos();
 
         // Assign auto commands to autonomous trigger
-        GameEvents.autonomous().whileTrue(getSelectedAuto());
+        RobotModeTriggers.autonomous().whileTrue(getSelectedAuto());
     }
 
     /** @return A command to schedule the auto selected on the chooser */

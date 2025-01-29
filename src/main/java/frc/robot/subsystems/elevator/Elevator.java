@@ -6,19 +6,23 @@ import org.littletonrobotics.junction.Logger;
 
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
-import frc.robot.util.GameEvents;
+import edu.wpi.first.wpilibj2.command.button.RobotModeTriggers;
 
 public class Elevator extends SubsystemBase {
     private final ElevatorIO io;
     private final ElevatorIOInputsAutoLogged inputs;
+
+    // This is to make the elevator position only reset the first time it's enabled
+    private boolean shouldZeroOnEnable = true;
 
     public Elevator(ElevatorIO io) {
         this.io = io;
         this.io.resetPosition();
         this.inputs = new ElevatorIOInputsAutoLogged();
 
-        // Reset elevator position when enabled
-        GameEvents.teleop().or(GameEvents.autonomous()).onTrue(resetPositionCommand());
+        // Reset elevator position when enabled for the first time
+        RobotModeTriggers.disabled().negate().and(() -> this.shouldZeroOnEnable)
+                .onTrue(resetPositionCommand().andThen(() -> this.shouldZeroOnEnable = false));
     }
 
     @Override

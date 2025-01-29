@@ -9,6 +9,8 @@ public interface ElevatorIO {
         public double elevatorPositionMeters = 0.0;
         public double velocityMetersPerSecond = 0.0;
 
+        public double appliedVolts = 0.0;
+
         public double leaderOutputVolts = 0.0;
         public double leaderCurrentAmps = 0.0;
 

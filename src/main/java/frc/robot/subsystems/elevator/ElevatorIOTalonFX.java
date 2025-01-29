@@ -116,10 +116,4 @@ public class ElevatorIOTalonFX implements ElevatorIO {
             .withMotionMagicAcceleration(a)
             .withMotionMagicJerk(j));
     }
-
-    public double getTuningNumber(String key, double defaultValue) {
-        return defaultValue;
-        // if (!SmartDashboard.containsKey("Coral/" + key)) SmartDashboard.putNumber("Coral/" + key, defaultValue);
-        // return SmartDashboard.getNumber("Coral/" + key, defaultValue);
-    }
 }

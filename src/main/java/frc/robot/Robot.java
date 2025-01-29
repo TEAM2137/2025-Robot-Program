@@ -4,7 +4,6 @@ import edu.wpi.first.wpilibj.Threads;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
 import frc.robot.generated.BuildConstants;
 import frc.robot.generated.TunerConstants;
-import frc.robot.util.GameEvents;
 
 import org.littletonrobotics.junction.LogFileUtil;
 import org.littletonrobotics.junction.LoggedRobot;
@@ -116,12 +115,9 @@ public class Robot extends LoggedRobot {
     @Override
     public void disabledPeriodic() {}
 
-    /** This autonomous runs the autonomous command selected by your {@link RobotContainer} class. */
+    /** This function is called once when autonomous is enabled. */
     @Override
-    public void autonomousInit() {
-        GameEvents.setIsTeleop(false);
-        GameEvents.setIsAutonomous(true);
-    }
+    public void autonomousInit() {}
 
     /** This function is called periodically during autonomous. */
     @Override
@@ -129,22 +125,15 @@ public class Robot extends LoggedRobot {
 
     /** This function is called once when autonomous is ended. */
     @Override
-    public void autonomousExit() {
-        GameEvents.setIsAutonomous(false);
-    }
+    public void autonomousExit() {}
 
     /** This function is called once when teleop is enabled. */
     @Override
-    public void teleopInit() {
-        // This makes sure that the autonomous stops running when teleop starts running.
-        GameEvents.setIsAutonomous(false);
-        GameEvents.setIsTeleop(true);
-    }
+    public void teleopInit() {}
 
+    /** This function is called once when teleop is ended. */
     @Override
-    public void teleopExit() {
-        GameEvents.setIsTeleop(false);
-    }
+    public void teleopExit() {}
 
     /** This function is called periodically during operator control. */
     @Override
