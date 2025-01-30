@@ -183,8 +183,8 @@ public class Drive extends SubsystemBase {
         gyroDisconnectedAlert.set(!gyroInputs.connected && Constants.currentMode != Mode.SIM);
 
         // Post nearest poles in NetworkTables
-        getNearestLeftPole();
-        getNearestRightPole();
+        getNearestLeftPole(getPose());
+        getNearestRightPole(getPose());
 
         field.setRobotPose(getPose());
         SmartDashboard.putData("Field", field);
@@ -196,20 +196,20 @@ public class Drive extends SubsystemBase {
     private static StructPublisher<Pose2d> closestRightPolePublisher = NetworkTableInstance.getDefault()
             .getStructTopic("ClosestRightPole", Pose2d.struct).publish();
 
-    public int getNearestLeftPole() {
-        return getNearestPole(FieldPOIs.REEF_LOCATIONS_LEFT, closestLeftPolePublisher);
+    public int getNearestLeftPole(Pose2d pose) {
+        return getNearestPole(pose, FieldPOIs.REEF_LOCATIONS_LEFT, closestLeftPolePublisher);
     }
 
-    public int getNearestRightPole() {
-        return getNearestPole(FieldPOIs.REEF_LOCATIONS_RIGHT, closestRightPolePublisher);
+    public int getNearestRightPole(Pose2d pose) {
+        return getNearestPole(pose, FieldPOIs.REEF_LOCATIONS_RIGHT, closestRightPolePublisher);
     }
 
-    public int getNearestPole(List<Pose2d> locations, StructPublisher<Pose2d> publisher) {
+    public int getNearestPole(Pose2d pose, List<Pose2d> locations, StructPublisher<Pose2d> publisher) {
         Pair<Integer, Double> bestResult = new Pair<>(-1, 100.0);
 
         for (int i = 0; i < locations.size(); i++) {
             Pose2d position = locations.get(i);
-            double dst = getPose().getTranslation().getDistance(position.getTranslation());
+            double dst = pose.getTranslation().getDistance(position.getTranslation());
             if (dst <= bestResult.getSecond()) bestResult = new Pair<>(i, dst);
         }
 

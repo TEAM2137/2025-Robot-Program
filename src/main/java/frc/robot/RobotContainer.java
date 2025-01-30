@@ -1,7 +1,10 @@
 package frc.robot;
 
+import java.util.function.Supplier;
+
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
+import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.wpilibj.GenericHID;
 import edu.wpi.first.wpilibj.XboxController;
 import edu.wpi.first.wpilibj2.command.Command;
@@ -163,16 +166,16 @@ public class RobotContainer {
      * edu.wpi.first.wpilibj2.command.button.JoystickButton}.
      */
     private void configureButtonBindings() {
+        Supplier<Translation2d> joystickSupplier = () -> new Translation2d(driverController.getLeftY(), driverController.getLeftX());
+
         // Default command, normal field-relative drive
         drive.setDefaultCommand(DriveCommands.joystickDrive(drive,
-                () -> driverController.getLeftY(),
-                () -> driverController.getLeftX(),
+                joystickSupplier,
                 () -> -driverController.getRightX()));
 
         // Lock rotation to 0°
         rotationLock.whileTrue(DriveCommands.joystickDriveAtAngle(drive,
-                () -> driverController.getLeftY(),
-                () -> driverController.getLeftX(),
+                joystickSupplier,
                 () -> new Rotation2d()));
 
         // Switch to X pattern
@@ -193,8 +196,8 @@ public class RobotContainer {
 
         // coralStation.whileFalse(elevator.setPositionCommand(0.1));
 
-        targetLeft.whileTrue(DriveCommands.driveToNearestPole(drive, false));
-        targetRight.whileTrue(DriveCommands.driveToNearestPole(drive, true));
+        targetLeft.whileTrue(DriveCommands.driveToNearestPole(drive, false, joystickSupplier));
+        targetRight.whileTrue(DriveCommands.driveToNearestPole(drive, true, joystickSupplier));
 
         coralRollers.onTrue(coral.setRollerVoltage(4));
         coralRollers.onFalse(coral.setRollerVoltage(0));

@@ -13,8 +13,8 @@ public class FieldPOIs {
 
     public static final Pose2d REEF = new Pose2d(new Translation2d(4.49, 4.03), new Rotation2d());
     public static final List<Pose2d> REEF_LOCATIONS = createReefScoringLocations();
-    public static final List<Pose2d> REEF_LOCATIONS_RIGHT = filterEveryOther(1, REEF_LOCATIONS);
-    public static final List<Pose2d> REEF_LOCATIONS_LEFT = filterEveryOther(0, REEF_LOCATIONS);
+    public static final List<Pose2d> REEF_LOCATIONS_RIGHT = filterEveryOther(0, REEF_LOCATIONS);
+    public static final List<Pose2d> REEF_LOCATIONS_LEFT = filterEveryOther(1, REEF_LOCATIONS);
 
     static {
         // Publish values to NT
