@@ -196,6 +196,8 @@ public class RobotContainer {
 
         // coralStation.whileFalse(elevator.setPositionCommand(0.1));
 
+        operatorController.start().onTrue(elevator.resetPositionCommand());
+
         targetLeft.whileTrue(DriveCommands.driveToNearestPole(drive, false, joystickSupplier));
         targetRight.whileTrue(DriveCommands.driveToNearestPole(drive, true, joystickSupplier));
 

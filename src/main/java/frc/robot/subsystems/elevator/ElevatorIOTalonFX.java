@@ -91,7 +91,7 @@ public class ElevatorIOTalonFX implements ElevatorIO {
 
     @Override
     public void setTargetPosition(double targetPosition) {
-        leadMotor.setControl(new PositionVoltage(targetPosition / ElevatorConstants.spoolDiameter / ElevatorConstants.gearing));
+        leadMotor.setControl(new PositionVoltage(targetPosition / ElevatorConstants.spoolDiameter));
     }
 
     @Override
