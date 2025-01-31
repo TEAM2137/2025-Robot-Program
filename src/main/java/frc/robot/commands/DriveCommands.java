@@ -10,14 +10,13 @@ import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.math.trajectory.TrapezoidProfile;
 import edu.wpi.first.math.util.Units;
-import edu.wpi.first.networktables.NetworkTableInstance;
-import edu.wpi.first.networktables.StructPublisher;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.DriverStation.Alliance;
 import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import frc.robot.subsystems.drive.Drive;
+import frc.robot.util.AutoAlignUtil;
 import frc.robot.util.FieldPOIs;
 
 import java.text.DecimalFormat;
@@ -54,9 +53,6 @@ public class DriveCommands {
             .getTranslation();
     }
 
-    private static StructPublisher<Pose2d> futurePosePublisher = NetworkTableInstance.getDefault()
-        .getStructTopic("EstimatedFuturePose", Pose2d.struct).publish();
-
     /**
      * Field relative drive command using two joysticks (controlling linear and angular velocities).
      */
@@ -66,8 +62,6 @@ public class DriveCommands {
             DoubleSupplier omegaSupplier) {
         return Commands.run(
             () -> {
-                futurePosePublisher.accept(getEstimatedFuturePose(drive, movementSupplier.get()));
-
                 // Get linear velocity
                 Translation2d movementRaw = movementSupplier.get();
                 Translation2d linearVelocity = getLinearVelocityFromJoysticks(-movementRaw.getX(), -movementRaw.getY());
@@ -297,13 +291,20 @@ public class DriveCommands {
 
         // Construct command
         return Commands.runOnce(() -> {
-            // Estimate where the driver is trying to go by checking joystick inputs
-            Pose2d estimatedPose = getEstimatedFuturePose(drive, motionSupplier.get());
+            Pose2d pose = drive.getPose();
+
+            boolean isFlipped = DriverStation.getAlliance().isPresent() && DriverStation.getAlliance().get() == Alliance.Red;
+
+            // Convert joystick inputs to robot relative (otherwise robot rotation messes with targeting)
+            Translation2d motionVector = AutoAlignUtil.normalize(
+                motionSupplier.get().rotateBy((isFlipped
+                    ? pose.getRotation().plus(new Rotation2d(Math.PI))
+                    : pose.getRotation()).unaryMinus()));
 
             // Find the correct pole to target
             targetPole = right
-                ? FieldPOIs.REEF_LOCATIONS_RIGHT.get(drive.getNearestRightPole(estimatedPose))
-                : FieldPOIs.REEF_LOCATIONS_LEFT.get(drive.getNearestLeftPole(estimatedPose));
+                ? FieldPOIs.REEF_LOCATIONS_RIGHT.get(drive.getNearestRightPole(pose, motionVector))
+                : FieldPOIs.REEF_LOCATIONS_LEFT.get(drive.getNearestLeftPole(pose, motionVector));
 
         }, drive).andThen(Commands.run(() -> {
 
@@ -336,12 +337,13 @@ public class DriveCommands {
                 : drive.getRotation()
             ));
 
-        }, drive)).beforeStarting(() -> angleController.reset(drive.getRotation().getRadians()));
+        }, drive)).beforeStarting(() -> angleController.reset(drive.getRotation().getRadians()))
+            .andThen(() -> drive.clearNearestPoleDisplays(), drive);
     }
 
-    private static Pose2d getEstimatedFuturePose(Drive drive, Translation2d motion) {
+    public static Pose2d getLookaheadPose(Drive drive, Translation2d motion, double lookahead) {
         return new Pose2d(
-            drive.getPose().getTranslation().minus(motion.times(0.75)),
+            drive.getPose().getTranslation().minus(motion.times(lookahead)),
             drive.getPose().getRotation()
         );
     }
