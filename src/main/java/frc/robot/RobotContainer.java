@@ -53,7 +53,6 @@ public class RobotContainer {
     // Bindings
     public final Trigger resetGyro = driverController.start();
     public final Trigger xLock = driverController.x();
-    public final Trigger rotationLock = driverController.leftTrigger();
 
     public final Trigger targetRight = driverController.rightBumper();
     public final Trigger targetLeft = driverController.leftBumper();
@@ -167,17 +166,14 @@ public class RobotContainer {
      * edu.wpi.first.wpilibj2.command.button.JoystickButton}.
      */
     private void configureButtonBindings() {
-        Supplier<Translation2d> joystickSupplier = () -> new Translation2d(driverController.getLeftY(), driverController.getLeftX());
+        Supplier<Translation2d> joystickSupplier = () -> new Translation2d(
+            driverController.getLeftY(), driverController.getLeftX());
 
         // Default command, normal field-relative drive
         drive.setDefaultCommand(DriveCommands.joystickDrive(drive,
                 joystickSupplier,
+                () -> driverController.getRightTriggerAxis() > 0.25,
                 () -> -driverController.getRightX()));
-
-        // Lock rotation to 0°
-        rotationLock.whileTrue(DriveCommands.joystickDriveAtAngle(drive,
-                joystickSupplier,
-                () -> new Rotation2d()));
 
         // Switch to X pattern
         xLock.onTrue(Commands.runOnce(drive::xLock, drive));
