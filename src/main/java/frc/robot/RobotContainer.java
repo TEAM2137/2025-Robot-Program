@@ -62,7 +62,6 @@ public class RobotContainer {
     public final Trigger intakeAlgae = controller.a();
     public final Trigger outtakeAlgae = controller.b();
     public final Trigger intakeDown = controller.x();
-    public final Trigger CagePosition = controller.a();
 
     // Auto
     private final Autonomous autonomous;
@@ -207,9 +206,6 @@ public class RobotContainer {
 
         intakeDown.onTrue(algae.setPivotPosition(90));
         intakeDown.onFalse(algae.setPivotPosition(0));
-
-        CagePosition.onTrue(cage.setCagePosition(50));
-        CagePosition.onFalse(cage.setCagePosition(0));
     }
 
     /**

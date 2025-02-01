@@ -10,11 +10,13 @@ public interface CageIO {
         public double appliedVolts = 0.0;
         public double currentAmps = 0.0;
         public double velocityRadPerSec = 0.0;
-        public double motorPositionRotations = 0.0;
+        public double motorRotations = 0.0;
         public Rotation2d armAngle = new Rotation2d();
     }
 
     public default void updateInputs(CageIOInputs inputs) {}
 
     public default void setPosition(double position) {}
+
+    public default void setVoltage(double volts) {}
 }
