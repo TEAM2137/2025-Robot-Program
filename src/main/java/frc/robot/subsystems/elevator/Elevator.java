@@ -32,15 +32,11 @@ public class Elevator extends SubsystemBase {
     }
 
     public Command resetPositionCommand() {
-        return runOnce(() -> {
-            io.resetPosition();
-        });
+        return runOnce(() -> io.resetPosition());
     }
 
     public Command setPositionCommand(double targetPosition) {
-        return runOnce(() -> {
-            io.setTargetPosition(targetPosition);
-        });
+        return runOnce(() -> io.setTargetPosition(targetPosition));
     }
 
     public double getExtensionMeters() {

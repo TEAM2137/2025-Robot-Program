@@ -20,15 +20,21 @@ public interface ElevatorIO {
 
     public default void updateInputs(ElevatorIOInputs inputs) {}
 
+    /** Sets the setpoint for the elevator height, in meters */
     public default void setTargetPosition(double targetPosition) {}
 
+    /** Sets the voltage of the elevator motors for manual control */
     public default void setVolts(double appliedVolts) {}
 
+    /** Sets the kP and kD contants of the elevator control */
     public default void setPIDConstants(double kP, double kD) {}
 
+    /** Sets the kS and kG contants of the elevator control */
     public default void setFFConstants(double kS, double kG) {}
 
+    /** Sets the motion magic contants of the elevator control */
     public default void setMMConstants(double v, double a, double j) {}
 
+    /** Resets the elevator's encoder position to 0 rotations/meters */
     public default void resetPosition() {}
 }
