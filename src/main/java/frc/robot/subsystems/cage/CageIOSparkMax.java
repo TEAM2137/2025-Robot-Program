@@ -23,10 +23,12 @@ public class CageIOSparkMax implements CageIO {
         config
             .inverted(false)
             .idleMode(IdleMode.kBrake);
-        config.closedLoop
-            .feedbackSensor(FeedbackSensor.kAbsoluteEncoder)
+        config.closedLoop.feedbackSensor(FeedbackSensor.kAbsoluteEncoder)
             .p(CageConstants.kP)
             .d(CageConstants.kD);
+        config.encoder
+            .positionConversionFactor(1.0 / CageConstants.gearing)
+            .velocityConversionFactor(1.0 / CageConstants.gearing);
 
         motor.configure(config, ResetMode.kResetSafeParameters, PersistMode.kPersistParameters);
     }
