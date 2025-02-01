@@ -187,7 +187,7 @@ public class RobotContainer {
         // Default command, normal field-relative drive
         drive.setDefaultCommand(DriveCommands.joystickDrive(drive,
                 joystickSupplier,
-                () -> driverController.getRightTriggerAxis() > 0.25,
+                () -> driverController.getLeftTriggerAxis() > 0.25,
                 () -> -driverController.getRightX()));
 
         // Switch to X pattern
