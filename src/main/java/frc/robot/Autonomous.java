@@ -1,6 +1,7 @@
 package frc.robot;
 
-
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Set;
 
 import org.littletonrobotics.junction.networktables.LoggedDashboardChooser;
@@ -10,7 +11,6 @@ import choreo.auto.AutoRoutine;
 import choreo.auto.AutoTrajectory;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
-import edu.wpi.first.wpilibj2.command.SequentialCommandGroup;
 import edu.wpi.first.wpilibj2.command.button.RobotModeTriggers;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
 import frc.robot.commands.DriveCommands;
@@ -72,41 +72,36 @@ public class Autonomous {
         sysIdCommandChooser.addOption("Drive SysId (Dynamic Reverse)", drive.sysIdDynamic(SysIdRoutine.Direction.kReverse));
 
         // Testing Autos
-        autoChooser.addOption("Example Auto (5 cycles)", exampleAuto(5));
+        autoChooser.addOption("4 Coral Upper", fourCoralUpper());
     }
 
-    public AutoRoutine exampleAuto(int cycles) {
-        AutoRoutine routine = factory.newRoutine("example-auto");
+    public AutoRoutine fourCoralUpper() {
+        String pathName = "4 Coral Upper";
+        AutoRoutine routine = factory.newRoutine(pathName);
 
         // Load the routine's trajectories
-        AutoTrajectory scorePreloaded = routine.trajectory("score-preloaded");
-        AutoTrajectory preloadToCoral = routine.trajectory("preload-to-coral-station");
-        AutoTrajectory coralToReef = routine.trajectory("coral-station-to-reef");
+        List<AutoTrajectory> splits = loadSplits(routine, pathName, 7);
 
         // When the routine begins, reset odometry and start the first trajectory
-        routine.active().onTrue(
-            cycleAfter(cycles - 1, Commands.sequence(
-                scorePreloaded.resetOdometry(),
-                scorePreloaded.cmd(),
-                preloadToCoral.cmd(),
-                coralToReef.cmd()
-            ), routine)
-        );
+        routine.active().onTrue(Commands.sequence(
+            splits.get(0).resetOdometry(),
+            splits.get(0).cmd(),
+            splits.get(1).cmd(),
+            splits.get(2).cmd(),
+            splits.get(3).cmd(),
+            splits.get(4).cmd(),
+            splits.get(5).cmd(),
+            splits.get(6).cmd()
+        ));
 
         return routine;
     }
 
-    public Command cycleAfter(int cycles, Command base, AutoRoutine routine) {
-        if (cycles <= 0) return base;
-
-        AutoTrajectory reefToCoral = routine.trajectory("reef-to-coral-station");
-        AutoTrajectory coralToReef = routine.trajectory("coral-station-to-reef");
-        SequentialCommandGroup group = new SequentialCommandGroup(base);
-
-        for (int i = 0; i < cycles; i++) {
-            group.addCommands(reefToCoral.cmd(), coralToReef.cmd());
+    private ArrayList<AutoTrajectory> loadSplits(AutoRoutine routine, String path, int numSplits) {
+        ArrayList<AutoTrajectory> splits = new ArrayList<>();
+        for (int i = 0; i < numSplits; i++) {
+            splits.add(routine.trajectory(path, i));
         }
-
-        return group;
+        return splits;
     }
 }

@@ -2,7 +2,6 @@ package frc.robot;
 
 import java.util.function.Supplier;
 
-
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Translation2d;
@@ -194,7 +193,7 @@ public class RobotContainer {
 
         // Hold left trigger to enable elevator manual controls using the right stick.
         // This should be removed once elevator testing is complete
-        elevatorManual.whileTrue(elevator.setVoltage(() -> -operatorController.getRightY() * 12));
+        elevatorManual.whileTrue(elevator.setVoltage(() -> -operatorController.getRightY() * 8));
 
         l1.onTrue(elevator.setPositionCommand(ElevatorConstants.l1Setpoint));
         l2.onTrue(elevator.setPositionCommand(ElevatorConstants.l2Setpoint));

@@ -9,7 +9,7 @@ public class ElevatorConstants {
 
     // Ratios
     public static final double gearing = 37.0 / 12.0;
-    public static final double spoolDiameter = Units.inchesToMeters(1.375 + 0.125);
+    public static final double spoolRadius = Units.inchesToMeters(1.25) / 2.0;
 
     // PID Constants
     public static final double kS = 0.0; // Output addition to overcome static friction
