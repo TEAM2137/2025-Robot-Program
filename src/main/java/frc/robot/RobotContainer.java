@@ -22,6 +22,8 @@ import frc.robot.subsystems.algae.AlgaeIntakeIO;
 import frc.robot.subsystems.algae.AlgaeIntakeIOSim;
 import frc.robot.subsystems.cage.Cage;
 import frc.robot.subsystems.cage.CageIO;
+import frc.robot.subsystems.cage.CageIOSim;
+import frc.robot.subsystems.cage.CageIOSparkMax;
 import frc.robot.subsystems.drive.Drive;
 import frc.robot.subsystems.drive.GyroIO;
 import frc.robot.subsystems.drive.GyroIOPigeon2;
@@ -85,6 +87,7 @@ public class RobotContainer {
 
     // Manual subsystem controls
     public final Trigger elevatorManual = operatorController.leftTrigger(0.35);
+    public final Trigger cageManual = operatorController.rightTrigger(0.35);
     public final Trigger coralManual = operatorController.rightBumper();
 
     /** The container for the robot. Contains subsystems, IO devices, and commands. */
@@ -112,8 +115,8 @@ public class RobotContainer {
             coral = new Coral(new CoralIOTalonFX());
 
             algae = new AlgaeIntake(new AlgaeIntakeIO() {});
+            cage = new Cage(new CageIOSparkMax());
 
-            cage = new Cage(new CageIO() {});
             break;
 
         case SIM:
@@ -136,9 +139,7 @@ public class RobotContainer {
             coral = new Coral(new CoralIOSim());
 
             algae = new AlgaeIntake(new AlgaeIntakeIOSim());
-            cage = new Cage(new CageIO() {
-
-            });
+            cage = new Cage(new CageIOSim() {});
 
             break;
 
@@ -162,9 +163,7 @@ public class RobotContainer {
             coral = new Coral(new CoralIO() {});
 
             algae = new AlgaeIntake(new AlgaeIntakeIO() {});
-            cage = new Cage(new CageIO() {
-
-            });
+            cage = new Cage(new CageIO() {});
 
             break;
         }
@@ -204,6 +203,10 @@ public class RobotContainer {
         // Hold left trigger to enable elevator manual controls using the right stick.
         // This should be removed once elevator testing is complete
         elevatorManual.whileTrue(elevator.setVoltage(() -> -operatorController.getRightY() * 8));
+
+        // Hold right trigger to enable cage manual controls using the right stick.
+        // This should be removed once cage testing is complete
+        cageManual.whileTrue(cage.setVoltage(() -> -operatorController.getRightY() * 4));
 
         l1.onTrue(elevator.setPositionCommand(ElevatorConstants.l1Setpoint));
         l2.onTrue(elevator.setPositionCommand(ElevatorConstants.l2Setpoint));

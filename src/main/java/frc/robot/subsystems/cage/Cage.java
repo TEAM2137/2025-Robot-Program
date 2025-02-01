@@ -1,5 +1,7 @@
 package frc.robot.subsystems.cage;
 
+import java.util.function.DoubleSupplier;
+
 import org.littletonrobotics.junction.Logger;
 
 import edu.wpi.first.wpilibj2.command.Command;
@@ -24,7 +26,7 @@ public class Cage extends SubsystemBase{
         return runOnce(() -> io.setPosition(targetPosition));
     }
 
-    public Command setVoltage(double volts) {
-        return runOnce(() -> io.setVoltage(volts));
+    public Command setVoltage(DoubleSupplier voltageSupplier) {
+        return run(() -> io.setVoltage(voltageSupplier.getAsDouble()));
     }
 }
