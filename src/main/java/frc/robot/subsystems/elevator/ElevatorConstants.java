@@ -8,7 +8,7 @@ public class ElevatorConstants {
     public static final int followerID = 31;
 
     // Ratios
-    public static final double gearing = 3.0;
+    public static final double gearing = 37.0 / 12.0;
     public static final double spoolDiameter = Units.inchesToMeters(1.375 + 0.125);
 
     // PID Constants
