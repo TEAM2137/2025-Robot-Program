@@ -260,6 +260,10 @@ public class DriveCommands {
 
     private static Pose2d targetPole;
 
+    public static Pose2d getTargetPole() {
+        return targetPole;
+    }
+
     public static Command driveToNearestPole(Drive drive, boolean right, Supplier<Translation2d> motionSupplier) {
         // Create PID controller
         ProfiledPIDController angleController = new ProfiledPIDController(
@@ -269,54 +273,62 @@ public class DriveCommands {
         angleController.enableContinuousInput(-Math.PI, Math.PI);
 
         // Construct command
-        return Commands.runOnce(() -> {
-            Pose2d pose = drive.getPose();
+        return Commands.sequence(
+            Commands.runOnce(() -> angleController.reset(drive.getRotation().getRadians())),
+            Commands.runOnce(() -> targetPole = getNewTargetPole(drive, right, motionSupplier)),
+            Commands.runEnd(() -> {
+                // Get linear velocity based on pole location
+                double max = 0.75;
+                Translation2d toPole = new Translation2d(
+                    drive.getPose().getX() - targetPole.getX(),
+                    drive.getPose().getY() - targetPole.getY()
+                );
+                Translation2d normalized = new Translation2d(
+                    -Math.min(toPole.getNorm() * 1.5, max),
+                    toPole.getAngle()
+                );
 
-            boolean isFlipped = DriverStation.getAlliance().isPresent() && DriverStation.getAlliance().get() == Alliance.Red;
+                // Calculate angular speed
+                double omega = angleController.calculate(drive.getRotation().getRadians(), targetPole.getRotation().getRadians());
 
-            // Convert joystick inputs to robot relative (otherwise robot rotation messes with targeting)
-            Translation2d motionVector = AutoAlignUtil.normalize(
-                motionSupplier.get().rotateBy((isFlipped
-                    ? pose.getRotation().plus(new Rotation2d(Math.PI))
-                    : pose.getRotation()).unaryMinus()));
+                // Convert to field relative speeds
+                ChassisSpeeds speeds = new ChassisSpeeds(
+                    normalized.getX() * drive.getMaxLinearSpeedMetersPerSec(),
+                    normalized.getY() * drive.getMaxLinearSpeedMetersPerSec(),
+                    omega
+                );
 
-            // Find the correct pole to target
-            targetPole = right
-                ? FieldPOIs.REEF_LOCATIONS_RIGHT.get(drive.getNearestRightPole(pose, motionVector))
-                : FieldPOIs.REEF_LOCATIONS_LEFT.get(drive.getNearestLeftPole(pose, motionVector));
+                // Drive the robot to targets
+                boolean isFlipped = DriverStation.getAlliance().isPresent()
+                    && DriverStation.getAlliance().get() == Alliance.Red;
+                drive.runVelocity(ChassisSpeeds.fromFieldRelativeSpeeds(speeds, isFlipped
+                    ? drive.getRotation().plus(new Rotation2d(Math.PI))
+                    : drive.getRotation()
+                ));
+            }, () -> targetPole = null, drive)
+        );
+    }
 
-        }, drive).andThen(Commands.run(() -> {
+    public static Pose2d getNewTargetPole(Drive drive, boolean right, Supplier<Translation2d> motionSupplier) {
+        Pose2d pose = drive.getPose();
+        Translation2d motionVector = new Translation2d();
 
-            // Get linear velocity based on pole location
-            double max = 0.75;
-            Translation2d toPole = new Translation2d(
-                drive.getPose().getX() - targetPole.getX(),
-                drive.getPose().getY() - targetPole.getY()
-            );
-            Translation2d normalized = new Translation2d(
-                -Math.min(toPole.getNorm() * 1.5, max),
-                toPole.getAngle()
-            );
-
-            // Calculate angular speed
-            double omega = angleController.calculate(drive.getRotation().getRadians(), targetPole.getRotation().getRadians());
-
-            // Convert to field relative speeds
-            ChassisSpeeds speeds = new ChassisSpeeds(
-                normalized.getX() * drive.getMaxLinearSpeedMetersPerSec(),
-                normalized.getY() * drive.getMaxLinearSpeedMetersPerSec(),
-                omega
-            );
-
-            // Drive the robot to targets
+        // Ignore transformations if no joystick values are inputted
+        if (motionSupplier.get().getNorm() > 0.1) {
             boolean isFlipped = DriverStation.getAlliance().isPresent()
                 && DriverStation.getAlliance().get() == Alliance.Red;
-            drive.runVelocity(ChassisSpeeds.fromFieldRelativeSpeeds(speeds, isFlipped
-                ? drive.getRotation().plus(new Rotation2d(Math.PI))
-                : drive.getRotation()
-            ));
 
-        }, drive)).beforeStarting(() -> angleController.reset(drive.getRotation().getRadians()))
-            .andThen(() -> drive.clearNearestPoleDisplays(), drive);
+            // Convert joystick inputs to robot relative (otherwise robot rotation messes with targeting)
+            motionVector = AutoAlignUtil.normalize(
+                motionSupplier.get().rotateBy((isFlipped
+                    ? pose.getRotation().plus(new Rotation2d(Math.PI))
+                    : pose.getRotation()).unaryMinus())
+            );
+        }
+
+        // Find the correct pole to target
+        return right
+            ? FieldPOIs.REEF_LOCATIONS_RIGHT.get(drive.getNearestRightPole(pose, motionVector))
+            : FieldPOIs.REEF_LOCATIONS_LEFT.get(drive.getNearestLeftPole(pose, motionVector));
     }
 }

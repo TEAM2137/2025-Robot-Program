@@ -39,6 +39,8 @@ import frc.robot.subsystems.vision.VisionIOLimelight;
 import frc.robot.subsystems.vision.VisionIOPhotonVisionSim;
 
 public class RobotContainer {
+    private static RobotContainer instance;
+
     // Subsystems
     public final Drive drive;
     public final Vision vision;
@@ -51,10 +53,12 @@ public class RobotContainer {
 
     // Visuals
     public final RobotVisualizer visualizer;
-    
+
     // Controller
     private final CommandXboxController driverController = new CommandXboxController(0);
     private final CommandXboxController operatorController = new CommandXboxController(1);
+    private final Supplier<Translation2d> joystickSupplier = () -> new Translation2d(
+        driverController.getLeftY(), driverController.getLeftX());
 
     /* Controller trigger bindings */
 
@@ -83,6 +87,8 @@ public class RobotContainer {
 
     /** The container for the robot. Contains subsystems, IO devices, and commands. */
     public RobotContainer() {
+        RobotContainer.instance = this;
+
         switch (Constants.currentMode) {
         case REAL:
             // Real robot, instantiate hardware IO implementations
@@ -170,9 +176,6 @@ public class RobotContainer {
      * edu.wpi.first.wpilibj2.command.button.JoystickButton}.
      */
     private void configureButtonBindings() {
-        Supplier<Translation2d> joystickSupplier = () -> new Translation2d(
-            driverController.getLeftY(), driverController.getLeftX());
-
         // Default command, normal field-relative drive
         drive.setDefaultCommand(DriveCommands.joystickDrive(drive,
                 joystickSupplier,
@@ -229,4 +232,10 @@ public class RobotContainer {
     public Command getAutonomousCommand() {
         return autonomous.getSelectedAuto();
     }
+
+    public Supplier<Translation2d> joystickMotionSupplier() {
+        return joystickSupplier;
+    }
+
+    public static RobotContainer getInstance() { return instance; }
 }
