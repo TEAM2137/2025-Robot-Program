@@ -15,10 +15,13 @@ import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.util.Units;
 
 public class CageIOSparkMax implements CageIO {
-    private SparkMax motor = new SparkMax(CageConstants.motorID, MotorType.kBrushless);
-    private SparkClosedLoopController controller = motor.getClosedLoopController();
+    private SparkMax motor;
+    private SparkClosedLoopController controller;
 
     public CageIOSparkMax() {
+        motor = new SparkMax(CageConstants.motorID, MotorType.kBrushless);
+        controller = motor.getClosedLoopController();
+
         SparkMaxConfig config = new SparkMaxConfig();
         config
             .inverted(false)
