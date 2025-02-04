@@ -2,6 +2,7 @@ package frc.robot;
 
 import java.util.function.Supplier;
 
+import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Translation2d;
@@ -84,6 +85,7 @@ public class RobotContainer {
     public final Trigger l2 = operatorController.a();
     public final Trigger l3 = operatorController.b();
     public final Trigger l4 = operatorController.y();
+    public final Trigger stowManual = operatorController.leftBumper();
 
     // Manual subsystem controls
     public final Trigger elevatorManual = operatorController.leftTrigger(0.35);
@@ -202,16 +204,22 @@ public class RobotContainer {
 
         // Hold left trigger to enable elevator manual controls using the right stick.
         // This should be removed once elevator testing is complete
-        elevatorManual.whileTrue(elevator.setVoltage(() -> -operatorController.getRightY() * 8));
+        elevatorManual.whileTrue(elevator.setVoltage(() ->
+            MathUtil.applyDeadband(-operatorController.getRightY(), 0.1) * 8));
+        elevatorManual.onFalse(elevator.setVoltage(() -> 0));
 
         // Hold right trigger to enable cage manual controls using the right stick.
         // This should be removed once cage testing is complete
-        cageManual.whileTrue(cage.setVoltage(() -> -operatorController.getRightY() * 4));
+        cageManual.whileTrue(cage.setVoltage(() ->
+            MathUtil.applyDeadband(-operatorController.getRightY(), 0.1) * 4));
+        cageManual.onFalse(cage.setVoltage(() -> 0));
 
         l1.onTrue(elevator.setPositionCommand(ElevatorConstants.l1Setpoint));
         l2.onTrue(elevator.setPositionCommand(ElevatorConstants.l2Setpoint));
         l3.onTrue(elevator.setPositionCommand(ElevatorConstants.l3Setpoint));
         l4.onTrue(elevator.setPositionCommand(ElevatorConstants.l4Setpoint));
+
+        stowManual.onTrue(elevator.setPositionCommand(ElevatorConstants.coralStationSetpoint));
 
         score.onTrue(coral.setRollerVoltage(4)
                 .andThen(Commands.waitSeconds(1.0))
