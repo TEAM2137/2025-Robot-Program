@@ -13,4 +13,6 @@ public interface CoralIO {
     public default void updateInputs(CoralIOInputs inputs) {}
 
     public default void setRollerVoltage(double voltage) {}
+
+    public default boolean isBeamBroken() { return false; }
 }

@@ -80,6 +80,9 @@ public class RobotContainer {
     // Run coral rollers to score and stow elevator
     public final Trigger score = driverController.rightTrigger(0.25);
 
+    // Test coral station intake command
+    public final Trigger intake = driverController.a();
+
     // Elevator setpoints
     public final Trigger l1 = operatorController.x();
     public final Trigger l2 = operatorController.a();
@@ -221,10 +224,9 @@ public class RobotContainer {
 
         stowManual.onTrue(elevator.setPositionCommand(ElevatorConstants.coralStationSetpoint));
 
-        score.onTrue(coral.setRollerVoltage(4)
-                .andThen(Commands.waitSeconds(1.0))
-                .andThen(coral.setRollerVoltage(0.0))
-                .andThen(elevator.setPositionCommand(ElevatorConstants.coralStationSetpoint)));
+        score.onTrue(coral.setVoltageCommand(4));
+        score.onFalse(coral.setVoltageCommand(0.0).andThen(
+            elevator.setPositionCommand(ElevatorConstants.coralStationSetpoint)));
 
         resetElevator.onTrue(elevator.resetPositionCommand()
                 .ignoringDisable(true));
@@ -232,8 +234,10 @@ public class RobotContainer {
         targetLeft.whileTrue(DriveCommands.driveToNearestPole(drive, false, joystickSupplier));
         targetRight.whileTrue(DriveCommands.driveToNearestPole(drive, true, joystickSupplier));
 
-        coralManual.onTrue(coral.setRollerVoltage(4));
-        coralManual.onFalse(coral.setRollerVoltage(0));
+        intake.onTrue(coral.intakeCommand());
+
+        coralManual.onTrue(coral.setVoltageCommand(4));
+        coralManual.onFalse(coral.setVoltageCommand(0));
 
         // intakeAlgae.onTrue(algae.setRollerVoltage(12));
         // outtakeAlgae.onTrue(algae.setRollerVoltage(-12));
