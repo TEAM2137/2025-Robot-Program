@@ -1,7 +1,11 @@
 package frc.robot;
 
+import java.util.function.Supplier;
+
+import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
+import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.wpilibj.GenericHID;
 import edu.wpi.first.wpilibj.XboxController;
 import edu.wpi.first.wpilibj2.command.Command;
@@ -17,6 +21,10 @@ import frc.robot.subsystems.coral.CoralIOTalonFX;
 import frc.robot.subsystems.algae.AlgaeIntake;
 import frc.robot.subsystems.algae.AlgaeIntakeIO;
 import frc.robot.subsystems.algae.AlgaeIntakeIOSim;
+import frc.robot.subsystems.cage.Cage;
+import frc.robot.subsystems.cage.CageIO;
+import frc.robot.subsystems.cage.CageIOSim;
+import frc.robot.subsystems.cage.CageIOSparkMax;
 import frc.robot.subsystems.drive.Drive;
 import frc.robot.subsystems.drive.GyroIO;
 import frc.robot.subsystems.drive.GyroIOPigeon2;
@@ -35,38 +43,15 @@ import frc.robot.subsystems.vision.VisionIOLimelight;
 import frc.robot.subsystems.vision.VisionIOPhotonVisionSim;
 
 public class RobotContainer {
+    private static RobotContainer instance;
+
     // Subsystems
     public final Drive drive;
     public final Vision vision;
     public final Elevator elevator;
     public final Coral coral;
     public final AlgaeIntake algae;
-
-    // Controller
-    private final CommandXboxController driverController = new CommandXboxController(0);
-    private final CommandXboxController operatorController = new CommandXboxController(1);
-
-    // Bindings
-    public final Trigger resetGyro = driverController.start();
-    public final Trigger xLock = driverController.x();
-    public final Trigger rotationLock = driverController.leftTrigger();
-
-    public final Trigger targetRight = driverController.rightBumper();
-    public final Trigger targetLeft = driverController.leftBumper();
-
-    public final Trigger l1 = operatorController.x();
-    public final Trigger l2 = operatorController.a();
-    public final Trigger l3 = operatorController.b();
-    public final Trigger l4 = operatorController.y();
-
-    public final Trigger elevatorManual = operatorController.leftTrigger(0.35);
-
-    public final Trigger coralStation = l1.or(l2).or(l3).or(l4);
-    public final Trigger coralRollers = operatorController.rightBumper();
-
-    public final Trigger intakeAlgae = driverController.a();
-    public final Trigger outtakeAlgae = driverController.b();
-    public final Trigger intakeDown = driverController.x();
+    public final Cage cage;
 
     // Auto
     private final Autonomous autonomous;
@@ -74,8 +59,46 @@ public class RobotContainer {
     // Visuals
     public final RobotVisualizer visualizer;
 
-    /** The container for the robot. Contains subsystems, OI devices, and commands. */
+    // Controller
+    private final CommandXboxController driverController = new CommandXboxController(0);
+    private final CommandXboxController operatorController = new CommandXboxController(1);
+    private final Supplier<Translation2d> joystickSupplier = () -> new Translation2d(
+        driverController.getLeftY(), driverController.getLeftX());
+
+    /* Controller trigger bindings */
+
+    // Utilities
+    public final Trigger xLock = driverController.x();
+    public final Trigger resetGyro = driverController.start();
+    public final Trigger resetElevator = operatorController.start();
+
+    // Drive/point to different field POIs
+    public final Trigger targetRight = driverController.rightBumper();
+    public final Trigger targetLeft = driverController.leftBumper();
+    public final Trigger targetCoralStation = driverController.a();
+
+    // Run coral rollers to score and stow elevator
+    public final Trigger score = driverController.rightTrigger(0.25);
+
+    // Test coral station intake command
+    public final Trigger intake = driverController.a();
+
+    // Elevator setpoints
+    public final Trigger l1 = operatorController.x();
+    public final Trigger l2 = operatorController.a();
+    public final Trigger l3 = operatorController.b();
+    public final Trigger l4 = operatorController.y();
+    public final Trigger stowManual = operatorController.leftBumper();
+
+    // Manual subsystem controls
+    public final Trigger elevatorManual = operatorController.leftTrigger(0.35);
+    public final Trigger cageManual = operatorController.rightTrigger(0.35);
+    public final Trigger coralManual = operatorController.rightBumper();
+
+    /** The container for the robot. Contains subsystems, IO devices, and commands. */
     public RobotContainer() {
+        RobotContainer.instance = this;
+
         switch (Constants.currentMode) {
         case REAL:
             // Real robot, instantiate hardware IO implementations
@@ -97,6 +120,7 @@ public class RobotContainer {
             coral = new Coral(new CoralIOTalonFX());
 
             algae = new AlgaeIntake(new AlgaeIntakeIO() {});
+            cage = new Cage(new CageIOSparkMax());
 
             break;
 
@@ -120,6 +144,7 @@ public class RobotContainer {
             coral = new Coral(new CoralIOSim());
 
             algae = new AlgaeIntake(new AlgaeIntakeIOSim());
+            cage = new Cage(new CageIOSim() {});
 
             break;
 
@@ -143,6 +168,7 @@ public class RobotContainer {
             coral = new Coral(new CoralIO() {});
 
             algae = new AlgaeIntake(new AlgaeIntakeIO() {});
+            cage = new Cage(new CageIO() {});
 
             break;
         }
@@ -165,47 +191,61 @@ public class RobotContainer {
     private void configureButtonBindings() {
         // Default command, normal field-relative drive
         drive.setDefaultCommand(DriveCommands.joystickDrive(drive,
-                () -> driverController.getLeftY(),
-                () -> driverController.getLeftX(),
+                joystickSupplier,
+                () -> driverController.getLeftTriggerAxis() > 0.25,
                 () -> -driverController.getRightX()));
-
-        // Lock rotation to 0°
-        rotationLock.whileTrue(DriveCommands.joystickDriveAtAngle(drive,
-                () -> driverController.getLeftY(),
-                () -> driverController.getLeftX(),
-                () -> new Rotation2d()));
 
         // Switch to X pattern
         xLock.onTrue(Commands.runOnce(drive::xLock, drive));
 
         // Reset gyro to 0°
-        resetGyro.onTrue(Commands.runOnce(() ->drive.setPose(new Pose2d(drive.getPose().getTranslation(), new Rotation2d())),drive)
-                .ignoringDisable(true));
+        resetGyro.onTrue(Commands.runOnce(() ->
+                drive.setPose(new Pose2d(
+                    drive.getPose().getTranslation(),
+                    new Rotation2d())),
+                drive).ignoringDisable(true));
 
         // Hold left trigger to enable elevator manual controls using the right stick.
         // This should be removed once elevator testing is complete
-        elevatorManual.whileTrue(elevator.setVoltage(() -> -operatorController.getRightY() * 12));
+        elevatorManual.whileTrue(elevator.setVoltage(() ->
+            MathUtil.applyDeadband(-operatorController.getRightY(), 0.1) * 8));
+        elevatorManual.onFalse(elevator.setVoltage(() -> 0));
+
+        // Hold right trigger to enable cage manual controls using the right stick.
+        // This should be removed once cage testing is complete
+        cageManual.whileTrue(cage.setVoltage(() ->
+            MathUtil.applyDeadband(-operatorController.getRightY(), 0.1) * 4));
+        cageManual.onFalse(cage.setVoltage(() -> 0));
 
         l1.onTrue(elevator.setPositionCommand(ElevatorConstants.l1Setpoint));
         l2.onTrue(elevator.setPositionCommand(ElevatorConstants.l2Setpoint));
         l3.onTrue(elevator.setPositionCommand(ElevatorConstants.l3Setpoint));
         l4.onTrue(elevator.setPositionCommand(ElevatorConstants.l4Setpoint));
 
-        // coralStation.whileFalse(elevator.setPositionCommand(0.1));
+        stowManual.onTrue(elevator.setPositionCommand(ElevatorConstants.coralStationSetpoint));
 
-        targetLeft.whileTrue(DriveCommands.driveToNearestPole(drive, false));
-        targetRight.whileTrue(DriveCommands.driveToNearestPole(drive, true));
+        score.onTrue(coral.setVoltageCommand(4));
+        score.onFalse(coral.setVoltageCommand(0.0).andThen(
+            elevator.setPositionCommand(ElevatorConstants.coralStationSetpoint)));
 
-        coralRollers.onTrue(coral.setRollerVoltage(4));
-        coralRollers.onFalse(coral.setRollerVoltage(0));
+        resetElevator.onTrue(elevator.resetPositionCommand()
+                .ignoringDisable(true));
 
-        intakeAlgae.onTrue(algae.setRollerVoltage(12));
-        outtakeAlgae.onTrue(algae.setRollerVoltage(-12));
-        intakeAlgae.onFalse(algae.setRollerVoltage(0));
-        outtakeAlgae.onFalse(algae.setRollerVoltage(0));
+        targetLeft.whileTrue(DriveCommands.driveToNearestPole(drive, false, joystickSupplier));
+        targetRight.whileTrue(DriveCommands.driveToNearestPole(drive, true, joystickSupplier));
 
-        intakeDown.onTrue(algae.setPivotPosition(90));
-        intakeDown.onFalse(algae.setPivotPosition(0));
+        intake.onTrue(coral.intakeCommand());
+
+        coralManual.onTrue(coral.setVoltageCommand(4));
+        coralManual.onFalse(coral.setVoltageCommand(0));
+
+        // intakeAlgae.onTrue(algae.setRollerVoltage(12));
+        // outtakeAlgae.onTrue(algae.setRollerVoltage(-12));
+        // intakeAlgae.onFalse(algae.setRollerVoltage(0));
+        // outtakeAlgae.onFalse(algae.setRollerVoltage(0));
+
+        // intakeDown.onTrue(algae.setPivotPosition(90));
+        // intakeDown.onFalse(algae.setPivotPosition(0));
     }
 
     /**
@@ -216,4 +256,10 @@ public class RobotContainer {
     public Command getAutonomousCommand() {
         return autonomous.getSelectedAuto();
     }
+
+    public Supplier<Translation2d> joystickMotionSupplier() {
+        return joystickSupplier;
+    }
+
+    public static RobotContainer getInstance() { return instance; }
 }

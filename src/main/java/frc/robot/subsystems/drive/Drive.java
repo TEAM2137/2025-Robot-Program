@@ -22,6 +22,7 @@ import edu.wpi.first.math.kinematics.SwerveModuleState;
 import edu.wpi.first.math.numbers.N1;
 import edu.wpi.first.math.numbers.N3;
 import edu.wpi.first.networktables.NetworkTableInstance;
+import edu.wpi.first.networktables.StructArrayPublisher;
 import edu.wpi.first.networktables.StructPublisher;
 import edu.wpi.first.util.sendable.Sendable;
 import edu.wpi.first.util.sendable.SendableBuilder;
@@ -36,7 +37,10 @@ import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
 import frc.robot.Constants;
 import frc.robot.Constants.Mode;
+import frc.robot.RobotContainer;
+import frc.robot.commands.DriveCommands;
 import frc.robot.generated.TunerConstants;
+import frc.robot.util.AutoAlignUtil;
 import frc.robot.util.FieldPOIs;
 import java.util.List;
 import java.util.concurrent.locks.Lock;
@@ -102,6 +106,17 @@ public class Drive extends SubsystemBase {
     };
 
     private SwerveDrivePoseEstimator poseEstimator = new SwerveDrivePoseEstimator(kinematics, rawGyroRotation, lastModulePositions, new Pose2d());
+
+    private static StructPublisher<Pose2d> closestLeftPolePublisher = NetworkTableInstance.getDefault()
+            .getStructTopic("ClosestLeftPole", Pose2d.struct).publish();
+    private static StructPublisher<Pose2d> closestRightPolePublisher = NetworkTableInstance.getDefault()
+            .getStructTopic("ClosestRightPole", Pose2d.struct).publish();
+    private static StructArrayPublisher<Translation2d> joystickPublisher = NetworkTableInstance.getDefault()
+            .getStructArrayTopic("JoystickMotionVector", Translation2d.struct).publish();
+    private static StructArrayPublisher<Translation2d> toLeftReefPublisher = NetworkTableInstance.getDefault()
+            .getStructArrayTopic("ToLeftReefVector", Translation2d.struct).publish();
+    private static StructArrayPublisher<Translation2d> toRightReefPublisher = NetworkTableInstance.getDefault()
+            .getStructArrayTopic("ToRightReefVector", Translation2d.struct).publish();
 
     public Drive(GyroIO gyroIO, ModuleIO flModuleIO,ModuleIO frModuleIO, ModuleIO blModuleIO, ModuleIO brModuleIO) {
         this.gyroIO = gyroIO;
@@ -182,59 +197,62 @@ public class Drive extends SubsystemBase {
         // Update gyro alert
         gyroDisconnectedAlert.set(!gyroInputs.connected && Constants.currentMode != Mode.SIM);
 
-        // Post nearest poles in NetworkTables
-        getNearestLeftPole();
-        getNearestRightPole();
+        // Post auto align debug displays in NetworkTables
+        Pose2d leftPole = DriveCommands.getNewTargetPole(this, false, RobotContainer.getInstance().joystickMotionSupplier());
+        Pose2d rightPole = DriveCommands.getNewTargetPole(this, true, RobotContainer.getInstance().joystickMotionSupplier());
+        Pose2d offscreenPole = new Pose2d(new Translation2d(100, 100), new Rotation2d());
 
+        boolean isTargetingLeft = RobotContainer.getInstance().targetLeft.getAsBoolean() && DriveCommands.getTargetPole() != null;
+        boolean isTargetingRight = RobotContainer.getInstance().targetRight.getAsBoolean() && DriveCommands.getTargetPole() != null;
+
+        closestLeftPolePublisher.accept(isTargetingLeft ? DriveCommands.getTargetPole() : offscreenPole);
+        closestRightPolePublisher.accept(isTargetingRight ? DriveCommands.getTargetPole() : offscreenPole);
+
+        toLeftReefPublisher.accept(createTrajectoryTo(leftPole.getTranslation()));
+        toRightReefPublisher.accept(createTrajectoryTo(rightPole.getTranslation()));
+
+        joystickPublisher.accept(createTrajectoryTo(getPose().getTranslation()
+            .minus(RobotContainer.getInstance().joystickMotionSupplier().get().times(1.5))));
+
+        // Post dashboard data through SmartDashboard
         field.setRobotPose(getPose());
         SmartDashboard.putData("Field", field);
         SmartDashboard.putData("Swerve Drive", swerveDriveSendable);
     }
 
-    private static StructPublisher<Pose2d> closestLeftPolePublisher = NetworkTableInstance.getDefault()
-            .getStructTopic("ClosestLeftPole", Pose2d.struct).publish();
-    private static StructPublisher<Pose2d> closestRightPolePublisher = NetworkTableInstance.getDefault()
-            .getStructTopic("ClosestRightPole", Pose2d.struct).publish();
-
-    public int getNearestLeftPole() {
-        return getNearestPole(FieldPOIs.REEF_LOCATIONS_LEFT, closestLeftPolePublisher);
+    public Translation2d[] createTrajectoryTo(Translation2d point) {
+        Translation2d[] trajectory = new Translation2d[2];
+        trajectory[0] = getPose().getTranslation();
+        trajectory[1] = point;
+        return trajectory;
     }
 
-    public int getNearestRightPole() {
-        return getNearestPole(FieldPOIs.REEF_LOCATIONS_RIGHT, closestRightPolePublisher);
+    public int getNearestLeftPole(Pose2d pose, Translation2d motionVector) {
+        return getNearestPole(pose, motionVector, FieldPOIs.REEF_LOCATIONS_LEFT);
     }
 
-    public int getNearestPole(List<Pose2d> locations, StructPublisher<Pose2d> publisher) {
-        Pair<Integer, Double> bestResult = new Pair<>(-1, 100.0);
+    public int getNearestRightPole(Pose2d pose, Translation2d motionVector) {
+        return getNearestPole(pose, motionVector, FieldPOIs.REEF_LOCATIONS_RIGHT);
+    }
+
+    public int getNearestPole(Pose2d pose, Translation2d motionVector, List<Pose2d> locations) {
+        Pair<Integer, Double> bestResult = new Pair<>(-1, 1000.0);
 
         for (int i = 0; i < locations.size(); i++) {
-            Pose2d position = locations.get(i);
-            double dst = getPose().getTranslation().getDistance(position.getTranslation());
-            if (dst <= bestResult.getSecond()) bestResult = new Pair<>(i, dst);
+            // Calculate the distance from the robot to the current reef pole
+            Pose2d poleLocation = locations.get(i);
+            double dst = pose.getTranslation().getDistance(poleLocation.getTranslation());
+
+            // Calculate the additional weighting based on joystick angle
+            double addition = AutoAlignUtil.calculateBestReefPoleAddition(
+                poleLocation.minus(pose).getTranslation(), motionVector);
+
+            // Apply addition and assign new best result if applicable
+            double weight = dst + addition * 2.8;
+            if (weight <= bestResult.getSecond()) bestResult = new Pair<>(i, weight);
         }
 
-        if (bestResult.getFirst() != -1) publisher.accept(locations.get(bestResult.getFirst()));
         return bestResult.getFirst();
-    }
-
-    /*
-     * Face IDs (blue reef (left), C = center):
-     *  0 1
-     * 5 C 2
-     *  4 3
-     */
-    public int getNearestReefFace() {
-        Translation2d reef = new Translation2d(4.49, 4.03);
-        Translation2d robot = getPose().getTranslation();
-
-        // figure out the angle between the reef and the robot
-        double angle = Math.atan2(reef.getY() - robot.getY(), reef.getX() - robot.getX());;
-        if (angle < 0) angle += 2 * Math.PI;
-        angle -= Math.PI / 6; // the reef has vertical points
-
-        // divide the angle by π/3 to find the reef face
-        int face = ((int) (angle / (Math.PI / 3))) % 6;
-        return face;
     }
 
     /**

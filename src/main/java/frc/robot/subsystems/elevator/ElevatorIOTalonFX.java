@@ -7,7 +7,7 @@ import com.ctre.phoenix6.configs.MotionMagicConfigs;
 import com.ctre.phoenix6.configs.Slot0Configs;
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
 import com.ctre.phoenix6.controls.Follower;
-import com.ctre.phoenix6.controls.PositionVoltage;
+import com.ctre.phoenix6.controls.MotionMagicVoltage;
 import com.ctre.phoenix6.controls.VoltageOut;
 import com.ctre.phoenix6.hardware.TalonFX;
 import com.ctre.phoenix6.signals.InvertedValue;
@@ -16,6 +16,8 @@ import com.ctre.phoenix6.signals.NeutralModeValue;
 public class ElevatorIOTalonFX implements ElevatorIO {
     private TalonFX leadMotor = new TalonFX(ElevatorConstants.leaderID, "rio");
     private TalonFX followMotor = new TalonFX(ElevatorConstants.followerID, "rio");
+
+    private double targetPosition = 0.0;
 
     public ElevatorIOTalonFX() {
         // Create TalonFX config
@@ -32,7 +34,6 @@ public class ElevatorIOTalonFX implements ElevatorIO {
         var motionMagicConfigs = config.MotionMagic;
         motionMagicConfigs.MotionMagicCruiseVelocity = ElevatorConstants.targetCruiseVelocity;
         motionMagicConfigs.MotionMagicAcceleration = ElevatorConstants.targetAcceleration;
-        motionMagicConfigs.MotionMagicJerk = ElevatorConstants.targetJerk;
 
         // Motor feedback settings
         var feedbackConfigs = config.Feedback;
@@ -74,8 +75,10 @@ public class ElevatorIOTalonFX implements ElevatorIO {
     @Override
     public void updateInputs(ElevatorIOInputs inputs) {
         inputs.motorPositionRotations = leadMotor.getPosition().getValueAsDouble();
-        inputs.elevatorPositionMeters = inputs.motorPositionRotations * ElevatorConstants.spoolDiameter;
+        inputs.elevatorPositionMeters = inputs.motorPositionRotations * ElevatorConstants.spoolRadius * Math.PI;
         inputs.velocityMetersPerSecond = leadMotor.getVelocity().getValueAsDouble();
+
+        inputs.targetPositionRotations = targetPosition;
 
         inputs.leaderOutputVolts = leadMotor.getMotorVoltage().getValueAsDouble();
         inputs.leaderCurrentAmps = leadMotor.getSupplyCurrent().getValueAsDouble();
@@ -86,12 +89,14 @@ public class ElevatorIOTalonFX implements ElevatorIO {
 
     @Override
     public void resetPosition() {
-        leadMotor.setPosition(0);
+        leadMotor.setPosition(0.0);
+        setTargetPosition(0.0);
     }
 
     @Override
     public void setTargetPosition(double targetPosition) {
-        leadMotor.setControl(new PositionVoltage(targetPosition / ElevatorConstants.spoolDiameter / ElevatorConstants.gearing));
+        this.targetPosition = targetPosition / ElevatorConstants.spoolRadius / Math.PI;
+        leadMotor.setControl(new MotionMagicVoltage(this.targetPosition));
     }
 
     @Override

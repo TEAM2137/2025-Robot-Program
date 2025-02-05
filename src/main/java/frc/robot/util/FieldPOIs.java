@@ -6,15 +6,18 @@ import java.util.List;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Translation2d;
+import edu.wpi.first.math.util.Units;
 import edu.wpi.first.networktables.NetworkTableInstance;
 
 public class FieldPOIs {
-    private static final double REEF_SCORING_OFFSET_METERS = 1.35;
+    private static final double REEF_VERTICAL_OFFSET_METERS = 1.35;
+    private static final double REEF_HORIZONTAL_OFFSET_METERS = 0.17;
+    private static final double END_EFFECTOR_OFFSET = Units.inchesToMeters(-3.6875);
 
     public static final Pose2d REEF = new Pose2d(new Translation2d(4.49, 4.03), new Rotation2d());
     public static final List<Pose2d> REEF_LOCATIONS = createReefScoringLocations();
-    public static final List<Pose2d> REEF_LOCATIONS_RIGHT = filterEveryOther(1, REEF_LOCATIONS);
-    public static final List<Pose2d> REEF_LOCATIONS_LEFT = filterEveryOther(0, REEF_LOCATIONS);
+    public static final List<Pose2d> REEF_LOCATIONS_RIGHT = filterEveryOther(0, REEF_LOCATIONS);
+    public static final List<Pose2d> REEF_LOCATIONS_LEFT = filterEveryOther(1, REEF_LOCATIONS);
 
     static {
         // Publish values to NT
@@ -34,18 +37,21 @@ public class FieldPOIs {
             angle = angle.plus(Rotation2d.fromRadians(Math.PI / 3));
 
             Translation2d verticalOffset = new Translation2d(
-                angle.getCos() * REEF_SCORING_OFFSET_METERS,
-                angle.getSin() * REEF_SCORING_OFFSET_METERS
+                angle.getCos() * REEF_VERTICAL_OFFSET_METERS,
+                angle.getSin() * REEF_VERTICAL_OFFSET_METERS
             );
 
+            double leftMagnitude = REEF_HORIZONTAL_OFFSET_METERS - END_EFFECTOR_OFFSET;
+            double rightMagnitude = REEF_HORIZONTAL_OFFSET_METERS + END_EFFECTOR_OFFSET;
+
             Translation2d leftOffset = new Translation2d(
-                angle.minus(Rotation2d.kCW_90deg).getCos() * 0.17,
-                angle.minus(Rotation2d.kCW_90deg).getSin() * 0.17
+                angle.minus(Rotation2d.kCW_90deg).getCos() * leftMagnitude,
+                angle.minus(Rotation2d.kCW_90deg).getSin() * leftMagnitude
             );
 
             Translation2d rightOffset = new Translation2d(
-                angle.plus(Rotation2d.kCW_90deg).getCos() * 0.17,
-                angle.plus(Rotation2d.kCW_90deg).getSin() * 0.17
+                angle.plus(Rotation2d.kCW_90deg).getCos() * rightMagnitude,
+                angle.plus(Rotation2d.kCW_90deg).getSin() * rightMagnitude
             );
 
             Pose2d leftPole = new Pose2d(REEF.getTranslation().plus(verticalOffset).plus(leftOffset), angle.plus(Rotation2d.k180deg));

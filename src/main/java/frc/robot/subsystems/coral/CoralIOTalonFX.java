@@ -34,7 +34,12 @@ public class CoralIOTalonFX implements CoralIO {
     public void updateInputs(CoralIOInputs inputs) {
         inputs.appliedVolts = rollers.getMotorVoltage().getValueAsDouble();
         inputs.currentAmps = rollers.getSupplyCurrent().getValueAsDouble();
-        inputs.isBeamBroken = !beamBreak.get();
+        inputs.isBeamBroken = isBeamBroken();
+    }
+
+    @Override
+    public boolean isBeamBroken() {
+        return !beamBreak.get();
     }
 
     @Override
