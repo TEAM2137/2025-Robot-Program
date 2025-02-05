@@ -31,6 +31,7 @@ import frc.robot.subsystems.elevator.ElevatorIOTalonFX;
 import frc.robot.subsystems.vision.Vision;
 import frc.robot.subsystems.vision.VisionConstants;
 import frc.robot.subsystems.vision.VisionIO;
+import frc.robot.subsystems.vision.VisionIOLimelight;
 import frc.robot.subsystems.vision.VisionIOPhotonVisionSim;
 
 public class RobotContainer {
@@ -72,15 +73,6 @@ public class RobotContainer {
 
     // Visuals
     public final RobotVisualizer visualizer;
-    // using y position to find what side of the field we are on
-    private double  yPOS() {
-        if( drive.getPose().getY() > 100){
-            return 35;
-        }else{
-            return -35;
-        }
-    }
-
 
     /** The container for the robot. Contains subsystems, OI devices, and commands. */
     public RobotContainer() {
@@ -97,8 +89,8 @@ public class RobotContainer {
 
             vision = new Vision(
                 drive::addVisionMeasurement,
-                new VisionIO() {},
-                new VisionIO() {}
+                new VisionIOLimelight(VisionConstants.cam0, drive::getRotation),
+                new VisionIOLimelight(VisionConstants.cam1, drive::getRotation)
             );
 
             elevator = new Elevator(new ElevatorIOTalonFX());
@@ -183,13 +175,6 @@ public class RobotContainer {
                 () -> driverController.getLeftX(),
                 () -> new Rotation2d()));
 
-        operatorController.a().whileTrue(DriveCommands.joystickDriveAtAngle(drive,
-                () -> driverController.getLeftY(),
-                () -> driverController.getLeftX(),
-                () -> new Rotation2d(yPOS())));
-
-
-
         // Switch to X pattern
         xLock.onTrue(Commands.runOnce(drive::xLock, drive));
 
@@ -221,8 +206,6 @@ public class RobotContainer {
 
         intakeDown.onTrue(algae.setPivotPosition(90));
         intakeDown.onFalse(algae.setPivotPosition(0));
-
-
     }
 
     /**
