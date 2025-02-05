@@ -29,7 +29,6 @@ import edu.wpi.first.util.sendable.SendableBuilder;
 import edu.wpi.first.wpilibj.Alert;
 import edu.wpi.first.wpilibj.Alert.AlertType;
 import edu.wpi.first.wpilibj.DriverStation;
-import edu.wpi.first.wpilibj.DriverStation.Alliance;
 import edu.wpi.first.wpilibj.smartdashboard.Field2d;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
@@ -202,11 +201,11 @@ public class Drive extends SubsystemBase {
         Pose2d rightPole = DriveCommands.getNewTargetPole(this, true, RobotContainer.getInstance().joystickMotionSupplier());
         Pose2d offscreenPole = new Pose2d(new Translation2d(100, 100), new Rotation2d());
 
-        boolean isTargetingLeft = RobotContainer.getInstance().targetLeft.getAsBoolean() && DriveCommands.getTargetPole() != null;
-        boolean isTargetingRight = RobotContainer.getInstance().targetRight.getAsBoolean() && DriveCommands.getTargetPole() != null;
+        boolean isTargetingLeft = RobotContainer.getInstance().targetLeft.getAsBoolean() && DriveCommands.getTarget() != null;
+        boolean isTargetingRight = RobotContainer.getInstance().targetRight.getAsBoolean() && DriveCommands.getTarget() != null;
 
-        closestLeftPolePublisher.accept(isTargetingLeft ? DriveCommands.getTargetPole() : offscreenPole);
-        closestRightPolePublisher.accept(isTargetingRight ? DriveCommands.getTargetPole() : offscreenPole);
+        closestLeftPolePublisher.accept(isTargetingLeft ? DriveCommands.getTarget() : offscreenPole);
+        closestRightPolePublisher.accept(isTargetingRight ? DriveCommands.getTarget() : offscreenPole);
 
         toLeftReefPublisher.accept(createTrajectoryTo(leftPole.getTranslation()));
         toRightReefPublisher.accept(createTrajectoryTo(rightPole.getTranslation()));
@@ -240,7 +239,7 @@ public class Drive extends SubsystemBase {
 
         for (int i = 0; i < locations.size(); i++) {
             // Calculate the distance from the robot to the current reef pole
-            Pose2d poleLocation = locations.get(i);
+            Pose2d poleLocation = AutoAlignUtil.flipIfRed(locations.get(i));
             double dst = pose.getTranslation().getDistance(poleLocation.getTranslation());
 
             // Calculate the additional weighting based on joystick angle
@@ -418,7 +417,6 @@ public class Drive extends SubsystemBase {
         );
 
         // Apply the generated speeds
-        boolean isFlipped = DriverStation.getAlliance().isPresent() && DriverStation.getAlliance().get() == Alliance.Red;
-        runVelocity(ChassisSpeeds.fromFieldRelativeSpeeds(speeds, isFlipped ? getRotation().plus(new Rotation2d(Math.PI)) : getRotation()));
+        runVelocity(ChassisSpeeds.fromFieldRelativeSpeeds(speeds, getRotation()));
     }
 }

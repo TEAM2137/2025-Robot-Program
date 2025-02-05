@@ -27,6 +27,10 @@ import java.util.function.BooleanSupplier;
 import java.util.function.DoubleSupplier;
 import java.util.function.Supplier;
 
+import choreo.util.ChoreoAllianceFlipUtil;
+
+
+
 public class DriveCommands {
     private static final double DEADBAND = 0.1;
     private static final double ANGLE_KP = 12.0;
@@ -258,10 +262,10 @@ public class DriveCommands {
         double gyroDelta = 0.0;
     }
 
-    private static Pose2d targetPole;
+    private static Pose2d target;
 
-    public static Pose2d getTargetPole() {
-        return targetPole;
+    public static Pose2d getTarget() {
+        return target;
     }
 
     public static Command driveToNearestPole(Drive drive, boolean right, Supplier<Translation2d> motionSupplier) {
@@ -275,37 +279,26 @@ public class DriveCommands {
         // Construct command
         return Commands.sequence(
             Commands.runOnce(() -> angleController.reset(drive.getRotation().getRadians())),
-            Commands.runOnce(() -> targetPole = getNewTargetPole(drive, right, motionSupplier)),
-            Commands.runEnd(() -> {
-                // Get linear velocity based on pole location
-                double max = 0.75;
-                Translation2d toPole = new Translation2d(
-                    drive.getPose().getX() - targetPole.getX(),
-                    drive.getPose().getY() - targetPole.getY()
-                );
-                Translation2d normalized = new Translation2d(
-                    -Math.min(toPole.getNorm() * 1.5, max),
-                    toPole.getAngle()
-                );
+            Commands.runOnce(() -> target = getNewTargetPole(drive, right, motionSupplier)),
+            driveToTargetCommand(drive, angleController)
+        );
+    }
 
-                // Calculate angular speed
-                double omega = angleController.calculate(drive.getRotation().getRadians(), targetPole.getRotation().getRadians());
+    public static Command driveToCoralStation(Drive drive) {
+        // Create PID controller
+        ProfiledPIDController angleController = new ProfiledPIDController(
+            ANGLE_KP, 0.0, ANGLE_KD,
+            new TrapezoidProfile.Constraints(ANGLE_MAX_VELOCITY, ANGLE_MAX_ACCELERATION)
+        );
+        angleController.enableContinuousInput(-Math.PI, Math.PI);
 
-                // Convert to field relative speeds
-                ChassisSpeeds speeds = new ChassisSpeeds(
-                    normalized.getX() * drive.getMaxLinearSpeedMetersPerSec(),
-                    normalized.getY() * drive.getMaxLinearSpeedMetersPerSec(),
-                    omega
-                );
-
-                // Drive the robot to targets
-                boolean isFlipped = DriverStation.getAlliance().isPresent()
-                    && DriverStation.getAlliance().get() == Alliance.Red;
-                drive.runVelocity(ChassisSpeeds.fromFieldRelativeSpeeds(speeds, isFlipped
-                    ? drive.getRotation().plus(new Rotation2d(Math.PI))
-                    : drive.getRotation()
-                ));
-            }, () -> targetPole = null, drive)
+        // Construct command
+        return Commands.sequence(
+            Commands.runOnce(() -> target = (drive.getPose().getY() < 8.19912 / 2.0 == !ChoreoAllianceFlipUtil.shouldFlip())
+                ? AutoAlignUtil.flipIfRed(FieldPOIs.CORAL_STATION_BOTTOM)
+                : AutoAlignUtil.flipIfRed(FieldPOIs.CORAL_STATION_TOP), drive),
+            Commands.runOnce(() -> angleController.reset(drive.getRotation().getRadians()), drive),
+            driveToTargetCommand(drive, angleController)
         );
     }
 
@@ -327,8 +320,42 @@ public class DriveCommands {
         }
 
         // Find the correct pole to target
-        return right
+        return AutoAlignUtil.flipIfRed(right
             ? FieldPOIs.REEF_LOCATIONS_RIGHT.get(drive.getNearestRightPole(pose, motionVector))
-            : FieldPOIs.REEF_LOCATIONS_LEFT.get(drive.getNearestLeftPole(pose, motionVector));
+            : FieldPOIs.REEF_LOCATIONS_LEFT.get(drive.getNearestLeftPole(pose, motionVector)));
+    }
+
+    private static Command driveToTargetCommand(Drive drive, ProfiledPIDController angleController) {
+        return Commands.runEnd(() -> {
+            double max = 0.75;
+            Translation2d toTarget = new Translation2d(
+                drive.getPose().getX() - target.getX(),
+                drive.getPose().getY() - target.getY()
+            );
+            Translation2d normalized = new Translation2d(
+                -Math.min(toTarget.getNorm() * 1.5, max),
+                toTarget.getAngle()
+            );
+
+            // Calculate angular speed
+            double omega = angleController.calculate(drive.getRotation().getRadians(), target.getRotation().getRadians());
+
+            // Check if it's red alliance
+            boolean isFlipped = DriverStation.getAlliance().isPresent()
+                && DriverStation.getAlliance().get() == Alliance.Red;
+
+            // Convert to field relative speeds
+            ChassisSpeeds speeds = new ChassisSpeeds(
+                normalized.getX() * drive.getMaxLinearSpeedMetersPerSec() * (isFlipped ? -1 : 1),
+                normalized.getY() * drive.getMaxLinearSpeedMetersPerSec() * (isFlipped ? -1 : 1),
+                omega
+            );
+
+            // Drive the robot to targets
+            drive.runVelocity(ChassisSpeeds.fromFieldRelativeSpeeds(speeds, isFlipped
+                ? drive.getRotation().plus(new Rotation2d(Math.PI))
+                : drive.getRotation()
+            ));
+        }, () -> target = null, drive);
     }
 }

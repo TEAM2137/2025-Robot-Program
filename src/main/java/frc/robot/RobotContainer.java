@@ -40,7 +40,6 @@ import frc.robot.subsystems.vision.Vision;
 import frc.robot.subsystems.vision.VisionConstants;
 import frc.robot.subsystems.vision.VisionIO;
 import frc.robot.subsystems.vision.VisionIOLimelight;
-import frc.robot.subsystems.vision.VisionIOPhotonVisionSim;
 
 public class RobotContainer {
     private static RobotContainer instance;
@@ -79,9 +78,6 @@ public class RobotContainer {
 
     // Run coral rollers to score and stow elevator
     public final Trigger score = driverController.rightTrigger(0.25);
-
-    // Test coral station intake command
-    public final Trigger intake = driverController.a();
 
     // Elevator setpoints
     public final Trigger l1 = operatorController.x();
@@ -136,8 +132,8 @@ public class RobotContainer {
 
             vision = new Vision(
                 drive::addVisionMeasurement,
-                new VisionIOPhotonVisionSim(VisionConstants.cam0, VisionConstants.robotToCamera0, drive::getPose),
-                new VisionIOPhotonVisionSim(VisionConstants.cam1, VisionConstants.robotToCamera1, drive::getPose)
+                new VisionIO() {},
+                new VisionIO() {}
             );
 
             elevator = new Elevator(new ElevatorIOSim());
@@ -225,16 +221,17 @@ public class RobotContainer {
         stowManual.onTrue(elevator.setPositionCommand(ElevatorConstants.coralStationSetpoint));
 
         score.onTrue(coral.setVoltageCommand(4));
-        score.onFalse(coral.setVoltageCommand(0.0).andThen(
-            elevator.setPositionCommand(ElevatorConstants.coralStationSetpoint)));
+        score.onFalse(coral.setVoltageCommand(0.0)
+            .andThen(elevator.setPositionCommand(ElevatorConstants.coralStationSetpoint))
+            .andThen(coral.intakeCommand()));
 
-        resetElevator.onTrue(elevator.resetPositionCommand()
-                .ignoringDisable(true));
+        resetElevator.onTrue(elevator.resetPositionCommand().ignoringDisable(true));
 
         targetLeft.whileTrue(DriveCommands.driveToNearestPole(drive, false, joystickSupplier));
         targetRight.whileTrue(DriveCommands.driveToNearestPole(drive, true, joystickSupplier));
 
-        intake.onTrue(coral.intakeCommand());
+        targetCoralStation.onTrue(DriveCommands.driveToCoralStation(drive).alongWith(coral.intakeCommand()));
+        targetCoralStation.onFalse(drive.runOnce(() -> {}));
 
         coralManual.onTrue(coral.setVoltageCommand(4));
         coralManual.onFalse(coral.setVoltageCommand(0));

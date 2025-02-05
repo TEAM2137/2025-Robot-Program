@@ -1,20 +1,26 @@
 package frc.robot;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import org.littletonrobotics.junction.networktables.LoggedDashboardChooser;
 
 import choreo.auto.AutoFactory;
 import choreo.auto.AutoRoutine;
 import choreo.auto.AutoTrajectory;
+import edu.wpi.first.math.geometry.Translation2d;
+import edu.wpi.first.networktables.NetworkTableInstance;
+import edu.wpi.first.networktables.StructArrayPublisher;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.button.RobotModeTriggers;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
 import frc.robot.commands.DriveCommands;
 import frc.robot.subsystems.drive.Drive;
+import frc.robot.util.AutoAlignUtil;
 
 public class Autonomous {
     public final AutoFactory factory;
@@ -26,6 +32,9 @@ public class Autonomous {
     private final RobotContainer robot;
     private final Drive drive;
 
+    private static StructArrayPublisher<Translation2d> autoTrajectoryPublisher = NetworkTableInstance.getDefault()
+        .getStructArrayTopic("AutoTrajectory", Translation2d.struct).publish();
+
     public Autonomous(RobotContainer robot) {
         this.robot = robot;
         this.drive = robot.drive;
@@ -36,7 +45,15 @@ public class Autonomous {
             drive::setPose, // A function that resets the current robot pose to the provided Pose2d
             drive::followTrajectory, // The drive subsystem trajectory follower
             true, // If alliance flipping should be enabled
-            drive // The drive subsystem
+            drive, // The drive subsystem
+            (trajectory, starting) -> {
+                // Log the supplied trajectory
+                autoTrajectoryPublisher.accept(Arrays.stream(trajectory.getPoses())
+                    .map(pose -> AutoAlignUtil.flipIfRed(pose).getTranslation())
+                    .collect(Collectors.toList())
+                    .toArray(new Translation2d[0])
+                );
+            }
         );
 
         // Create the sysId command chooser

@@ -1,5 +1,7 @@
 package frc.robot.util;
 
+import choreo.util.ChoreoAllianceFlipUtil;
+import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Translation2d;
 
 public class AutoAlignUtil {
@@ -20,5 +22,9 @@ public class AutoAlignUtil {
 
     public static double dot(Translation2d a, Translation2d b) {
         return (a.getX() * b.getX() + a.getY() * b.getY());
+    }
+
+    public static Pose2d flipIfRed(Pose2d pose) {
+        return ChoreoAllianceFlipUtil.shouldFlip() ? ChoreoAllianceFlipUtil.flip(pose) : pose;
     }
 }
