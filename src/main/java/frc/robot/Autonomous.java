@@ -90,6 +90,21 @@ public class Autonomous {
 
         // Testing Autos
         autoChooser.addOption("4 Coral Upper", fourCoralUpper());
+        autoChooser.addOption("Drive Forward", driveStraight());
+    }
+
+    public AutoRoutine driveStraight() {
+        String pathName = "Drive Straight";
+        AutoRoutine routine = factory.newRoutine(pathName);
+        AutoTrajectory trajectory = routine.trajectory(pathName);
+
+        // When the routine begins, reset odometry and start the first trajectory
+        routine.active().onTrue(Commands.sequence(
+            trajectory.resetOdometry(),
+            trajectory.cmd()
+        ));
+
+        return routine;
     }
 
     public AutoRoutine fourCoralUpper() {

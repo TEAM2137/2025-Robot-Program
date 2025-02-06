@@ -2,6 +2,7 @@ package frc.robot;
 
 import java.util.function.Supplier;
 
+import choreo.util.ChoreoAllianceFlipUtil;
 import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
@@ -24,7 +25,6 @@ import frc.robot.subsystems.algae.AlgaeIntakeIOSim;
 import frc.robot.subsystems.cage.Cage;
 import frc.robot.subsystems.cage.CageIO;
 import frc.robot.subsystems.cage.CageIOSim;
-import frc.robot.subsystems.cage.CageIOSparkMax;
 import frc.robot.subsystems.drive.Drive;
 import frc.robot.subsystems.drive.GyroIO;
 import frc.robot.subsystems.drive.GyroIOPigeon2;
@@ -116,7 +116,7 @@ public class RobotContainer {
             coral = new Coral(new CoralIOTalonFX());
 
             algae = new AlgaeIntake(new AlgaeIntakeIO() {});
-            cage = new Cage(new CageIOSparkMax());
+            cage = new Cage(new CageIO() {});
 
             break;
 
@@ -196,10 +196,13 @@ public class RobotContainer {
 
         // Reset gyro to 0°
         resetGyro.onTrue(Commands.runOnce(() ->
-                drive.setPose(new Pose2d(
-                    drive.getPose().getTranslation(),
-                    new Rotation2d())),
-                drive).ignoringDisable(true));
+            drive.setPose(new Pose2d(
+                drive.getPose().getTranslation(),
+                ChoreoAllianceFlipUtil.shouldFlip()
+                    ? ChoreoAllianceFlipUtil.flip(new Rotation2d())
+                    : new Rotation2d()
+            )),
+            drive).ignoringDisable(true));
 
         // Hold left trigger to enable elevator manual controls using the right stick.
         // This should be removed once elevator testing is complete

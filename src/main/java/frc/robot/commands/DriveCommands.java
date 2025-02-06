@@ -29,8 +29,6 @@ import java.util.function.Supplier;
 
 import choreo.util.ChoreoAllianceFlipUtil;
 
-
-
 public class DriveCommands {
     private static final double DEADBAND = 0.1;
     private static final double ANGLE_KP = 12.0;
@@ -39,8 +37,8 @@ public class DriveCommands {
     private static final double ANGLE_MAX_ACCELERATION = 36.0;
     private static final double FF_START_DELAY = 2.0; // Secs
     private static final double FF_RAMP_RATE = 0.1; // Volts/Sec
-    private static final double WHEEL_RADIUS_MAX_VELOCITY = 0.25; // Rad/Sec
-    private static final double WHEEL_RADIUS_RAMP_RATE = 0.05; // Rad/Sec^2
+    private static final double WHEEL_RADIUS_MAX_VELOCITY = 1.0; // Rad/Sec
+    private static final double WHEEL_RADIUS_RAMP_RATE = 0.5; // Rad/Sec^2
 
     private DriveCommands() {}
 
