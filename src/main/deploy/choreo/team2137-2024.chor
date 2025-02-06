@@ -225,28 +225,28 @@
    }
   },
   "mass":{
-   "exp":"116 lbs",
-   "val":52.61671492
+   "exp":"113 lbs",
+   "val":51.255937810000006
   },
   "inertia":{
-   "exp":"6 kg m ^ 2",
-   "val":6.0
+   "exp":"4.3895948014 kg m ^ 2",
+   "val":4.3895948014
   },
   "gearing":{
    "exp":"5.9",
    "val":5.9
   },
   "radius":{
-   "exp":"2 in",
-   "val":0.0508
+   "exp":"1.772 in",
+   "val":0.0450088
   },
   "vmax":{
    "exp":"6000 RPM",
    "val":628.3185307179587
   },
   "tmax":{
-   "exp":"1.2 N * m",
-   "val":1.2
+   "exp":"0.7 N * m",
+   "val":0.7
   },
   "cof":{
    "exp":"1.1",
@@ -254,16 +254,16 @@
   },
   "bumper":{
    "front":{
-    "exp":"16.25 in",
-    "val":0.41275
+    "exp":"16.5 in",
+    "val":0.4191
    },
    "side":{
-    "exp":"16.25 in",
-    "val":0.41275
+    "exp":"16.5 in",
+    "val":0.4191
    },
    "back":{
-    "exp":"16.25 in",
-    "val":0.41275
+    "exp":"16.5 in",
+    "val":0.4191
    }
   },
   "differentialTrackWidth":{
