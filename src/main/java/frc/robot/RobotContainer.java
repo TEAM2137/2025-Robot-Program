@@ -233,7 +233,8 @@ public class RobotContainer {
         targetLeft.whileTrue(DriveCommands.driveToNearestPole(drive, false, joystickSupplier));
         targetRight.whileTrue(DriveCommands.driveToNearestPole(drive, true, joystickSupplier));
 
-        targetCoralStation.onTrue(DriveCommands.driveToCoralStation(drive).alongWith(coral.intakeCommand()));
+        targetCoralStation.onTrue(coral.intakeCommand());
+        // targetCoralStation.onTrue(DriveCommands.driveToCoralStation(drive).alongWith(coral.intakeCommand()));
         targetCoralStation.onFalse(drive.runOnce(() -> {}));
 
         coralManual.onTrue(coral.setVoltageCommand(4));

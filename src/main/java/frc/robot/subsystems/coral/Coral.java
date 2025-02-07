@@ -30,7 +30,7 @@ public class Coral extends SubsystemBase{
 
     public Command intakeCommand() {
         return setVoltageCommand(2).repeatedly().until(beamBrokenTrigger)
-            .andThen(setVoltageCommand(2).repeatedly().until(beamBrokenTrigger.negate()))
+            .andThen(setVoltageCommand(2).repeatedly().onlyWhile(beamBrokenTrigger))
             .andThen(setVoltageCommand(0));
     }
 }

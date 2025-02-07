@@ -96,12 +96,17 @@ public class Autonomous {
     public AutoRoutine driveStraight() {
         String pathName = "Drive Straight";
         AutoRoutine routine = factory.newRoutine(pathName);
-        AutoTrajectory trajectory = routine.trajectory(pathName);
+        AutoTrajectory first = routine.trajectory(pathName, 0);
+        AutoTrajectory second = routine.trajectory(pathName, 1);
 
         // When the routine begins, reset odometry and start the first trajectory
         routine.active().onTrue(Commands.sequence(
-            trajectory.resetOdometry(),
-            trajectory.cmd()
+            first.resetOdometry(),
+            first.cmd(),
+            drive.stopCommand(),
+            robot.coral.intakeCommand(),
+            second.cmd(),
+            drive.stopCommand()
         ));
 
         return routine;
