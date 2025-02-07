@@ -108,7 +108,7 @@ public class Autonomous {
             drive.stopCommand(),
 
             // Intake the coral
-            AutoCommands.autoIntakeCommand(second.cmd(), 5.0, robot),
+            AutoCommands.intakeThenDo(second.cmd(), 5.0, robot),
 
             // Stop driving at the end
             drive.stopCommand()
@@ -126,14 +126,48 @@ public class Autonomous {
 
         // When the routine begins, reset odometry and start the first trajectory
         routine.active().onTrue(Commands.sequence(
+            // Reset odometry, then drive to reef
             splits.get(0).resetOdometry(),
             splits.get(0).cmd(),
+            
+            // Score preloaded coral
+            AutoCommands.score(),
+
+            // Drive to coral station
             splits.get(1).cmd(),
-            splits.get(2).cmd(),
+
+            // Intake coral 2 from coral station, then drive to reef
+            AutoCommands.intakeThenDo(
+                splits.get(2).cmd(), 
+                5.0, robot
+            ),
+
+            // Score coral 2
+            AutoCommands.score(),
+
+            // Drive to coral station
             splits.get(3).cmd(),
-            splits.get(4).cmd(),
+
+            // Intake coral 3 from coral station, then drive to reef
+            AutoCommands.intakeThenDo(
+                splits.get(4).cmd(),
+                5.0, robot
+            ),
+
+            // Score coral 3
+            AutoCommands.score(),
+
+            // Drive to coral station
             splits.get(5).cmd(),
-            splits.get(6).cmd()
+
+            // Intake coral 4 from coral station, then drive to reef
+            AutoCommands.intakeThenDo(
+                splits.get(6).cmd(),
+                5.0, robot
+            ),
+
+            // Score coral 4
+            AutoCommands.score()
         ));
 
         return routine;
