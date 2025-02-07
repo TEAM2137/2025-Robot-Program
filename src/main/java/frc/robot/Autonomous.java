@@ -18,6 +18,7 @@ import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.button.RobotModeTriggers;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
+import frc.robot.commands.AutoCommands;
 import frc.robot.commands.DriveCommands;
 import frc.robot.subsystems.drive.Drive;
 import frc.robot.util.AutoAlignUtil;
@@ -99,13 +100,17 @@ public class Autonomous {
         AutoTrajectory first = routine.trajectory(pathName, 0);
         AutoTrajectory second = routine.trajectory(pathName, 1);
 
-        // When the routine begins, reset odometry and start the first trajectory
         routine.active().onTrue(Commands.sequence(
             first.resetOdometry(),
+
+            // Run the first drive command and stop
             first.cmd(),
             drive.stopCommand(),
-            robot.coral.intakeCommand(),
-            second.cmd(),
+
+            // Intake the coral
+            AutoCommands.autoIntakeCommand(second.cmd(), 5.0, robot),
+
+            // Stop driving at the end
             drive.stopCommand()
         ));
 

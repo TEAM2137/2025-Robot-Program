@@ -33,4 +33,16 @@ public class Coral extends SubsystemBase{
             .andThen(setVoltageCommand(2).repeatedly().onlyWhile(beamBrokenTrigger))
             .andThen(setVoltageCommand(0));
     }
+
+    public Command intakeUntilBrokenCommand(double timeoutSeconds) {
+        return setVoltageCommand(2).repeatedly().until(beamBrokenTrigger)
+            .withTimeout(timeoutSeconds)
+            .finallyDo(() -> io.setRollerVoltage(0));
+    }
+
+    public Command intakeUntilNotBrokenCommand(double timeoutSeconds) {
+        return setVoltageCommand(2).repeatedly().onlyWhile(beamBrokenTrigger)
+            .withTimeout(timeoutSeconds)
+            .finallyDo(() -> io.setRollerVoltage(0));
+    }
 }
