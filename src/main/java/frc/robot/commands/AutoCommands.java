@@ -1,26 +1,18 @@
 package frc.robot.commands;
 
 import frc.robot.RobotContainer;
-
-import edu.wpi.first.wpilibj2.command.Command;
-import edu.wpi.first.wpilibj2.command.Commands;
+import choreo.auto.AutoTrajectory;
 
 public class AutoCommands {
-    public static Command intakeThenDo(Command driveAwayCommand, double timeoutSeconds, RobotContainer robot) {
-        return Commands.sequence(
-            // Intake the coral
-            robot.coral.intakeUntilBrokenCommand(timeoutSeconds),
-
-            // Start moving after the beam is broken, but complete the intake while driving away
-            Commands.parallel(
-                driveAwayCommand,
-                robot.coral.intakeUntilNotBrokenCommand(timeoutSeconds / 2.0)
-            )
-        );
-    }
-
-    // TODO
-    public static Command score() {
-        return Commands.none();
+    /**
+     *
+     * @param toStation - the trajectory that the intake commands should be attached to
+     * @param toReef - the trajectory that will be run after intaking
+     * @param robot - the robot container instance
+     */
+    public static void createIntakeSequence(AutoTrajectory toStation, AutoTrajectory toReef, RobotContainer robot) {
+        toStation.done().onTrue(robot.coral.intakeUntilBrokenCommand());
+        robot.coral.beamBroken.and(toStation.recentlyDone()).onTrue(
+            robot.coral.intakeWhileBrokenCommand().alongWith(toReef.cmd()));
     }
 }

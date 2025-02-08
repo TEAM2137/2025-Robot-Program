@@ -8,8 +8,8 @@ import edu.wpi.first.wpilibj.simulation.ElevatorSim;
 
 public class ElevatorIOSim implements ElevatorIO {
     private ElevatorSim sim;
-    private PIDController pid = new PIDController(30.0, 0.0, 3.0);
-    private ElevatorFeedforward ff = new ElevatorFeedforward(0.0, 6.0, 0.0);
+    private PIDController pid = new PIDController(27.0, 0.0, 2.5);
+    private ElevatorFeedforward ff = new ElevatorFeedforward(0.0, 0.5, 0.0);
 
     private boolean pidControlEnabled = false;
     private double appliedVolts = 0.0;
@@ -18,8 +18,8 @@ public class ElevatorIOSim implements ElevatorIO {
         this.sim = new ElevatorSim(
             DCMotor.getKrakenX60(2),
             3.0, 7.257, 0.03175,
-            0.26035, 1.96215,
-            true, 0.26035
+            0.0, 1.82,
+            true, 0.0
         );
     }
 
@@ -40,7 +40,8 @@ public class ElevatorIOSim implements ElevatorIO {
 
     @Override
     public void resetPosition() {
-        sim.setState(0.26035, 0);
+        // sim.setState(0.26035, 0);
+        sim.setState(0, 0);
     }
 
     @Override

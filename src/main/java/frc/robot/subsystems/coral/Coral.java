@@ -10,12 +10,12 @@ public class Coral extends SubsystemBase{
     private final CoralIO io;
     private final CoralIOInputsAutoLogged inputs;
 
-    public final Trigger beamBrokenTrigger;
+    public final Trigger beamBroken;
 
     public Coral(CoralIO io){
         this.io = io;
         this.inputs = new CoralIOInputsAutoLogged();
-        this.beamBrokenTrigger = new Trigger(io::isBeamBroken);
+        this.beamBroken = new Trigger(io::isBeamBroken);
     }
 
     @Override
@@ -29,20 +29,18 @@ public class Coral extends SubsystemBase{
     }
 
     public Command intakeCommand() {
-        return setVoltageCommand(2).repeatedly().until(beamBrokenTrigger)
-            .andThen(setVoltageCommand(2).repeatedly().onlyWhile(beamBrokenTrigger))
+        return setVoltageCommand(2).repeatedly().until(beamBroken)
+            .andThen(setVoltageCommand(2).repeatedly().onlyWhile(beamBroken))
             .andThen(setVoltageCommand(0));
     }
 
-    public Command intakeUntilBrokenCommand(double timeoutSeconds) {
-        return setVoltageCommand(2).repeatedly().until(beamBrokenTrigger)
-            .withTimeout(timeoutSeconds)
+    public Command intakeUntilBrokenCommand() {
+        return setVoltageCommand(2).repeatedly().until(beamBroken)
             .finallyDo(() -> io.setRollerVoltage(0));
     }
 
-    public Command intakeUntilNotBrokenCommand(double timeoutSeconds) {
-        return setVoltageCommand(2).repeatedly().onlyWhile(beamBrokenTrigger)
-            .withTimeout(timeoutSeconds)
+    public Command intakeWhileBrokenCommand() {
+        return setVoltageCommand(2).repeatedly().onlyWhile(beamBroken)
             .finallyDo(() -> io.setRollerVoltage(0));
     }
 }

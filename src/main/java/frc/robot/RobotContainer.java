@@ -216,16 +216,16 @@ public class RobotContainer {
             MathUtil.applyDeadband(-operatorController.getRightY(), 0.1) * 4));
         cageManual.onFalse(cage.setVoltage(() -> 0));
 
-        l1.onTrue(elevator.setPositionCommand(ElevatorConstants.l1Setpoint));
-        l2.onTrue(elevator.setPositionCommand(ElevatorConstants.l2Setpoint));
-        l3.onTrue(elevator.setPositionCommand(ElevatorConstants.l3Setpoint));
-        l4.onTrue(elevator.setPositionCommand(ElevatorConstants.l4Setpoint));
+        l1.onTrue(elevator.setPositionCommand(ElevatorConstants.L1));
+        l2.onTrue(elevator.setPositionCommand(ElevatorConstants.L2));
+        l3.onTrue(elevator.setPositionCommand(ElevatorConstants.L3));
+        l4.onTrue(elevator.setPositionCommand(ElevatorConstants.L4));
 
-        stowManual.onTrue(elevator.setPositionCommand(ElevatorConstants.coralStationSetpoint));
+        stowManual.onTrue(elevator.setPositionCommand(ElevatorConstants.stow));
 
         score.onTrue(coral.setVoltageCommand(4));
         score.onFalse(coral.setVoltageCommand(0.0)
-            .andThen(elevator.setPositionCommand(ElevatorConstants.coralStationSetpoint))
+            .andThen(elevator.setPositionCommand(ElevatorConstants.stow))
             .andThen(coral.intakeCommand()));
 
         resetElevator.onTrue(elevator.resetPositionCommand().ignoringDisable(true));

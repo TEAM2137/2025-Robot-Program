@@ -27,9 +27,9 @@ public class ElevatorConstants {
     public static final double stage3Range = Units.inchesToMeters(19.500000);
 
     // Setpoints (m)
-    public static final double coralStationSetpoint = 0.01;
-    public static final double l1Setpoint = 0.14;
-    public static final double l2Setpoint = 0.38;
-    public static final double l3Setpoint = 1.00;
-    public static final double l4Setpoint = 1.82;
+    public static final double stow = 0.01;
+    public static final double L1 = 0.14;
+    public static final double L2 = 0.38;
+    public static final double L3 = 1.00;
+    public static final double L4 = 1.82;
 }
