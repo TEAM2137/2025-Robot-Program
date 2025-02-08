@@ -25,6 +25,7 @@ import frc.robot.subsystems.algae.AlgaeIntakeIOSim;
 import frc.robot.subsystems.cage.Cage;
 import frc.robot.subsystems.cage.CageIO;
 import frc.robot.subsystems.cage.CageIOSim;
+import frc.robot.subsystems.cage.CageIOSparkMax;
 import frc.robot.subsystems.drive.Drive;
 import frc.robot.subsystems.drive.GyroIO;
 import frc.robot.subsystems.drive.GyroIOPigeon2;
@@ -116,7 +117,7 @@ public class RobotContainer {
             coral = new Coral(new CoralIOTalonFX());
 
             algae = new AlgaeIntake(new AlgaeIntakeIO() {});
-            cage = new Cage(new CageIO() {});
+            cage = new Cage(new CageIOSparkMax());
 
             break;
 
