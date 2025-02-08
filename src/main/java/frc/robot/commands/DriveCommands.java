@@ -15,6 +15,7 @@ import edu.wpi.first.wpilibj.DriverStation.Alliance;
 import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
+import frc.robot.RobotContainer;
 import frc.robot.subsystems.drive.Drive;
 import frc.robot.util.AutoAlignUtil;
 import frc.robot.util.FieldPOIs;
@@ -31,12 +32,20 @@ import choreo.util.ChoreoAllianceFlipUtil;
 
 public class DriveCommands {
     private static final double DEADBAND = 0.1;
+
     private static final double ANGLE_KP = 12.0;
     private static final double ANGLE_KD = 0.2;
     private static final double ANGLE_MAX_VELOCITY = 8.0;
     private static final double ANGLE_MAX_ACCELERATION = 36.0;
+
+    private static final double DRIVE_KP = 7.0;
+    private static final double DRIVE_KD = 0.05;
+    private static final double DRIVE_MAX_VELOCITY = 4.0; // Meters/Sec
+    private static final double DRIVE_MAX_ACCELERATION = 28.0; // Meters/Sec^2
+
     private static final double FF_START_DELAY = 2.0; // Secs
     private static final double FF_RAMP_RATE = 0.1; // Volts/Sec
+
     private static final double WHEEL_RADIUS_MAX_VELOCITY = 1.0; // Rad/Sec
     private static final double WHEEL_RADIUS_RAMP_RATE = 0.5; // Rad/Sec^2
 
@@ -136,7 +145,9 @@ public class DriveCommands {
             );
         }, drive)
         // Reset PID controller when command starts
-        .beforeStarting(() -> angleController.reset(drive.getRotation().getRadians()));
+        .beforeStarting(() -> angleController.reset(
+            drive.getRotation().getRadians(),
+            drive.getAngularSpeedRadsPerSec()), drive);
     }
 
     /**
@@ -276,7 +287,6 @@ public class DriveCommands {
 
         // Construct command
         return Commands.sequence(
-            Commands.runOnce(() -> angleController.reset(drive.getRotation().getRadians())),
             Commands.runOnce(() -> target = getNewTargetPole(drive, right, motionSupplier)),
             driveToTargetCommand(drive, angleController)
         );
@@ -295,7 +305,6 @@ public class DriveCommands {
             Commands.runOnce(() -> target = (drive.getPose().getY() < 8.19912 / 2.0 == !ChoreoAllianceFlipUtil.shouldFlip())
                 ? AutoAlignUtil.flipIfRed(FieldPOIs.CORAL_STATION_BOTTOM)
                 : AutoAlignUtil.flipIfRed(FieldPOIs.CORAL_STATION_TOP), drive),
-            Commands.runOnce(() -> angleController.reset(drive.getRotation().getRadians()), drive),
             driveToTargetCommand(drive, angleController)
         );
     }
@@ -324,14 +333,28 @@ public class DriveCommands {
     }
 
     private static Command driveToTargetCommand(Drive drive, ProfiledPIDController angleController) {
+        // Create drive PID controller
+        ProfiledPIDController driveController = new ProfiledPIDController(
+            DRIVE_KP, 0.0, DRIVE_KD,
+            new TrapezoidProfile.Constraints(DRIVE_MAX_VELOCITY, DRIVE_MAX_ACCELERATION)
+        );
+
+        // Run the command
         return Commands.runEnd(() -> {
-            double max = 0.75;
+            // Dynamically calculate drive constraints based on elevator height
+            double elevatorHeight = RobotContainer.getInstance().elevator.getExtensionMeters();
+            double velocityScaling = 1 - (elevatorHeight / 3.0);
+            double accelScaling = 1 - (elevatorHeight / 6.0);
+            TrapezoidProfile.Constraints driveConstraints = new TrapezoidProfile.Constraints(
+                DRIVE_MAX_VELOCITY * velocityScaling,
+                DRIVE_MAX_ACCELERATION * accelScaling);
+
             Translation2d toTarget = new Translation2d(
                 drive.getPose().getX() - target.getX(),
                 drive.getPose().getY() - target.getY()
             );
             Translation2d normalized = new Translation2d(
-                -Math.min(toTarget.getNorm() * 1.5, max),
+                driveController.calculate(toTarget.getNorm(), new TrapezoidProfile.State(), driveConstraints),
                 toTarget.getAngle()
             );
 
@@ -344,8 +367,8 @@ public class DriveCommands {
 
             // Convert to field relative speeds
             ChassisSpeeds speeds = new ChassisSpeeds(
-                normalized.getX() * drive.getMaxLinearSpeedMetersPerSec() * (isFlipped ? -1 : 1),
-                normalized.getY() * drive.getMaxLinearSpeedMetersPerSec() * (isFlipped ? -1 : 1),
+                normalized.getX() * (isFlipped ? -1 : 1),
+                normalized.getY() * (isFlipped ? -1 : 1),
                 omega
             );
 
@@ -354,6 +377,22 @@ public class DriveCommands {
                 ? drive.getRotation().plus(new Rotation2d(Math.PI))
                 : drive.getRotation()
             ));
-        }, () -> target = null, drive);
+        }, () -> target = null, drive)
+        .beforeStarting(() -> {
+            // Reset pid controllers
+            double targetDistance = drive.getPose().getTranslation().getDistance(target.getTranslation());
+            driveController.reset(
+                targetDistance,
+                // Calculate the robots starting velocity towards the target
+                drive.getLinearSpeedMetersPerSec() * AutoAlignUtil.dot(
+                    AutoAlignUtil.normalize(drive.getLinearSpeedsVector()),
+                    AutoAlignUtil.normalize(drive.getPose().getTranslation().minus(target.getTranslation())))
+            );
+            driveController.calculate(targetDistance);
+            angleController.reset(
+                drive.getRotation().getRadians(),
+                drive.getAngularSpeedRadsPerSec()
+            );
+        });
     }
 }

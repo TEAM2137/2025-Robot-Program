@@ -399,6 +399,22 @@ public class Drive extends SubsystemBase {
         return getMaxLinearSpeedMetersPerSec() / DRIVE_BASE_RADIUS;
     }
 
+    /** Returns a field-space vector representing the robot's linear speed in meters per sec. */
+    public Translation2d getLinearSpeedsVector() {
+        ChassisSpeeds speeds = ChassisSpeeds.fromRobotRelativeSpeeds(kinematics.toChassisSpeeds(getModuleStates()), getRotation());
+        return new Translation2d(speeds.vxMetersPerSecond, speeds.vyMetersPerSecond);
+    }
+
+    /** Returns the current linear speed in meters per sec. */
+    public double getLinearSpeedMetersPerSec() {
+        return getLinearSpeedsVector().getNorm();
+    }
+
+    /** Returns the current angular speed in radians per sec. */
+    public double getAngularSpeedRadsPerSec() {
+        return kinematics.toChassisSpeeds(getModuleStates()).omegaRadiansPerSecond;
+    }
+
     /** Returns an array of module translations. */
     public static Translation2d[] getModuleTranslations() {
         return new Translation2d[] {
