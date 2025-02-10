@@ -70,6 +70,7 @@ public class RobotContainer {
 
     // Utilities
     public final Trigger xLock = driverController.x();
+    public final Trigger stopAll = driverController.y();
     public final Trigger resetGyro = driverController.start();
     public final Trigger resetElevator = operatorController.start();
 
@@ -199,6 +200,10 @@ public class RobotContainer {
         // Switch to X pattern
         xLock.onTrue(Commands.runOnce(drive::xLock, drive));
 
+        stopAll.onTrue(coral.setVoltageCommand(0)
+            .andThen(elevator.setVoltage(() -> 0))
+            .andThen(drive.stopCommand()));
+
         // Reset gyro to 0°
         resetGyro.onTrue(Commands.runOnce(() ->
             drive.setPose(new Pose2d(
@@ -244,14 +249,6 @@ public class RobotContainer {
 
         coralManual.onTrue(coral.setVoltageCommand(4));
         coralManual.onFalse(coral.setVoltageCommand(0));
-
-        // intakeAlgae.onTrue(algae.setRollerVoltage(12));
-        // outtakeAlgae.onTrue(algae.setRollerVoltage(-12));
-        // intakeAlgae.onFalse(algae.setRollerVoltage(0));
-        // outtakeAlgae.onFalse(algae.setRollerVoltage(0));
-
-        // intakeDown.onTrue(algae.setPivotPosition(90));
-        // intakeDown.onFalse(algae.setPivotPosition(0));
     }
 
     /**
