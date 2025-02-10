@@ -29,11 +29,6 @@ public class CoralIOSim implements CoralIO {
     }
 
     @Override
-    public boolean isBeamBroken() {
-        return isBeamBroken;
-    }
-
-    @Override
     public void setRollerVoltage(double voltage) {
         sim.setInputVoltage(voltage);
     }

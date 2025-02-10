@@ -11,16 +11,18 @@ public class Coral extends SubsystemBase{
     private final CoralIOInputsAutoLogged inputs;
 
     public final Trigger beamBroken;
+    private boolean isBeamBroken;
 
     public Coral(CoralIO io){
         this.io = io;
         this.inputs = new CoralIOInputsAutoLogged();
-        this.beamBroken = new Trigger(io::isBeamBroken);
+        this.beamBroken = new Trigger(() -> isBeamBroken);
     }
 
     @Override
     public void periodic() {
         io.updateInputs(inputs);
+        isBeamBroken = inputs.isBeamBroken;
         Logger.processInputs("Coral", inputs);
     }
 
