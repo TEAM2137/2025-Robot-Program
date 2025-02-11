@@ -7,12 +7,11 @@ import edu.wpi.first.math.geometry.Transform3d;
 
 public class VisionConstants {
   // AprilTag layout
-  public static AprilTagFieldLayout aprilTagLayout =
-      AprilTagFieldLayout.loadField(AprilTagFields.kDefaultField);
+  public static AprilTagFieldLayout aprilTagLayout = AprilTagFieldLayout.loadField(AprilTagFields.kDefaultField);
 
   // Camera names, must match names configured on coprocessor
-  public static String cam0 = "camera_0";
-  public static String cam1 = "camera_1";
+  public static String cam0 = "limelight-l";
+  public static String cam1 = "limelight-r";
 
   // Robot to camera transforms
   // (Not used by Limelight, configure in web UI instead)

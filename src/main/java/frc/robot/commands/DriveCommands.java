@@ -38,9 +38,9 @@ public class DriveCommands {
     private static final double ANGLE_MAX_VELOCITY = 8.0;
     private static final double ANGLE_MAX_ACCELERATION = 36.0;
 
-    private static final double DRIVE_KP = 7.0;
+    private static final double DRIVE_KP = 8.25;
     private static final double DRIVE_KD = 0.05;
-    private static final double DRIVE_MAX_VELOCITY = 4.0; // Meters/Sec
+    private static final double DRIVE_MAX_VELOCITY = 4.25; // Meters/Sec
     private static final double DRIVE_MAX_ACCELERATION = 28.0; // Meters/Sec^2
 
     private static final double FF_START_DELAY = 2.0; // Secs

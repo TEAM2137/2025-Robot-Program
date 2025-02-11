@@ -164,7 +164,7 @@ public class Autonomous {
         // Raise elevator on approach
         toReef4.atTimeBeforeEnd(elevatorDelay).onTrue(
             robot.elevator.setPositionCommand(ElevatorConstants.L4));
-        
+
         // Score coral 4, stow elevator, and drive to pickup coral
         AutoCommands.createScoringSequence(scoreDuration, toReef1, robot);
 

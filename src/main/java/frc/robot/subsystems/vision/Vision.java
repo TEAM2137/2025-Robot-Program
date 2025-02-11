@@ -92,10 +92,11 @@ public class Vision extends SubsystemBase {
                     > maxZError // Must have realistic Z coordinate
 
                 // Must be within the field boundaries
-                || observation.pose().getX() < 0.0
+                || observation.pose().getX() <= 0.0
                 || observation.pose().getX() > aprilTagLayout.getFieldLength()
-                || observation.pose().getY() < 0.0
-                || observation.pose().getY() > aprilTagLayout.getFieldWidth();
+                || observation.pose().getY() <= 0.0
+                || observation.pose().getY() > aprilTagLayout.getFieldWidth()
+                || observation.type() == PoseObservationType.MEGATAG_2;
 
         // Add pose to log
         robotPoses.add(observation.pose());
@@ -120,9 +121,12 @@ public class Vision extends SubsystemBase {
           angularStdDev *= cameraStdDevFactors[cameraIndex];
         }
 
+        Pose2d pose2d = observation.pose().toPose2d();
+        // System.out.println("Pose: " + pose2d.toString());
+
         // Send vision observation
         consumer.accept(
-            observation.pose().toPose2d(),
+            pose2d,
             observation.timestamp(),
             VecBuilder.fill(linearStdDev, linearStdDev, angularStdDev));
       }

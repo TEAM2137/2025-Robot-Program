@@ -111,8 +111,8 @@ public class RobotContainer {
 
             vision = new Vision(
                 drive::addVisionMeasurement,
-                new VisionIOLimelight(VisionConstants.cam0, drive::getRotation),
-                new VisionIOLimelight(VisionConstants.cam1, drive::getRotation)
+                new VisionIOLimelight(VisionConstants.cam0, drive::getRotation)
+                // new VisionIOLimelight(VisionConstants.cam1, drive::getRotation)
             );
 
             elevator = new Elevator(new ElevatorIOTalonFX());
@@ -235,16 +235,16 @@ public class RobotContainer {
 
         score.onTrue(coral.setVoltageCommand(4));
         score.onFalse(coral.setVoltageCommand(0.0)
-            .andThen(elevator.setPositionCommand(ElevatorConstants.stow))
-            .andThen(coral.intakeCommand()));
+            .andThen(elevator.setPositionCommand(ElevatorConstants.stow)));
+            // .andThen(coral.intakeCommand()));
 
         resetElevator.onTrue(elevator.resetPositionCommand().ignoringDisable(true));
 
         targetLeft.whileTrue(DriveCommands.driveToNearestPole(drive, false, joystickSupplier));
         targetRight.whileTrue(DriveCommands.driveToNearestPole(drive, true, joystickSupplier));
 
-        targetCoralStation.onTrue(coral.intakeCommand());
-        // targetCoralStation.onTrue(DriveCommands.driveToCoralStation(drive).alongWith(coral.intakeCommand()));
+        // targetCoralStation.onTrue(coral.intakeCommand());
+        targetCoralStation.onTrue(DriveCommands.driveToCoralStation(drive).alongWith(coral.intakeCommand()));
         targetCoralStation.onFalse(drive.runOnce(() -> {}));
 
         coralManual.onTrue(coral.setVoltageCommand(4));

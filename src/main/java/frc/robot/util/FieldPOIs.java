@@ -19,8 +19,8 @@ public class FieldPOIs {
     public static final List<Pose2d> REEF_LOCATIONS_RIGHT = filterEveryOther(0, REEF_LOCATIONS);
     public static final List<Pose2d> REEF_LOCATIONS_LEFT = filterEveryOther(1, REEF_LOCATIONS);
 
-    public static final Pose2d CORAL_STATION_TOP = new Pose2d(new Translation2d(1.142, 7.107), new Rotation2d(-0.939));
-    public static final Pose2d CORAL_STATION_BOTTOM = new Pose2d(new Translation2d(1.142, 0.918), new Rotation2d(0.939));
+    public static final Pose2d CORAL_STATION_TOP = new Pose2d(new Translation2d(1.0, 7.107), new Rotation2d(-0.939));
+    public static final Pose2d CORAL_STATION_BOTTOM = new Pose2d(new Translation2d(1.0, 0.918), new Rotation2d(0.939));
 
     static {
         // Publish values to NT

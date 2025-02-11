@@ -14,8 +14,8 @@ public class ElevatorConstants {
     // PID Constants
     public static final double kS = 0.0; // Output addition to overcome static friction
     public static final double kG = 0.05; // Output addition to overcome gravity
-    public static final double kP = 4.5; // PID P
-    public static final double kD = 0.1; // PID D
+    public static final double kP = 5.5; // PID P
+    public static final double kD = 0.08; // PID D
 
     // CTRE Motion Magic Constants (https://v6.docs.ctr-electronics.com/en/2024/docs/api-reference/device-specific/talonfx/motion-magic.html)
     public static final double targetCruiseVelocity = 65.0; // Target cruise velocity (rps)
@@ -27,9 +27,9 @@ public class ElevatorConstants {
     public static final double stage3Range = Units.inchesToMeters(19.500000);
 
     // Setpoints (m)
-    public static final double stow = 0.01;
-    public static final double L1 = 0.14;
-    public static final double L2 = 0.38;
-    public static final double L3 = 1.00;
-    public static final double L4 = 1.82;
+    public static final double stow = 0.0;
+    public static final double L1 = 0.35;
+    public static final double L2 = 0.57;
+    public static final double L3 = 1.19;
+    public static final double L4 = 2.05;
 }

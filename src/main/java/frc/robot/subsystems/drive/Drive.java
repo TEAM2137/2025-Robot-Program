@@ -235,7 +235,7 @@ public class Drive extends SubsystemBase {
     }
 
     public int getNearestPole(Pose2d pose, Translation2d motionVector, List<Pose2d> locations) {
-        Pair<Integer, Double> bestResult = new Pair<>(-1, 1000.0);
+        Pair<Integer, Double> bestResult = new Pair<>(0, 1000.0);
 
         for (int i = 0; i < locations.size(); i++) {
             // Calculate the distance from the robot to the current reef pole
