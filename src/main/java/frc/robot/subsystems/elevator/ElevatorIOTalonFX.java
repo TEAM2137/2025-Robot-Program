@@ -78,13 +78,16 @@ public class ElevatorIOTalonFX implements ElevatorIO {
         inputs.elevatorPositionMeters = inputs.motorPositionRotations * ElevatorConstants.spoolRadius * Math.PI;
         inputs.velocityMetersPerSecond = leadMotor.getVelocity().getValueAsDouble();
 
-        inputs.targetPositionRotations = targetPosition;
+        inputs.targetPositionMeters = targetPosition;
+        inputs.targetPositionRotations = targetPosition / ElevatorConstants.spoolRadius / Math.PI;
 
         inputs.leaderOutputVolts = leadMotor.getMotorVoltage().getValueAsDouble();
         inputs.leaderCurrentAmps = leadMotor.getSupplyCurrent().getValueAsDouble();
 
         inputs.followerOutputVolts = followMotor.getMotorVoltage().getValueAsDouble();
         inputs.followerCurrentAmps = followMotor.getSupplyCurrent().getValueAsDouble();
+
+        if (targetPosition == ElevatorConstants.stow && inputs.elevatorPositionMeters <= 0.01) setVolts(0);
     }
 
     @Override
@@ -95,12 +98,13 @@ public class ElevatorIOTalonFX implements ElevatorIO {
 
     @Override
     public void setTargetPosition(double targetPosition) {
-        this.targetPosition = targetPosition / ElevatorConstants.spoolRadius / Math.PI;
-        leadMotor.setControl(new MotionMagicVoltage(this.targetPosition));
+        this.targetPosition = targetPosition;
+        leadMotor.setControl(new MotionMagicVoltage(targetPosition / ElevatorConstants.spoolRadius / Math.PI));
     }
 
     @Override
     public void setVolts(double appliedVolts) {
+        this.targetPosition = 0.0;
         leadMotor.setControl(new VoltageOut(appliedVolts));
     }
 

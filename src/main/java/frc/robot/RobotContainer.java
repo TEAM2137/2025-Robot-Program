@@ -1,5 +1,6 @@
 package frc.robot;
 
+import java.util.function.BooleanSupplier;
 import java.util.function.Supplier;
 
 import choreo.util.ChoreoAllianceFlipUtil;
@@ -191,14 +192,17 @@ public class RobotContainer {
      * edu.wpi.first.wpilibj2.command.button.JoystickButton}.
      */
     private void configureButtonBindings() {
+        BooleanSupplier slowMode = () -> driverController.getLeftTriggerAxis() > 0.25;
+
         // Default command, normal field-relative drive
         drive.setDefaultCommand(DriveCommands.joystickDrive(drive,
-                joystickSupplier,
-                () -> driverController.getLeftTriggerAxis() > 0.25,
+                joystickSupplier, slowMode,
                 () -> -driverController.getRightX()));
 
         // Switch to X pattern
         xLock.onTrue(Commands.runOnce(drive::xLock, drive));
+        // xLock.onTrue(Commands.run(() -> drive.runVolts(
+        //     new ChassisSpeeds(12, 0, 0)), drive));
 
         stopAll.onTrue(coral.setVoltageCommand(0)
             .andThen(elevator.setVoltage(() -> 0))
@@ -244,7 +248,8 @@ public class RobotContainer {
         targetRight.whileTrue(DriveCommands.driveToNearestPole(drive, true, joystickSupplier));
 
         // targetCoralStation.onTrue(coral.intakeCommand());
-        targetCoralStation.onTrue(DriveCommands.driveToCoralStation(drive).alongWith(coral.intakeCommand()));
+        targetCoralStation.onTrue(DriveCommands.driveToCoralStation(drive, joystickSupplier, slowMode)
+            .alongWith(coral.intakeCommand()));
         targetCoralStation.onFalse(drive.runOnce(() -> {}));
 
         coralManual.onTrue(coral.setVoltageCommand(4));

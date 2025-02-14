@@ -38,10 +38,12 @@ public class DriveCommands {
     private static final double ANGLE_MAX_VELOCITY = 8.0;
     private static final double ANGLE_MAX_ACCELERATION = 36.0;
 
-    private static final double DRIVE_KP = 8.25;
-    private static final double DRIVE_KD = 0.05;
+    private static final double DRIVE_KP = 8.6;
+    private static final double DRIVE_KD = 0.035;
     private static final double DRIVE_MAX_VELOCITY = 4.25; // Meters/Sec
     private static final double DRIVE_MAX_ACCELERATION = 28.0; // Meters/Sec^2
+
+    private static final double TARGET_DEADBAND_METERS = 0.02; // For targeting
 
     private static final double FF_START_DELAY = 2.0; // Secs
     private static final double FF_RAMP_RATE = 0.1; // Volts/Sec
@@ -292,21 +294,13 @@ public class DriveCommands {
         );
     }
 
-    public static Command driveToCoralStation(Drive drive) {
-        // Create PID controller
-        ProfiledPIDController angleController = new ProfiledPIDController(
-            ANGLE_KP, 0.0, ANGLE_KD,
-            new TrapezoidProfile.Constraints(ANGLE_MAX_VELOCITY, ANGLE_MAX_ACCELERATION)
-        );
-        angleController.enableContinuousInput(-Math.PI, Math.PI);
-
+    public static Command driveToCoralStation(Drive drive, Supplier<Translation2d> joystickSupplier, BooleanSupplier slowMode) {
         // Construct command
-        return Commands.sequence(
-            Commands.runOnce(() -> target = (drive.getPose().getY() < 8.19912 / 2.0 == !ChoreoAllianceFlipUtil.shouldFlip())
-                ? AutoAlignUtil.flipIfRed(FieldPOIs.CORAL_STATION_BOTTOM)
-                : AutoAlignUtil.flipIfRed(FieldPOIs.CORAL_STATION_TOP), drive),
-            driveToTargetCommand(drive, angleController)
-        );
+        return joystickDriveAtAngle(drive, joystickSupplier, slowMode, () -> {
+            return (drive.getPose().getY() < 8.19912 / 2.0 == !ChoreoAllianceFlipUtil.shouldFlip())
+                    ? AutoAlignUtil.flipIfRed(FieldPOIs.CORAL_STATION_BOTTOM).getRotation()
+                    : AutoAlignUtil.flipIfRed(FieldPOIs.CORAL_STATION_TOP).getRotation();
+        });
     }
 
     public static Pose2d getNewTargetPole(Drive drive, boolean right, Supplier<Translation2d> motionSupplier) {
@@ -354,7 +348,8 @@ public class DriveCommands {
                 drive.getPose().getY() - target.getY()
             );
             Translation2d normalized = new Translation2d(
-                driveController.calculate(toTarget.getNorm(), new TrapezoidProfile.State(), driveConstraints),
+                driveController.calculate(MathUtil.applyDeadband(toTarget.getNorm(), TARGET_DEADBAND_METERS),
+                    new TrapezoidProfile.State(), driveConstraints),
                 toTarget.getAngle()
             );
 
