@@ -121,7 +121,7 @@ public class Autonomous {
         AutoTrajectory toReef4 = splits.get(6);
 
         // Seconds before the end of the path that the elevator should raise
-        double elevatorDelay = 0.8;
+        // double elevatorDelay = 0.8;
         // Seconds that the coral rollers should run for when scoring
         double scoreDuration = 0.5;
 
