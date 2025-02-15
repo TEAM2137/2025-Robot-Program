@@ -21,6 +21,7 @@ import edu.wpi.first.math.kinematics.SwerveModulePosition;
 import edu.wpi.first.math.kinematics.SwerveModuleState;
 import edu.wpi.first.math.numbers.N1;
 import edu.wpi.first.math.numbers.N3;
+import edu.wpi.first.networktables.DoublePublisher;
 import edu.wpi.first.networktables.NetworkTableInstance;
 import edu.wpi.first.networktables.StructArrayPublisher;
 import edu.wpi.first.networktables.StructPublisher;
@@ -107,15 +108,15 @@ public class Drive extends SubsystemBase {
     private SwerveDrivePoseEstimator poseEstimator = new SwerveDrivePoseEstimator(kinematics, rawGyroRotation, lastModulePositions, new Pose2d());
 
     private static StructPublisher<Pose2d> closestLeftPolePublisher = NetworkTableInstance.getDefault()
-            .getStructTopic("ClosestLeftPole", Pose2d.struct).publish();
+            .getStructTopic("AutoAlign/ClosestLeftPole", Pose2d.struct).publish();
     private static StructPublisher<Pose2d> closestRightPolePublisher = NetworkTableInstance.getDefault()
-            .getStructTopic("ClosestRightPole", Pose2d.struct).publish();
+            .getStructTopic("AutoAlign/ClosestRightPole", Pose2d.struct).publish();
     private static StructArrayPublisher<Translation2d> joystickPublisher = NetworkTableInstance.getDefault()
-            .getStructArrayTopic("JoystickMotionVector", Translation2d.struct).publish();
+            .getStructArrayTopic("AutoAlign/JoystickMotionVector", Translation2d.struct).publish();
     private static StructArrayPublisher<Translation2d> toLeftReefPublisher = NetworkTableInstance.getDefault()
-            .getStructArrayTopic("ToLeftReefVector", Translation2d.struct).publish();
+            .getStructArrayTopic("AutoAlign/ToLeftReefVector", Translation2d.struct).publish();
     private static StructArrayPublisher<Translation2d> toRightReefPublisher = NetworkTableInstance.getDefault()
-            .getStructArrayTopic("ToRightReefVector", Translation2d.struct).publish();
+            .getStructArrayTopic("AutoAlign/ToRightReefVector", Translation2d.struct).publish();
 
     public Drive(GyroIO gyroIO, ModuleIO flModuleIO,ModuleIO frModuleIO, ModuleIO blModuleIO, ModuleIO brModuleIO) {
         this.gyroIO = gyroIO;
@@ -425,9 +426,18 @@ public class Drive extends SubsystemBase {
         };
     }
 
+    private static StructPublisher<Pose2d> autoTargetPosePublisher = NetworkTableInstance.getDefault()
+            .getStructTopic("Autonomous/AutoTargetPose", Pose2d.struct).publish();
+    private static DoublePublisher autoErrorPublisher = NetworkTableInstance.getDefault()
+            .getDoubleTopic("Autonomous/TargetError").publish();
+
     public void followTrajectory(SwerveSample sample) {
         // Get the current pose of the robot
         Pose2d pose = getPose();
+
+        // Publish the autonomous target pose
+        autoTargetPosePublisher.accept(sample.getPose());
+        autoErrorPublisher.accept(pose.getTranslation().getDistance(sample.getPose().getTranslation()));
 
         // Generate the next speeds for the robot
         ChassisSpeeds speeds = new ChassisSpeeds(

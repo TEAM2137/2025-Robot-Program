@@ -33,7 +33,7 @@ public class Autonomous {
     private final Drive drive;
 
     private static StructArrayPublisher<Translation2d> autoTrajectoryPublisher = NetworkTableInstance.getDefault()
-        .getStructArrayTopic("AutoTrajectory", Translation2d.struct).publish();
+        .getStructArrayTopic("Autonomous/AutoTrajectory", Translation2d.struct).publish();
 
     public Autonomous(RobotContainer robot) {
         this.robot = robot;
