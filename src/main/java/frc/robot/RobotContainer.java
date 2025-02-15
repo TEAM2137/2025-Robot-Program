@@ -98,6 +98,7 @@ public class RobotContainer {
     public final Trigger elevatorManual = operatorController.leftTrigger(0.35);
     public final Trigger cageManual = operatorController.rightTrigger(0.35);
     public final Trigger coralManual = operatorController.rightBumper();
+    public final Trigger elevatorApplyManual = operatorController.back();
 
     /** The container for the robot. Contains subsystems, IO devices, and commands. */
     public RobotContainer() {
@@ -116,8 +117,8 @@ public class RobotContainer {
 
             vision = new Vision(
                 drive::addVisionMeasurement,
-                new VisionIOLimelight(VisionConstants.cam0, drive::getRotation)
-                // new VisionIOLimelight(VisionConstants.cam1, drive::getRotation)
+                new VisionIOLimelight(VisionConstants.cam0, drive::getRotation),
+                new VisionIOLimelight(VisionConstants.cam1, drive::getRotation)
             );
 
             elevator = new Elevator(new ElevatorIOTalonFX());
@@ -241,30 +242,32 @@ public class RobotContainer {
             MathUtil.applyDeadband(-operatorController.getRightY(), 0.1) * 4));
         cageManual.onFalse(cage.setVoltage(() -> 0));
 
-        l1.onTrue(elevator.setPositionCommand(ElevatorConstants.L1));
-        l2.onTrue(elevator.setPositionCommand(ElevatorConstants.L2));
-        l3.onTrue(elevator.setPositionCommand(ElevatorConstants.L3));
-        l4.onTrue(elevator.setPositionCommand(ElevatorConstants.L4));
+        l1.onTrue(elevator.schedulePositionCommand(ElevatorConstants.L1));
+        l2.onTrue(elevator.schedulePositionCommand(ElevatorConstants.L2));
+        l3.onTrue(elevator.schedulePositionCommand(ElevatorConstants.L3));
+        l4.onTrue(elevator.schedulePositionCommand(ElevatorConstants.L4));
 
         stowManual.onTrue(elevator.setPositionCommand(ElevatorConstants.stow));
 
-        score.onTrue(coral.setVoltageCommand(4));
-        score.onFalse(coral.setVoltageCommand(0.0)
+        score.onTrue(coral.setVoltageCommand(6));
+        score.onFalse(coral.setVoltageCommand(0)
             .andThen(elevator.setPositionCommand(ElevatorConstants.stow)));
             // .andThen(coral.intakeCommand()));
 
         resetElevator.onTrue(elevator.resetPositionCommand().ignoringDisable(true));
 
-        targetLeft.whileTrue(DriveCommands.driveToNearestPole(drive, false, joystickSupplier));
-        targetRight.whileTrue(DriveCommands.driveToNearestPole(drive, true, joystickSupplier));
+        targetLeft.whileTrue(DriveCommands.driveToNearestPole(this, false, joystickSupplier));
+        targetRight.whileTrue(DriveCommands.driveToNearestPole(this, true, joystickSupplier));
 
-        // targetCoralStation.onTrue(coral.intakeCommand());
-        targetCoralStation.onTrue(DriveCommands.driveToCoralStation(drive, joystickSupplier, slowMode)
-            .alongWith(coral.intakeCommand()));
-        targetCoralStation.onFalse(drive.runOnce(() -> {}));
+        targetCoralStation.onTrue(DriveCommands.driveToCoralStation(drive, joystickSupplier, slowMode).alongWith(coral.intakeCommand()));
+        targetCoralStation.onFalse(Commands.runOnce(() -> coral.getCurrentCommand().cancel(), coral)
+            .andThen(coral.setVoltageCommand(0))
+            .andThen(Commands.runOnce(() -> drive.getCurrentCommand().cancel(), drive)));
 
-        coralManual.onTrue(coral.setVoltageCommand(4));
+        coralManual.onTrue(coral.setVoltageCommand(6));
         coralManual.onFalse(coral.setVoltageCommand(0));
+
+        elevatorApplyManual.onTrue(elevator.applyScheduledPositionCommand());
     }
 
     /**

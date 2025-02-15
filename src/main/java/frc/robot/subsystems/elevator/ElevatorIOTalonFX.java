@@ -17,7 +17,8 @@ public class ElevatorIOTalonFX implements ElevatorIO {
     private TalonFX leadMotor = new TalonFX(ElevatorConstants.leaderID, "rio");
     private TalonFX followMotor = new TalonFX(ElevatorConstants.followerID, "rio");
 
-    private double targetPosition = 0.0;
+    private double targetPosition = ElevatorConstants.stow;
+    private double scheduledPosition = ElevatorConstants.stow;
 
     public ElevatorIOTalonFX() {
         // Create TalonFX config
@@ -78,6 +79,7 @@ public class ElevatorIOTalonFX implements ElevatorIO {
         inputs.elevatorPositionMeters = inputs.motorPositionRotations * ElevatorConstants.spoolRadius * Math.PI;
         inputs.velocityMetersPerSecond = leadMotor.getVelocity().getValueAsDouble();
 
+        inputs.scheduledTargetPosition = this.scheduledPosition;
         inputs.targetPositionMeters = targetPosition;
         inputs.targetPositionRotations = targetPosition / ElevatorConstants.spoolRadius / Math.PI;
 
@@ -94,6 +96,18 @@ public class ElevatorIOTalonFX implements ElevatorIO {
     public void resetPosition() {
         leadMotor.setPosition(0.0);
         setTargetPosition(0.0);
+    }
+
+    @Override
+    public void schedulePosition(double targetPosition) {
+        this.scheduledPosition = targetPosition;
+        if (!(this.targetPosition == ElevatorConstants.stow
+            || this.targetPosition == 0.0)) setTargetPosition(targetPosition);
+    }
+
+    @Override
+    public void applyScheduledPosition() {
+        setTargetPosition(this.scheduledPosition);
     }
 
     @Override

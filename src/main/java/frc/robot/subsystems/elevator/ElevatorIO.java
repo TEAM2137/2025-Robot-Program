@@ -10,6 +10,7 @@ public interface ElevatorIO {
         public double velocityMetersPerSecond = 0.0;
 
         public double appliedVolts = 0.0;
+        public double scheduledTargetPosition = 0.0;
         public double targetPositionMeters = 0.0;
         public double targetPositionRotations = 0.0;
 
@@ -21,6 +22,10 @@ public interface ElevatorIO {
     }
 
     public default void updateInputs(ElevatorIOInputs inputs) {}
+
+    public default void schedulePosition(double targetPosition) {}
+
+    public default void applyScheduledPosition() {}
 
     /** Sets the setpoint for the elevator height, in meters */
     public default void setTargetPosition(double targetPosition) {}

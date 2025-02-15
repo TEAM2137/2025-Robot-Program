@@ -43,7 +43,8 @@ public class DriveCommands {
     private static final double DRIVE_MAX_VELOCITY = 4.25; // Meters/Sec
     private static final double DRIVE_MAX_ACCELERATION = 28.0; // Meters/Sec^2
 
-    private static final double TARGET_DEADBAND_METERS = 0.02; // For targeting
+    private static final double ELEVATOR_RAISE_DISTANCE_METERS = 1.25; // For targeting
+    private static final double TARGET_DEADBAND_METERS = 0.01; // For targeting
 
     private static final double FF_START_DELAY = 2.0; // Secs
     private static final double FF_RAMP_RATE = 0.1; // Volts/Sec
@@ -279,7 +280,7 @@ public class DriveCommands {
         return target;
     }
 
-    public static Command driveToNearestPole(Drive drive, boolean right, Supplier<Translation2d> motionSupplier) {
+    public static Command driveToNearestPole(RobotContainer robot, boolean right, Supplier<Translation2d> motionSupplier) {
         // Create PID controller
         ProfiledPIDController angleController = new ProfiledPIDController(
             ANGLE_KP, 0.0, ANGLE_KD,
@@ -289,8 +290,13 @@ public class DriveCommands {
 
         // Construct command
         return Commands.sequence(
-            Commands.runOnce(() -> target = getNewTargetPole(drive, right, motionSupplier)),
-            driveToTargetCommand(drive, angleController)
+            Commands.runOnce(() -> target = getNewTargetPole(robot.drive, right, motionSupplier)),
+            driveToTargetCommand(robot.drive, angleController).alongWith(Commands.run(() -> {
+                Translation2d robotTranslation = robot.drive.getPose().getTranslation();
+                if (target.getTranslation().getDistance(robotTranslation) < ELEVATOR_RAISE_DISTANCE_METERS) {
+                    robot.elevator.applyScheduledPosition();
+                }
+            }))
         );
     }
 

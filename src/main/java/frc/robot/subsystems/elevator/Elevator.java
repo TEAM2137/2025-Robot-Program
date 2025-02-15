@@ -35,6 +35,18 @@ public class Elevator extends SubsystemBase {
         return runOnce(() -> io.resetPosition());
     }
 
+    public Command applyScheduledPositionCommand() {
+        return runOnce(() -> io.applyScheduledPosition());
+    }
+
+    public void applyScheduledPosition() {
+        io.applyScheduledPosition();
+    }
+
+    public Command schedulePositionCommand(double targetPosition) {
+        return runOnce(() -> io.schedulePosition(targetPosition));
+    }
+
     public Command setPositionCommand(double targetPosition) {
         return runOnce(() -> io.setTargetPosition(targetPosition));
     }
@@ -48,6 +60,6 @@ public class Elevator extends SubsystemBase {
     }
 
     public Command stowCommand() {
-        return setPositionCommand(ElevatorConstants.stow);
+        return schedulePositionCommand(ElevatorConstants.stow);
     }
 }
