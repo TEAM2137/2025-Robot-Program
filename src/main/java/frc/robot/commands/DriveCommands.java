@@ -33,18 +33,18 @@ import choreo.util.ChoreoAllianceFlipUtil;
 public class DriveCommands {
     private static final double DEADBAND = 0.1;
 
-    private static final double ANGLE_KP = 12.0;
-    private static final double ANGLE_KD = 0.2;
-    private static final double ANGLE_MAX_VELOCITY = 8.0;
-    private static final double ANGLE_MAX_ACCELERATION = 36.0;
+    private static final double ANGLE_KP = 5.5;
+    private static final double ANGLE_KD = 0.01;
+    private static final double ANGLE_MAX_VELOCITY = 5.5;
+    private static final double ANGLE_MAX_ACCELERATION = 40.0;
 
-    private static final double DRIVE_KP = 8.6;
-    private static final double DRIVE_KD = 0.035;
-    private static final double DRIVE_MAX_VELOCITY = 4.25; // Meters/Sec
-    private static final double DRIVE_MAX_ACCELERATION = 28.0; // Meters/Sec^2
+    private static final double DRIVE_KP = 2.6;
+    private static final double DRIVE_KD = 0.1;
+    private static final double DRIVE_MAX_VELOCITY = 3.0; // Meters/Sec
+    private static final double DRIVE_MAX_ACCELERATION = 10.0; // Meters/Sec^2
+    private static final double DRIVE_DEADBAND_METERS = 0.02; // For targeting
 
     private static final double ELEVATOR_RAISE_DISTANCE_METERS = 1.25; // For targeting
-    private static final double TARGET_DEADBAND_METERS = 0.01; // For targeting
 
     private static final double FF_START_DELAY = 2.0; // Secs
     private static final double FF_RAMP_RATE = 0.1; // Volts/Sec
@@ -354,13 +354,14 @@ public class DriveCommands {
                 drive.getPose().getY() - target.getY()
             );
             Translation2d normalized = new Translation2d(
-                driveController.calculate(MathUtil.applyDeadband(toTarget.getNorm(), TARGET_DEADBAND_METERS),
+                driveController.calculate(MathUtil.applyDeadband(toTarget.getNorm(), DRIVE_DEADBAND_METERS),
                     new TrapezoidProfile.State(), driveConstraints),
                 toTarget.getAngle()
             );
 
             // Calculate angular speed
-            double omega = angleController.calculate(drive.getRotation().getRadians(), target.getRotation().getRadians());
+            double omega = angleController.calculate(drive.getRotation().getRadians(),
+                target.getRotation().getRadians());
 
             // Check if it's red alliance
             boolean isFlipped = DriverStation.getAlliance().isPresent()

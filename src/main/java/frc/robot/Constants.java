@@ -12,7 +12,7 @@ import edu.wpi.first.wpilibj.RobotBase;
  */
 public final class Constants {
     // The serial number of the practice bot roboRIO
-    private static final String practiceRioSerialNumber = "";
+    private static final String practiceRioSerialNumber = "03415A1A";
 
     public static final Mode simMode = Mode.SIM;
     public static final Mode currentMode = RobotBase.isReal() ? Mode.REAL : simMode;

@@ -137,12 +137,17 @@ public class Drive extends SubsystemBase {
         // Configure SysId
         sysId = new SysIdRoutine(
             new SysIdRoutine.Config(
-                null,
-                null,
-                null,
-                (state) -> Logger.recordOutput("Drive/SysIdState", state.toString())),
+                Volts.of(1.0).per(Second), null, Seconds.of(4),
+                (state) -> Logger.recordOutput("Drive/SysIdTestState", state.toString())
+            ),
             new SysIdRoutine.Mechanism(
-                (voltage) -> runCharacterization(voltage.in(Volts)), null, this));
+                (voltage) -> runCharacterization(voltage.in(Volts)), null, this)
+        );
+    }
+
+    @Override
+    public String getName() {
+        return "Drive";
     }
 
     @Override

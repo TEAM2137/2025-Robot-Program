@@ -127,7 +127,7 @@ public class Autonomous {
 
         // When the routine begins, reset odometry and start the first trajectory
         routine.active().onTrue(toReef1.resetOdometry()
-            // .andThen(robot.elevator.resetPositionCommand())
+            .andThen(robot.elevator.resetPositionCommand())
             .andThen(toReef1.cmd()));
 
         // Raise elevator on approach

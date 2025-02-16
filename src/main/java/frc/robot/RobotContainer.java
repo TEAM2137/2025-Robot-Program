@@ -1,18 +1,14 @@
 package frc.robot;
 
-import static edu.wpi.first.units.Units.Degrees;
 
 import java.util.function.BooleanSupplier;
 import java.util.function.Supplier;
 
 import choreo.util.ChoreoAllianceFlipUtil;
-import edu.wpi.first.cameraserver.CameraServer;
 import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
-import edu.wpi.first.math.geometry.Rotation3d;
 import edu.wpi.first.math.geometry.Translation2d;
-import edu.wpi.first.networktables.NetworkTableInstance;
 import edu.wpi.first.wpilibj.GenericHID;
 import edu.wpi.first.wpilibj.XboxController;
 import edu.wpi.first.wpilibj2.command.Command;
@@ -187,14 +183,7 @@ public class RobotContainer {
         configureButtonBindings();
 
         // Setup webcam streaming
-        CameraServer.startAutomaticCapture();
-
-        // Calculate global rotation after applying transformations to limelight-r in the correct order
-        Rotation3d llRot = new Rotation3d(Degrees.of(0), Degrees.of(0), Degrees.of(30))
-                .plus(new Rotation3d(Degrees.of(0), Degrees.of(20), Degrees.of(0)));
-        NetworkTableInstance.getDefault().getDoubleTopic("LimelightConstants/LL-R-Roll").publish().accept(llRot.getMeasureX().in(Degrees));
-        NetworkTableInstance.getDefault().getDoubleTopic("LimelightConstants/LL-R-Pitch").publish().accept(llRot.getMeasureY().in(Degrees));
-        NetworkTableInstance.getDefault().getDoubleTopic("LimelightConstants/LL-R-Yaw").publish().accept(llRot.getMeasureZ().in(Degrees));
+        // CameraServer.startAutomaticCapture();
     }
 
     /**
@@ -209,12 +198,12 @@ public class RobotContainer {
         // Default command, normal field-relative drive
         drive.setDefaultCommand(DriveCommands.joystickDrive(drive,
                 joystickSupplier, slowMode,
-                () -> -driverController.getRightX()));
+                () -> -driverController.getRightX() * 0.75));
 
         // Switch to X pattern
         xLock.onTrue(Commands.runOnce(drive::xLock, drive));
-        // xLock.onTrue(Commands.run(() -> drive.runVolts(
-        //     new ChassisSpeeds(12, 0, 0)), drive));
+        // xLock.onTrue(Commands.run(() -> drive.runVelocity(
+        //     new ChassisSpeeds(5, 0, 0)), drive));
 
         stopAll.onTrue(coral.setVoltageCommand(0)
             .andThen(elevator.setVoltage(() -> 0))
