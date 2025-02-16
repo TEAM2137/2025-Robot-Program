@@ -126,9 +126,11 @@ public class Autonomous {
         double scoreDuration = 0.5;
 
         // When the routine begins, reset odometry and start the first trajectory
-        routine.active().onTrue(toReef1.resetOdometry()
-            .andThen(robot.elevator.resetPositionCommand())
-            .andThen(toReef1.cmd()));
+        // routine.active().onTrue(toReef1.resetOdometry()
+        //     .andThen(robot.elevator.resetPositionCommand())
+        //     .andThen(toReef1.cmd()));
+
+        routine.active().onTrue(toReef3.resetOdometry().andThen(toReef3.cmd()));
 
         // Raise elevator on approach
         // toReef1.atTimeBeforeEnd(elevatorDelay).onTrue(
@@ -148,7 +150,7 @@ public class Autonomous {
         AutoCommands.createScoringSequence(scoreDuration, toReef2, toStation3, robot);
 
         // Intake coral 3 from coral station, then drive to reef
-        AutoCommands.createIntakeSequence(toStation3, toReef3, robot);
+        // AutoCommands.createIntakeSequence(toStation3, toReef3, robot);
 
         // Raise elevator on approach
         // toReef3.atTimeBeforeEnd(elevatorDelay).onTrue(

@@ -15,10 +15,10 @@ public class AutoCommands {
      * @param robot - the robot container instance
      */
     public static void createIntakeSequence(AutoTrajectory base, AutoTrajectory onComplete, RobotContainer robot) {
-        base.done().onTrue(robot.coral.intakeUntilBrokenCommand());
-        robot.coral.beamBroken.and(base.recentlyDone()).onTrue(
-            robot.coral.intakeWhileBrokenCommand().alongWith(onComplete.cmd()));
-        // base.done().onTrue(onComplete.cmd());
+        // base.done().onTrue(robot.coral.intakeUntilBrokenCommand());
+        // robot.coral.beamBroken.and(base.recentlyDone()).onTrue(
+        //     robot.coral.intakeWhileBrokenCommand().alongWith(onComplete.cmd()));
+        base.doneDelayed(1.0).onTrue(onComplete.cmd());
     }
 
     /**
@@ -53,7 +53,7 @@ public class AutoCommands {
      * @param robot - the robot container instance
      */
     public static void createScoringSequence(double duration, AutoTrajectory base, Command onComplete, RobotContainer robot) {
-        base.done().onTrue(onComplete);
+        base.doneDelayed(1.0).onTrue(onComplete);
         // base.doneDelayed(1.5).onTrue(Commands.sequence(
         //     robot.coral.setVoltageCommand(4).repeatedly().withTimeout(duration)
         //     .andThen(robot.coral.setVoltageCommand(0))

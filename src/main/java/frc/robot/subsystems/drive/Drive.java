@@ -72,9 +72,9 @@ public class Drive extends SubsystemBase {
     private Rotation2d rawGyroRotation = new Rotation2d();
 
     // Auto trajectory following PIDs
-    private final PIDController autoXController = new PIDController(10.0, 0.0, 0.0);
-    private final PIDController autoYController = new PIDController(10.0, 0.0, 0.0);
-    private final PIDController autoHeadingController = new PIDController(7.5, 0.0, 0.0);
+    private final PIDController autoXController = new PIDController(7.0, 0.0, 0.1);
+    private final PIDController autoYController = new PIDController(7.0, 0.0, 0.1);
+    private final PIDController autoHeadingController = new PIDController(8.5, 0.0, 0.0);
 
     private final Field2d field = new Field2d();
     private final Sendable swerveDriveSendable = new Sendable() {

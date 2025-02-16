@@ -9,6 +9,7 @@ import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Translation2d;
+import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.wpilibj.GenericHID;
 import edu.wpi.first.wpilibj.XboxController;
 import edu.wpi.first.wpilibj2.command.Command;
@@ -201,9 +202,11 @@ public class RobotContainer {
                 () -> -driverController.getRightX() * 0.75));
 
         // Switch to X pattern
-        xLock.onTrue(Commands.runOnce(drive::xLock, drive));
-        // xLock.onTrue(Commands.run(() -> drive.runVelocity(
-        //     new ChassisSpeeds(5, 0, 0)), drive));
+        // xLock.onTrue(Commands.runOnce(drive::xLock, drive));
+        xLock.whileTrue(Commands.run(() -> drive.runVelocity(
+            new ChassisSpeeds(3, 0, 0)), drive));
+        xLock.onFalse(Commands.run(() -> drive.runVelocity(
+            new ChassisSpeeds(0, 0, 0)), drive));
 
         stopAll.onTrue(coral.setVoltageCommand(0)
             .andThen(elevator.setVoltage(() -> 0))
@@ -228,7 +231,7 @@ public class RobotContainer {
         // Hold right trigger to enable cage manual controls using the right stick.
         // This should be removed once cage testing is complete
         cageManual.whileTrue(cage.setVoltage(() ->
-            MathUtil.applyDeadband(-operatorController.getRightY(), 0.1) * 4));
+            MathUtil.applyDeadband(-operatorController.getRightY(), 0.1) * 6));
         cageManual.onFalse(cage.setVoltage(() -> 0));
 
         l1.onTrue(elevator.schedulePositionCommand(ElevatorConstants.L1));
