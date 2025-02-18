@@ -12,7 +12,7 @@ import edu.wpi.first.networktables.NetworkTableInstance;
 public class FieldPOIs {
     private static final double REEF_VERTICAL_OFFSET_METERS = 1.26;
     private static final double REEF_HORIZONTAL_OFFSET_METERS = 0.17;
-    private static final double END_EFFECTOR_OFFSET = Units.inchesToMeters(-3.5875);
+    private static final double END_EFFECTOR_OFFSET = Units.inchesToMeters(-2.3);
 
     public static final Pose2d REEF = new Pose2d(new Translation2d(4.49, 4.03), new Rotation2d());
     public static final List<Pose2d> REEF_LOCATIONS = createReefScoringLocations();

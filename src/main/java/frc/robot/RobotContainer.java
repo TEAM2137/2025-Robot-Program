@@ -204,7 +204,7 @@ public class RobotContainer {
         // Switch to X pattern
         // xLock.onTrue(Commands.runOnce(drive::xLock, drive));
         xLock.whileTrue(Commands.run(() -> drive.runVelocity(
-            new ChassisSpeeds(3, 0, 0)), drive));
+            new ChassisSpeeds(2, 0, 0)), drive));
         xLock.onFalse(Commands.run(() -> drive.runVelocity(
             new ChassisSpeeds(0, 0, 0)), drive));
 
