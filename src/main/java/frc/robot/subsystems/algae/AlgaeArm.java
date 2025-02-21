@@ -15,7 +15,7 @@ public class AlgaeArm extends SubsystemBase {
     public AlgaeArm(AlgaeArmIO io) {
         this.io = io;
         this.inputs = new AlgaeIntakeIOInputsAutoLogged();
-        
+
         // Reset elevator position when enabled for the first time
         RobotModeTriggers.disabled().negate().and(() -> this.shouldZeroOnEnable)
                 .onTrue(resetPositionCommand().andThen(() -> this.shouldZeroOnEnable = false));
