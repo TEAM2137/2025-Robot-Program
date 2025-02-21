@@ -22,9 +22,10 @@ import frc.robot.subsystems.coral.Coral;
 import frc.robot.subsystems.coral.CoralIO;
 import frc.robot.subsystems.coral.CoralIOSim;
 import frc.robot.subsystems.coral.CoralIOTalonFX;
-import frc.robot.subsystems.algae.AlgaeIntake;
-import frc.robot.subsystems.algae.AlgaeIntakeIO;
-import frc.robot.subsystems.algae.AlgaeIntakeIOSim;
+import frc.robot.subsystems.algae.AlgaeArm;
+import frc.robot.subsystems.algae.AlgaeArmIO;
+import frc.robot.subsystems.algae.AlgaeArmIOSim;
+import frc.robot.subsystems.algae.AlgaeArmIOTalonFX;
 import frc.robot.subsystems.cage.Cage;
 import frc.robot.subsystems.cage.CageIO;
 import frc.robot.subsystems.cage.CageIOSim;
@@ -53,7 +54,7 @@ public class RobotContainer {
     public final Vision vision;
     public final Elevator elevator;
     public final Coral coral;
-    public final AlgaeIntake algae;
+    public final AlgaeArm algae;
     public final Cage cage;
 
     // Auto
@@ -121,7 +122,7 @@ public class RobotContainer {
             elevator = new Elevator(new ElevatorIOTalonFX());
             coral = new Coral(new CoralIOTalonFX());
 
-            algae = new AlgaeIntake(new AlgaeIntakeIO() {});
+            algae = new AlgaeArm(new AlgaeArmIOTalonFX());
             cage = new Cage(new CageIOSparkMax());
 
             break;
@@ -145,7 +146,7 @@ public class RobotContainer {
             elevator = new Elevator(new ElevatorIOSim());
             coral = new Coral(new CoralIOSim());
 
-            algae = new AlgaeIntake(new AlgaeIntakeIOSim());
+            algae = new AlgaeArm(new AlgaeArmIOSim());
             cage = new Cage(new CageIOSim() {});
 
             break;
@@ -169,7 +170,7 @@ public class RobotContainer {
             elevator = new Elevator(new ElevatorIO() {});
             coral = new Coral(new CoralIO() {});
 
-            algae = new AlgaeIntake(new AlgaeIntakeIO() {});
+            algae = new AlgaeArm(new AlgaeArmIO() {});
             cage = new Cage(new CageIO() {});
 
             break;
