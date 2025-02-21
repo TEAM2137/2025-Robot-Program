@@ -33,16 +33,16 @@ import choreo.util.ChoreoAllianceFlipUtil;
 public class DriveCommands {
     private static final double DEADBAND = 0.1;
 
-    private static final double ANGLE_KP = 5.5;
-    private static final double ANGLE_KD = 0.01;
+    private static final double ANGLE_KP = 4.8;
+    private static final double ANGLE_KD = 0.0;
     private static final double ANGLE_MAX_VELOCITY = 5.5;
     private static final double ANGLE_MAX_ACCELERATION = 40.0;
 
-    private static final double DRIVE_KP = 2.6;
-    private static final double DRIVE_KD = 0.1;
+    private static final double DRIVE_KP = 2.8;
+    private static final double DRIVE_KD = 0.0;
     private static final double DRIVE_MAX_VELOCITY = 3.0; // Meters/Sec
-    private static final double DRIVE_MAX_ACCELERATION = 10.0; // Meters/Sec^2
-    private static final double DRIVE_DEADBAND_METERS = 0.02; // For targeting
+    private static final double DRIVE_MAX_ACCELERATION = 18.0; // Meters/Sec^2
+    private static final double DRIVE_DEADBAND_METERS = 0.01; // For targeting
 
     private static final double ELEVATOR_RAISE_DISTANCE_METERS = 1.25; // For targeting
 

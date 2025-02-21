@@ -1,5 +1,7 @@
 package frc.robot.subsystems.algae;
 
+import java.util.function.DoubleSupplier;
+
 import org.littletonrobotics.junction.Logger;
 
 import edu.wpi.first.wpilibj2.command.Command;
@@ -29,6 +31,10 @@ public class AlgaeArm extends SubsystemBase {
 
     public Command setPivotPosition(double position) {
         return runOnce(() -> io.setPivotPosition(position));
+    }
+
+    public Command setPivotVoltage(DoubleSupplier voltage) {
+        return run(() -> io.setPivotVoltage(voltage.getAsDouble()));
     }
 
     public Command resetPositionCommand() {

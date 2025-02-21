@@ -16,4 +16,6 @@ public interface AlgaeArmIO {
     public default void setPivotPosition(double position) {}
 
     public default void resetPosition() {}
+
+    public default void setPivotVoltage(double voltage) {}
 }

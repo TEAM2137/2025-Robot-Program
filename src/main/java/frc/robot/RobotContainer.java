@@ -235,6 +235,10 @@ public class RobotContainer {
             MathUtil.applyDeadband(-operatorController.getRightY(), 0.1) * 6));
         cageManual.onFalse(cage.setVoltage(() -> 0));
 
+        cageManual.whileTrue(algae.setPivotVoltage(() ->
+            MathUtil.applyDeadband(-operatorController.getLeftY(), 0.1) * 6));
+        cageManual.onFalse(algae.setPivotVoltage(() -> 0));
+
         l1.onTrue(elevator.schedulePositionCommand(ElevatorConstants.L1));
         l2.onTrue(elevator.schedulePositionCommand(ElevatorConstants.L2));
         l3.onTrue(elevator.schedulePositionCommand(ElevatorConstants.L3));

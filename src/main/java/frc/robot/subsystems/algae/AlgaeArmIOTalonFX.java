@@ -5,6 +5,7 @@ import static edu.wpi.first.units.Units.Hertz;
 import com.ctre.phoenix6.BaseStatusSignal;
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
 import com.ctre.phoenix6.controls.PositionVoltage;
+import com.ctre.phoenix6.controls.VoltageOut;
 import com.ctre.phoenix6.hardware.TalonFX;
 import com.ctre.phoenix6.signals.InvertedValue;
 import com.ctre.phoenix6.signals.NeutralModeValue;
@@ -61,6 +62,11 @@ public class AlgaeArmIOTalonFX implements AlgaeArmIO {
     @Override
     public void setPivotPosition(double targetPosition) {
         pivotMotor.setControl(new PositionVoltage(targetPosition));
+    }
+
+    @Override
+    public void setPivotVoltage(double voltage) {
+        pivotMotor.setControl(new VoltageOut(voltage));
     }
 
     @Override
