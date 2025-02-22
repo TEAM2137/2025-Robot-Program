@@ -44,6 +44,7 @@ import frc.robot.subsystems.vision.Vision;
 import frc.robot.subsystems.vision.VisionConstants;
 import frc.robot.subsystems.vision.VisionIO;
 import frc.robot.subsystems.vision.VisionIOLimelight;
+import frc.robot.util.FieldPOIs;
 import frc.robot.util.AutoAlignUtil.Target;
 
 public class RobotContainer {
@@ -235,7 +236,13 @@ public class RobotContainer {
         // Driver reef auto align
         targetLeft.whileTrue(DriveCommands.autoAlignTo(Target.LEFT_POLE, this, joystickSupplier));
         targetRight.whileTrue(DriveCommands.autoAlignTo(Target.RIGHT_POLE, this, joystickSupplier));
-        targetAlgae.whileTrue(DriveCommands.autoAlignTo(Target.ALGAE, this, joystickSupplier));
+        targetAlgae.whileTrue(DriveCommands.autoAlignTo(Target.ALGAE, this, joystickSupplier)
+            .beforeStarting(() -> {
+                // Schedule the proper elevator height
+                Pose2d pose = DriveCommands.getNewTargetPose(drive, Target.ALGAE, joystickSupplier);
+                int poseId = FieldPOIs.ALGAE_LOCATIONS.indexOf(pose);
+                elevator.schedulePosition(poseId % 2 == 0 ? ElevatorConstants.algaeHigh : ElevatorConstants.algaeLow);
+            }));
 
         // Driver coral station align
         targetCoralStation.onTrue(DriveCommands.driveToCoralStation(drive, joystickSupplier, slowMode).alongWith(coral.intakeCommand()));
@@ -258,11 +265,11 @@ public class RobotContainer {
             MathUtil.applyDeadband(-operatorController.getLeftY(), 0.1) * 12));
         cageManual.onFalse(algae.setPivotVoltage(() -> 0));
 
-        // Schedule different reef heights
-        l1.onTrue(elevator.schedulePositionCommand(ElevatorConstants.L1));
-        l2.onTrue(elevator.schedulePositionCommand(ElevatorConstants.L2));
-        l3.onTrue(elevator.schedulePositionCommand(ElevatorConstants.L3));
-        l4.onTrue(elevator.schedulePositionCommand(ElevatorConstants.L4));
+        // Schedule different reef heights. These commands cannot be run while targeting algae
+        l1.and(targetAlgae.negate()).onTrue(elevator.schedulePositionCommand(ElevatorConstants.L1));
+        l2.and(targetAlgae.negate()).onTrue(elevator.schedulePositionCommand(ElevatorConstants.L2));
+        l3.and(targetAlgae.negate()).onTrue(elevator.schedulePositionCommand(ElevatorConstants.L3));
+        l4.and(targetAlgae.negate()).onTrue(elevator.schedulePositionCommand(ElevatorConstants.L4));
 
         // Stow the elevator manually
         stowManual.onTrue(elevator.setPositionCommand(ElevatorConstants.stow));

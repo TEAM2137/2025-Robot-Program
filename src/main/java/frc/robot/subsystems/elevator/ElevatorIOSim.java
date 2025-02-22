@@ -11,6 +11,7 @@ public class ElevatorIOSim implements ElevatorIO {
     private PIDController pid = new PIDController(27.0, 0.0, 2.5);
     private ElevatorFeedforward ff = new ElevatorFeedforward(0.0, 0.5, 0.0);
 
+    private double scheduledPosition = 0.0;
     private boolean pidControlEnabled = false;
     private double appliedVolts = 0.0;
 
@@ -32,10 +33,16 @@ public class ElevatorIOSim implements ElevatorIO {
         sim.setInputVoltage(appliedVolts);
         sim.update(0.02);
 
+        inputs.scheduledTargetPosition = scheduledPosition;
         inputs.elevatorPositionMeters = sim.getPositionMeters();
         inputs.velocityMetersPerSecond = sim.getVelocityMetersPerSecond();
         inputs.leaderOutputVolts = appliedVolts;
         inputs.leaderCurrentAmps = sim.getCurrentDrawAmps();
+    }
+
+    @Override
+    public void schedulePosition(double targetPosition) {
+        this.scheduledPosition = targetPosition;
     }
 
     @Override

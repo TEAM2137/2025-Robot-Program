@@ -233,6 +233,10 @@ public class Drive extends SubsystemBase {
         return trajectory;
     }
 
+    public int getNearestPose(Translation2d motionVector, List<Pose2d> locations) {
+        return getNearestPose(this.getPose(), motionVector, locations);
+    }
+
     public int getNearestPose(Pose2d pose, Translation2d motionVector, List<Pose2d> locations) {
         Pair<Integer, Double> bestResult = new Pair<>(0, 1000.0);
 

@@ -33,6 +33,14 @@ public class AutoAlignUtil {
     );
 
     /**
+     * Retrieves the nearest integer pose ID for a given auto align target type
+     */
+    public static int mapToPoseId(Target targetType, Drive drive, Translation2d motionVector) {
+        List<Pose2d> poseData = targetToPoseData.get(targetType);
+        return drive.getNearestPose(drive.getPose(), motionVector, poseData);
+    }
+
+    /**
      * Retrieves the nearest pose for a given auto align target type
      */
     public static Pose2d mapToPose(Target targetType, Drive drive, Translation2d motionVector) {
