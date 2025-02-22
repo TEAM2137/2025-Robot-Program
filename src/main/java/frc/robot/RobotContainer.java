@@ -25,6 +25,7 @@ import frc.robot.subsystems.algae.AlgaeArm;
 import frc.robot.subsystems.algae.AlgaeArmIO;
 import frc.robot.subsystems.algae.AlgaeArmIOSim;
 import frc.robot.subsystems.algae.AlgaeArmIOTalonFX;
+import frc.robot.subsystems.algae.AlgaeConstants;
 import frc.robot.subsystems.cage.Cage;
 import frc.robot.subsystems.cage.CageIO;
 import frc.robot.subsystems.cage.CageIOSim;
@@ -200,6 +201,7 @@ public class RobotContainer {
      */
     private void configureButtonBindings() {
         BooleanSupplier slowMode = () -> driverController.getLeftTriggerAxis() > 0.25;
+        Trigger didTargetAlgae = new Trigger(() -> FieldPOIs.ALGAE_LOCATIONS.contains(DriveCommands.getTarget()));
 
         // Default command, normal field-relative drive
         drive.setDefaultCommand(DriveCommands.joystickDrive(drive,
@@ -228,9 +230,17 @@ public class RobotContainer {
             )),
             drive).ignoringDisable(true));
 
-        // Driver score command
-        score.onTrue(coral.setVoltageCommand(6));
-        score.onFalse(coral.setVoltageCommand(0)
+        // Driver score sequence
+        score.and(didTargetAlgae.negate()).onTrue(coral.setVoltageCommand(6));
+        score.and(didTargetAlgae.negate()).onFalse(coral.setVoltageCommand(0)
+            .andThen(elevator.setPositionCommand(ElevatorConstants.stow)));
+
+        // Driver remove algae sequence
+        score.and(didTargetAlgae).onTrue(algae.setPivotPosition(AlgaeConstants.deploy)
+            .andThen(coral.setVoltageCommand(6)));
+        score.and(didTargetAlgae).onFalse(algae.setPivotPosition(AlgaeConstants.stow)
+            .andThen(coral.setVoltageCommand(0))
+            .andThen(Commands.waitSeconds(0.3))
             .andThen(elevator.setPositionCommand(ElevatorConstants.stow)));
 
         // Driver reef auto align
