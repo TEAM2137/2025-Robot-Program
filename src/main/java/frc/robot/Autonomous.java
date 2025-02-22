@@ -90,7 +90,8 @@ public class Autonomous {
         sysIdCommandChooser.addOption("Drive SysId (Dynamic Reverse)", drive.sysIdDynamic(SysIdRoutine.Direction.kReverse));
 
         // Testing Autos
-        autoChooser.addOption("4 Coral Upper", fourCoralUpper());
+        autoChooser.addOption("3 Coral Upper", threeCoral("Upper"));
+        // autoChooser.addOption("3 Coral Lower", threeCoral("Lower"));
         autoChooser.addOption("Drive Forward", driveStraight());
     }
 
@@ -107,8 +108,8 @@ public class Autonomous {
         return routine;
     }
 
-    public AutoRoutine fourCoralUpper() {
-        String pathName = "4 Coral Upper";
+    public AutoRoutine threeCoral(String half) {
+        String pathName = "3 Coral " + half;
         AutoRoutine routine = factory.newRoutine(pathName);
 
         // Load the routine's trajectories
@@ -119,7 +120,6 @@ public class Autonomous {
         AutoTrajectory toStation3 = splits.get(3);
         AutoTrajectory toReef3 = splits.get(4);
         AutoTrajectory toStation4 = splits.get(5);
-        AutoTrajectory toReef4 = splits.get(6);
 
         // Seconds before the end of the path that the elevator should raise
         double elevatorDelay = 0.4;
@@ -129,8 +129,6 @@ public class Autonomous {
         // When the routine begins, reset odometry and start the first trajectory
         routine.active().onTrue(robot.elevator.resetPositionCommand());
         routine.active().onTrue(toReef1.resetOdometry().andThen(toReef1.cmd()));
-
-        // routine.active().onTrue(toReef3.resetOdometry().andThen(toReef3.cmd()));
 
         // Raise elevator on approach
         toReef1.atTimeBeforeEnd(elevatorDelay).onTrue(
@@ -158,16 +156,6 @@ public class Autonomous {
 
         // Score coral 3, stow elevator, and drive to pickup coral
         AutoCommands.createScoringSequence(scoreDuration, toReef3, toStation4, robot);
-
-        // Intake coral 4 from coral station, then drive to reef
-        AutoCommands.createIntakeSequence(toStation4, toReef4, robot);
-
-        // Raise elevator on approach
-        // toReef4.atTimeBeforeEnd(elevatorDelay).onTrue(
-        //     robot.elevator.setPositionCommand(ElevatorConstants.L4));
-
-        // Score coral 4, stow elevator, and drive to pickup coral
-        // AutoCommands.createScoringSequence(scoreDuration, toReef1, robot);
 
         return routine;
     }

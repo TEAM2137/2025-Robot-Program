@@ -11,6 +11,7 @@ import edu.wpi.first.networktables.NetworkTableInstance;
 
 public class FieldPOIs {
     private static final double REEF_VERTICAL_OFFSET_METERS = 1.26;
+    private static final double ALGAE_VERTICAL_OFFSET_METERS = 0.14;
     private static final double REEF_HORIZONTAL_OFFSET_METERS = 0.17;
     private static final double END_EFFECTOR_OFFSET = Units.inchesToMeters(-2.3);
 
@@ -41,8 +42,13 @@ public class FieldPOIs {
             angle = angle.plus(Rotation2d.fromRadians(Math.PI / 3));
 
             Translation2d verticalOffset = new Translation2d(
-                angle.getCos() * REEF_VERTICAL_OFFSET_METERS,
-                angle.getSin() * REEF_VERTICAL_OFFSET_METERS
+                angle.getCos() * (REEF_VERTICAL_OFFSET_METERS),
+                angle.getSin() * (REEF_VERTICAL_OFFSET_METERS)
+            );
+
+            Translation2d algaeVerticalOffset = new Translation2d(
+                angle.getCos() * (REEF_VERTICAL_OFFSET_METERS + ALGAE_VERTICAL_OFFSET_METERS),
+                angle.getSin() * (REEF_VERTICAL_OFFSET_METERS + ALGAE_VERTICAL_OFFSET_METERS)
             );
 
             double leftMagnitude = REEF_HORIZONTAL_OFFSET_METERS - END_EFFECTOR_OFFSET;
@@ -66,7 +72,7 @@ public class FieldPOIs {
 
             Pose2d rightPole = new Pose2d(REEF.getTranslation().plus(verticalOffset).plus(rightOffset), angle.plus(Rotation2d.k180deg));
             Pose2d leftPole = new Pose2d(REEF.getTranslation().plus(verticalOffset).plus(leftOffset), angle.plus(Rotation2d.k180deg));
-            Pose2d algae = new Pose2d(REEF.getTranslation().plus(verticalOffset).plus(centerOffset), angle.plus(Rotation2d.k180deg));
+            Pose2d algae = new Pose2d(REEF.getTranslation().plus(algaeVerticalOffset).plus(centerOffset), angle.plus(Rotation2d.k180deg));
 
             builder.add(rightPole);
             builder.add(leftPole);

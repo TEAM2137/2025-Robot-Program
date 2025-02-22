@@ -59,6 +59,6 @@ public class AutoCommands {
             .andThen(robot.elevator.stowCommand())
         ));
 
-        base.doneDelayed(0.8 + duration + (duration / 2.0)).onTrue(onComplete);
+        base.doneDelayed(0.95 + duration).onTrue(onComplete);
     }
 }

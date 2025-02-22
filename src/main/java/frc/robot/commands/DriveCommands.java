@@ -275,9 +275,14 @@ public class DriveCommands {
     }
 
     private static Pose2d target;
+    private static Pose2d lastTargeted = new Pose2d();
 
-    public static Pose2d getTarget() {
+    public static Pose2d getActiveTarget() {
         return target;
+    }
+
+    public static Pose2d getLastTargeted() {
+        return lastTargeted;
     }
 
     public static Command autoAlignTo(AutoAlignUtil.Target targetType, RobotContainer robot, Supplier<Translation2d> motionSupplier) {
@@ -290,7 +295,10 @@ public class DriveCommands {
 
         // Construct command
         return Commands.sequence(
-            Commands.runOnce(() -> target = getNewTargetPose(robot.drive, targetType, motionSupplier)),
+            Commands.runOnce(() -> {
+                target = getNewTargetPose(robot.drive, targetType, motionSupplier);
+                lastTargeted = target;
+            }),
             driveToTargetCommand(robot.drive, angleController).alongWith(Commands.run(() -> {
                 Translation2d robotTranslation = robot.drive.getPose().getTranslation();
                 if (target.getTranslation().getDistance(robotTranslation) < ELEVATOR_RAISE_DISTANCE_METERS) {

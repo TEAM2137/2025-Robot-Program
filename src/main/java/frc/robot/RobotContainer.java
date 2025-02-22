@@ -5,6 +5,7 @@ import java.util.function.BooleanSupplier;
 import java.util.function.Supplier;
 
 import choreo.util.ChoreoAllianceFlipUtil;
+import edu.wpi.first.cameraserver.CameraServer;
 import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
@@ -78,6 +79,7 @@ public class RobotContainer {
     public final Trigger stopAll = driverController.y();
     public final Trigger resetGyro = driverController.start();
     public final Trigger resetElevator = operatorController.start();
+    public final Trigger resetAlgae = operatorController.rightStick();
 
     // Drive/point to different field POIs
     public final Trigger targetRight = driverController.rightBumper();
@@ -101,6 +103,8 @@ public class RobotContainer {
     public final Trigger elevatorManual = operatorController.leftTrigger(0.35);
     public final Trigger cageManual = operatorController.rightTrigger(0.35);
     public final Trigger algaeRollers = operatorController.rightBumper();
+    public final Trigger algaeDeploy = operatorController.povDown();
+    public final Trigger algaeStow = operatorController.povUp();
     public final Trigger elevatorApplyManual = operatorController.back();
 
     /** The container for the robot. Contains subsystems, IO devices, and commands. */
@@ -190,7 +194,7 @@ public class RobotContainer {
         configureButtonBindings();
 
         // Setup webcam streaming
-        // CameraServer.startAutomaticCapture();
+        CameraServer.startAutomaticCapture();
     }
 
     /**
@@ -201,7 +205,7 @@ public class RobotContainer {
      */
     private void configureButtonBindings() {
         BooleanSupplier slowMode = () -> driverController.getLeftTriggerAxis() > 0.25;
-        Trigger didTargetAlgae = new Trigger(() -> FieldPOIs.ALGAE_LOCATIONS.contains(DriveCommands.getTarget()));
+        Trigger didTargetAlgae = new Trigger(() -> FieldPOIs.ALGAE_LOCATIONS.contains(DriveCommands.getLastTargeted()));
 
         // Default command, normal field-relative drive
         drive.setDefaultCommand(DriveCommands.joystickDrive(drive,
@@ -237,7 +241,7 @@ public class RobotContainer {
 
         // Driver remove algae sequence
         score.and(didTargetAlgae).onTrue(algae.setPivotPosition(AlgaeConstants.deploy)
-            .andThen(coral.setVoltageCommand(6)));
+            .andThen(coral.setVoltageCommand(-6)));
         score.and(didTargetAlgae).onFalse(algae.setPivotPosition(AlgaeConstants.stow)
             .andThen(coral.setVoltageCommand(0))
             .andThen(Commands.waitSeconds(0.3))
@@ -272,7 +276,7 @@ public class RobotContainer {
 
         // Hold right trigger to enable algae arm manual controls using the left stick.
         cageManual.whileTrue(algae.setPivotVoltage(() ->
-            MathUtil.applyDeadband(-operatorController.getLeftY(), 0.1) * 12));
+            MathUtil.applyDeadband(-operatorController.getLeftY(), 0.1) * 4));
         cageManual.onFalse(algae.setPivotVoltage(() -> 0));
 
         // Schedule different reef heights. These commands cannot be run while targeting algae
@@ -286,10 +290,15 @@ public class RobotContainer {
 
         // Reset the elevator encoder position
         resetElevator.onTrue(elevator.resetPositionCommand().ignoringDisable(true));
+        resetAlgae.onTrue(algae.resetPositionCommand().ignoringDisable(true));
 
-        // Manually run the algae rollers
+        // Manually run the algae arm rollers
         algaeRollers.onTrue(coral.setVoltageCommand(-6));
         algaeRollers.onFalse(coral.setVoltageCommand(0));
+
+        // Manually deploy and stow the algae arm
+        algaeStow.onTrue(algae.setPivotPosition(AlgaeConstants.stow));
+        algaeDeploy.onTrue(algae.setPivotPosition(AlgaeConstants.deploy));
 
         // Manually apply the elevator's scheduled position
         elevatorApplyManual.onTrue(elevator.applyScheduledPositionCommand());

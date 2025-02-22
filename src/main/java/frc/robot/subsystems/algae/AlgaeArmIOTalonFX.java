@@ -4,7 +4,7 @@ import static edu.wpi.first.units.Units.Hertz;
 
 import com.ctre.phoenix6.BaseStatusSignal;
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
-import com.ctre.phoenix6.controls.PositionVoltage;
+import com.ctre.phoenix6.controls.MotionMagicVoltage;
 import com.ctre.phoenix6.controls.VoltageOut;
 import com.ctre.phoenix6.hardware.TalonFX;
 import com.ctre.phoenix6.signals.InvertedValue;
@@ -20,6 +20,10 @@ public class AlgaeArmIOTalonFX implements AlgaeArmIO {
         var slot0Configs = config.Slot0;
         slot0Configs.kP = AlgaeConstants.kP;
         slot0Configs.kD = AlgaeConstants.kD;
+
+        var motionMagicConfigs = config.MotionMagic;
+        motionMagicConfigs.MotionMagicCruiseVelocity = AlgaeConstants.targetVelocity;
+        motionMagicConfigs.MotionMagicAcceleration = AlgaeConstants.targetAccel;
 
         // Motor feedback settings
         var feedbackConfigs = config.Feedback;
@@ -61,7 +65,7 @@ public class AlgaeArmIOTalonFX implements AlgaeArmIO {
 
     @Override
     public void setPivotPosition(double targetPosition) {
-        pivotMotor.setControl(new PositionVoltage(targetPosition));
+        pivotMotor.setControl(new MotionMagicVoltage(targetPosition));
     }
 
     @Override

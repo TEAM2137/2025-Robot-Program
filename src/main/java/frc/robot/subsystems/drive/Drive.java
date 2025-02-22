@@ -208,11 +208,11 @@ public class Drive extends SubsystemBase {
         Pose2d rightPole = DriveCommands.getNewTargetPose(this, Target.RIGHT_POLE, RobotContainer.getInstance().joystickMotionSupplier());
         Pose2d offscreenPole = new Pose2d(new Translation2d(100, 100), new Rotation2d());
 
-        boolean isTargetingLeft = RobotContainer.getInstance().targetLeft.getAsBoolean() && DriveCommands.getTarget() != null;
-        boolean isTargetingRight = RobotContainer.getInstance().targetRight.getAsBoolean() && DriveCommands.getTarget() != null;
+        boolean isTargetingLeft = RobotContainer.getInstance().targetLeft.getAsBoolean() && DriveCommands.getActiveTarget() != null;
+        boolean isTargetingRight = RobotContainer.getInstance().targetRight.getAsBoolean() && DriveCommands.getActiveTarget() != null;
 
-        closestLeftPolePublisher.accept(isTargetingLeft ? DriveCommands.getTarget() : offscreenPole);
-        closestRightPolePublisher.accept(isTargetingRight ? DriveCommands.getTarget() : offscreenPole);
+        closestLeftPolePublisher.accept(isTargetingLeft ? DriveCommands.getActiveTarget() : offscreenPole);
+        closestRightPolePublisher.accept(isTargetingRight ? DriveCommands.getActiveTarget() : offscreenPole);
 
         toLeftReefPublisher.accept(createTrajectoryTo(leftPole.getTranslation()));
         toRightReefPublisher.accept(createTrajectoryTo(rightPole.getTranslation()));
