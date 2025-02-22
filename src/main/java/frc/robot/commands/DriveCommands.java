@@ -280,7 +280,7 @@ public class DriveCommands {
         return target;
     }
 
-    public static Command driveToNearestPole(RobotContainer robot, boolean right, Supplier<Translation2d> motionSupplier) {
+    public static Command autoAlignTo(AutoAlignUtil.Target targetType, RobotContainer robot, Supplier<Translation2d> motionSupplier) {
         // Create PID controller
         ProfiledPIDController angleController = new ProfiledPIDController(
             ANGLE_KP, 0.0, ANGLE_KD,
@@ -290,7 +290,7 @@ public class DriveCommands {
 
         // Construct command
         return Commands.sequence(
-            Commands.runOnce(() -> target = getNewTargetPole(robot.drive, right, motionSupplier)),
+            Commands.runOnce(() -> target = getNewTargetPose(robot.drive, targetType, motionSupplier)),
             driveToTargetCommand(robot.drive, angleController).alongWith(Commands.run(() -> {
                 Translation2d robotTranslation = robot.drive.getPose().getTranslation();
                 if (target.getTranslation().getDistance(robotTranslation) < ELEVATOR_RAISE_DISTANCE_METERS) {
@@ -309,7 +309,7 @@ public class DriveCommands {
         });
     }
 
-    public static Pose2d getNewTargetPole(Drive drive, boolean right, Supplier<Translation2d> motionSupplier) {
+    public static Pose2d getNewTargetPose(Drive drive, AutoAlignUtil.Target targetType, Supplier<Translation2d> motionSupplier) {
         Pose2d pose = drive.getPose();
         Translation2d motionVector = new Translation2d();
 
@@ -327,9 +327,7 @@ public class DriveCommands {
         }
 
         // Find the correct pole to target
-        return AutoAlignUtil.flipIfRed(right
-            ? FieldPOIs.REEF_LOCATIONS_RIGHT.get(drive.getNearestRightPole(pose, motionVector))
-            : FieldPOIs.REEF_LOCATIONS_LEFT.get(drive.getNearestLeftPole(pose, motionVector)));
+        return AutoAlignUtil.flipIfRed(AutoAlignUtil.mapToPose(targetType, drive, motionVector));
     }
 
     private static Command driveToTargetCommand(Drive drive, ProfiledPIDController angleController) {

@@ -16,8 +16,9 @@ public class FieldPOIs {
 
     public static final Pose2d REEF = new Pose2d(new Translation2d(4.49, 4.03), new Rotation2d());
     public static final List<Pose2d> REEF_LOCATIONS = createReefScoringLocations();
-    public static final List<Pose2d> REEF_LOCATIONS_RIGHT = filterEveryOther(0, REEF_LOCATIONS);
-    public static final List<Pose2d> REEF_LOCATIONS_LEFT = filterEveryOther(1, REEF_LOCATIONS);
+    public static final List<Pose2d> REEF_LOCATIONS_RIGHT = filterEveryThird(0, REEF_LOCATIONS);
+    public static final List<Pose2d> REEF_LOCATIONS_LEFT = filterEveryThird(1, REEF_LOCATIONS);
+    public static final List<Pose2d> ALGAE_LOCATIONS = filterEveryThird(2, REEF_LOCATIONS);
 
     public static final Pose2d CORAL_STATION_TOP = new Pose2d(new Translation2d(1.0, 7.107), new Rotation2d(-0.939));
     public static final Pose2d CORAL_STATION_BOTTOM = new Pose2d(new Translation2d(1.0, 0.918), new Rotation2d(0.939));
@@ -45,31 +46,39 @@ public class FieldPOIs {
             );
 
             double leftMagnitude = REEF_HORIZONTAL_OFFSET_METERS - END_EFFECTOR_OFFSET;
+            double centerMagnitude = -END_EFFECTOR_OFFSET;
             double rightMagnitude = REEF_HORIZONTAL_OFFSET_METERS + END_EFFECTOR_OFFSET;
 
-            Translation2d leftOffset = new Translation2d(
+            Translation2d centerOffset = new Translation2d(
+                angle.minus(Rotation2d.kCW_90deg).getCos() * centerMagnitude,
+                angle.minus(Rotation2d.kCW_90deg).getSin() * centerMagnitude
+            );
+
+            Translation2d rightOffset = new Translation2d(
                 angle.minus(Rotation2d.kCW_90deg).getCos() * leftMagnitude,
                 angle.minus(Rotation2d.kCW_90deg).getSin() * leftMagnitude
             );
 
-            Translation2d rightOffset = new Translation2d(
+            Translation2d leftOffset = new Translation2d(
                 angle.plus(Rotation2d.kCW_90deg).getCos() * rightMagnitude,
                 angle.plus(Rotation2d.kCW_90deg).getSin() * rightMagnitude
             );
 
-            Pose2d leftPole = new Pose2d(REEF.getTranslation().plus(verticalOffset).plus(leftOffset), angle.plus(Rotation2d.k180deg));
             Pose2d rightPole = new Pose2d(REEF.getTranslation().plus(verticalOffset).plus(rightOffset), angle.plus(Rotation2d.k180deg));
+            Pose2d leftPole = new Pose2d(REEF.getTranslation().plus(verticalOffset).plus(leftOffset), angle.plus(Rotation2d.k180deg));
+            Pose2d algae = new Pose2d(REEF.getTranslation().plus(verticalOffset).plus(centerOffset), angle.plus(Rotation2d.k180deg));
 
-            builder.add(leftPole);
             builder.add(rightPole);
+            builder.add(leftPole);
+            builder.add(algae);
         }
 
         return List.copyOf(builder);
     }
 
-    private static <T> List<T> filterEveryOther(int offset, List<T> original) {
+    private static <T> List<T> filterEveryThird(int offset, List<T> original) {
         ArrayList<T> builder = new ArrayList<>();
-        for (int i = offset; i < original.size(); i += 2) builder.add(original.get(i));
+        for (int i = offset; i < original.size(); i += 3) builder.add(original.get(i));
         return List.copyOf(builder);
     }
 }

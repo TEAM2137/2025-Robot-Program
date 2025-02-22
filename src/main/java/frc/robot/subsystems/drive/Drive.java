@@ -41,7 +41,8 @@ import frc.robot.RobotContainer;
 import frc.robot.commands.DriveCommands;
 import frc.robot.generated.TunerConstants;
 import frc.robot.util.AutoAlignUtil;
-import frc.robot.util.FieldPOIs;
+import frc.robot.util.AutoAlignUtil.Target;
+
 import java.util.List;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
@@ -203,8 +204,8 @@ public class Drive extends SubsystemBase {
         gyroDisconnectedAlert.set(!gyroInputs.connected && Constants.currentMode != Mode.SIM);
 
         // Post auto align debug displays in NetworkTables
-        Pose2d leftPole = DriveCommands.getNewTargetPole(this, false, RobotContainer.getInstance().joystickMotionSupplier());
-        Pose2d rightPole = DriveCommands.getNewTargetPole(this, true, RobotContainer.getInstance().joystickMotionSupplier());
+        Pose2d leftPole = DriveCommands.getNewTargetPose(this, Target.LEFT_POLE, RobotContainer.getInstance().joystickMotionSupplier());
+        Pose2d rightPole = DriveCommands.getNewTargetPose(this, Target.RIGHT_POLE, RobotContainer.getInstance().joystickMotionSupplier());
         Pose2d offscreenPole = new Pose2d(new Translation2d(100, 100), new Rotation2d());
 
         boolean isTargetingLeft = RobotContainer.getInstance().targetLeft.getAsBoolean() && DriveCommands.getTarget() != null;
@@ -232,15 +233,7 @@ public class Drive extends SubsystemBase {
         return trajectory;
     }
 
-    public int getNearestLeftPole(Pose2d pose, Translation2d motionVector) {
-        return getNearestPole(pose, motionVector, FieldPOIs.REEF_LOCATIONS_LEFT);
-    }
-
-    public int getNearestRightPole(Pose2d pose, Translation2d motionVector) {
-        return getNearestPole(pose, motionVector, FieldPOIs.REEF_LOCATIONS_RIGHT);
-    }
-
-    public int getNearestPole(Pose2d pose, Translation2d motionVector, List<Pose2d> locations) {
+    public int getNearestPose(Pose2d pose, Translation2d motionVector, List<Pose2d> locations) {
         Pair<Integer, Double> bestResult = new Pair<>(0, 1000.0);
 
         for (int i = 0; i < locations.size(); i++) {
@@ -253,7 +246,7 @@ public class Drive extends SubsystemBase {
                 poleLocation.minus(pose).getTranslation(), motionVector);
 
             // Apply addition and assign new best result if applicable
-            double weight = dst + addition * 2.8;
+            double weight = dst + addition * 2.5;
             if (weight <= bestResult.getSecond()) bestResult = new Pair<>(i, weight);
         }
 

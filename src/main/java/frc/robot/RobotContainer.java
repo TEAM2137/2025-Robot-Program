@@ -44,6 +44,7 @@ import frc.robot.subsystems.vision.Vision;
 import frc.robot.subsystems.vision.VisionConstants;
 import frc.robot.subsystems.vision.VisionIO;
 import frc.robot.subsystems.vision.VisionIOLimelight;
+import frc.robot.util.AutoAlignUtil.Target;
 
 public class RobotContainer {
     private static RobotContainer instance;
@@ -79,14 +80,13 @@ public class RobotContainer {
     // Drive/point to different field POIs
     public final Trigger targetRight = driverController.rightBumper();
     public final Trigger targetLeft = driverController.leftBumper();
+    public final Trigger targetAlgae = driverController.b();
     public final Trigger targetCoralStation = driverController.a();
 
     // Run coral rollers to score and stow elevator
     public final Trigger score = driverController.rightTrigger(0.25);
 
     // Sequences for removing algae from the reef
-    public final Trigger removeUpperAlgae = driverController.povUp();
-    public final Trigger removeLowerAlgae = driverController.povDown();
 
     // Elevator setpoints
     public final Trigger l1 = operatorController.x();
@@ -231,20 +231,17 @@ public class RobotContainer {
         score.onTrue(coral.setVoltageCommand(6));
         score.onFalse(coral.setVoltageCommand(0)
             .andThen(elevator.setPositionCommand(ElevatorConstants.stow)));
-    
+
         // Driver reef auto align
-        targetLeft.whileTrue(DriveCommands.driveToNearestPole(this, false, joystickSupplier));
-        targetRight.whileTrue(DriveCommands.driveToNearestPole(this, true, joystickSupplier));
+        targetLeft.whileTrue(DriveCommands.autoAlignTo(Target.LEFT_POLE, this, joystickSupplier));
+        targetRight.whileTrue(DriveCommands.autoAlignTo(Target.RIGHT_POLE, this, joystickSupplier));
+        targetAlgae.whileTrue(DriveCommands.autoAlignTo(Target.ALGAE, this, joystickSupplier));
 
         // Driver coral station align
         targetCoralStation.onTrue(DriveCommands.driveToCoralStation(drive, joystickSupplier, slowMode).alongWith(coral.intakeCommand()));
         targetCoralStation.onFalse(Commands.runOnce(() -> coral.getCurrentCommand().cancel(), coral)
             .andThen(coral.setVoltageCommand(0))
             .andThen(Commands.runOnce(() -> drive.getCurrentCommand().cancel(), drive)));
-
-        // Remove algae from reef
-        removeUpperAlgae.onTrue(algae.removeAlgaeCommand(true));
-        removeLowerAlgae.onTrue(algae.removeAlgaeCommand(false));
 
         // Hold left trigger to enable elevator manual controls using the right stick.
         elevatorManual.whileTrue(elevator.setVoltage(() ->
