@@ -95,7 +95,7 @@ public class RobotContainer {
     // Manual subsystem controls
     public final Trigger elevatorManual = operatorController.leftTrigger(0.35);
     public final Trigger cageManual = operatorController.rightTrigger(0.35);
-    public final Trigger coralManual = operatorController.rightBumper();
+    public final Trigger algaeRollers = operatorController.rightBumper();
     public final Trigger elevatorApplyManual = operatorController.back();
 
     /** The container for the robot. Contains subsystems, IO devices, and commands. */
@@ -236,7 +236,7 @@ public class RobotContainer {
         cageManual.onFalse(cage.setVoltage(() -> 0));
 
         cageManual.whileTrue(algae.setPivotVoltage(() ->
-            MathUtil.applyDeadband(-operatorController.getLeftY(), 0.1) * 6));
+            MathUtil.applyDeadband(-operatorController.getLeftY(), 0.1) * 12));
         cageManual.onFalse(algae.setPivotVoltage(() -> 0));
 
         l1.onTrue(elevator.schedulePositionCommand(ElevatorConstants.L1));
@@ -261,8 +261,8 @@ public class RobotContainer {
             .andThen(coral.setVoltageCommand(0))
             .andThen(Commands.runOnce(() -> drive.getCurrentCommand().cancel(), drive)));
 
-        coralManual.onTrue(coral.setVoltageCommand(6));
-        coralManual.onFalse(coral.setVoltageCommand(0));
+        algaeRollers.onTrue(coral.setVoltageCommand(-6));
+        algaeRollers.onFalse(coral.setVoltageCommand(0));
 
         elevatorApplyManual.onTrue(elevator.applyScheduledPositionCommand());
     }
