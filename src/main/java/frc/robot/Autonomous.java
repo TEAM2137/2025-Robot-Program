@@ -91,8 +91,8 @@ public class Autonomous {
 
         // Testing Autos
         autoChooser.addOption("3 Coral Upper", threeCoral("Upper"));
-        // autoChooser.addOption("3 Coral Lower", threeCoral("Lower"));
-        autoChooser.addOption("Drive Forward", driveStraight());
+        autoChooser.addOption("3 Coral Lower", threeCoral("Lower"));
+        autoChooser.addOption("1 Coral Center", oneCoralCenter());
     }
 
     public AutoRoutine driveStraight() {
@@ -108,6 +108,27 @@ public class Autonomous {
         return routine;
     }
 
+
+    // Seconds before the end of the path that the elevator should raise
+    private static final double elevatorDelay = 0.4;
+    // Seconds that the coral rollers should run for when scoring
+    private static final double scoreDuration = 0.4;
+
+    public AutoRoutine oneCoralCenter() {
+        String pathName = "1 Coral Center";
+        AutoRoutine routine = factory.newRoutine(pathName);
+        AutoTrajectory trajectory = routine.trajectory(pathName);
+
+        routine.active().onTrue(robot.elevator.resetPositionCommand());
+        routine.active().onTrue(trajectory.resetOdometry().andThen(trajectory.cmd()));
+
+        trajectory.atTimeBeforeEnd(elevatorDelay).onTrue(
+            robot.elevator.setPositionCommand(ElevatorConstants.L4));
+
+        AutoCommands.createScoringSequence(scoreDuration, trajectory, robot);
+        return routine;
+    }
+
     public AutoRoutine threeCoral(String half) {
         String pathName = "3 Coral " + half;
         AutoRoutine routine = factory.newRoutine(pathName);
@@ -120,11 +141,6 @@ public class Autonomous {
         AutoTrajectory toStation3 = splits.get(3);
         AutoTrajectory toReef3 = splits.get(4);
         AutoTrajectory toStation4 = splits.get(5);
-
-        // Seconds before the end of the path that the elevator should raise
-        double elevatorDelay = 0.4;
-        // Seconds that the coral rollers should run for when scoring
-        double scoreDuration = 0.4;
 
         // When the routine begins, reset odometry and start the first trajectory
         routine.active().onTrue(robot.elevator.resetPositionCommand());
