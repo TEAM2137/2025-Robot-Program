@@ -9,7 +9,6 @@ import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Translation2d;
-import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.wpilibj.GenericHID;
 import edu.wpi.first.wpilibj.XboxController;
 import edu.wpi.first.wpilibj2.command.Command;
@@ -84,6 +83,10 @@ public class RobotContainer {
 
     // Run coral rollers to score and stow elevator
     public final Trigger score = driverController.rightTrigger(0.25);
+
+    // Sequences for removing algae from the reef
+    public final Trigger removeUpperAlgae = driverController.povUp();
+    public final Trigger removeLowerAlgae = driverController.povDown();
 
     // Elevator setpoints
     public final Trigger l1 = operatorController.x();
@@ -202,13 +205,14 @@ public class RobotContainer {
                 joystickSupplier, slowMode,
                 () -> -driverController.getRightX() * 0.75));
 
-        // Switch to X pattern
-        // xLock.onTrue(Commands.runOnce(drive::xLock, drive));
-        xLock.whileTrue(Commands.run(() -> drive.runVelocity(
-            new ChassisSpeeds(2, 0, 0)), drive));
-        xLock.onFalse(Commands.run(() -> drive.runVelocity(
-            new ChassisSpeeds(0, 0, 0)), drive));
+        // Switch to X wheel pattern
+        xLock.onTrue(Commands.runOnce(drive::xLock, drive));
+        // xLock.whileTrue(Commands.run(() -> drive.runVelocity(
+        //     new ChassisSpeeds(2, 0, 0)), drive));
+        // xLock.onFalse(Commands.run(() -> drive.runVelocity(
+        //     new ChassisSpeeds(0, 0, 0)), drive));
 
+        // Stop all active subsystems
         stopAll.onTrue(coral.setVoltageCommand(0)
             .andThen(elevator.setVoltage(() -> 0))
             .andThen(drive.stopCommand()));
@@ -223,47 +227,57 @@ public class RobotContainer {
             )),
             drive).ignoringDisable(true));
 
-        // Hold left trigger to enable elevator manual controls using the right stick.
-        // This should be removed once elevator testing is complete
-        elevatorManual.whileTrue(elevator.setVoltage(() ->
-            MathUtil.applyDeadband(-operatorController.getRightY(), 0.1) * 8));
-        elevatorManual.onFalse(elevator.setVoltage(() -> 0));
-
-        // Hold right trigger to enable cage manual controls using the right stick.
-        // This should be removed once cage testing is complete
-        cageManual.whileTrue(cage.setVoltage(() ->
-            MathUtil.applyDeadband(-operatorController.getRightY(), 0.1) * 6));
-        cageManual.onFalse(cage.setVoltage(() -> 0));
-
-        cageManual.whileTrue(algae.setPivotVoltage(() ->
-            MathUtil.applyDeadband(-operatorController.getLeftY(), 0.1) * 12));
-        cageManual.onFalse(algae.setPivotVoltage(() -> 0));
-
-        l1.onTrue(elevator.schedulePositionCommand(ElevatorConstants.L1));
-        l2.onTrue(elevator.schedulePositionCommand(ElevatorConstants.L2));
-        l3.onTrue(elevator.schedulePositionCommand(ElevatorConstants.L3));
-        l4.onTrue(elevator.schedulePositionCommand(ElevatorConstants.L4));
-
-        stowManual.onTrue(elevator.setPositionCommand(ElevatorConstants.stow));
-
+        // Driver score command
         score.onTrue(coral.setVoltageCommand(6));
         score.onFalse(coral.setVoltageCommand(0)
             .andThen(elevator.setPositionCommand(ElevatorConstants.stow)));
-            // .andThen(coral.intakeCommand()));
-
-        resetElevator.onTrue(elevator.resetPositionCommand().ignoringDisable(true));
-
+    
+        // Driver reef auto align
         targetLeft.whileTrue(DriveCommands.driveToNearestPole(this, false, joystickSupplier));
         targetRight.whileTrue(DriveCommands.driveToNearestPole(this, true, joystickSupplier));
 
+        // Driver coral station align
         targetCoralStation.onTrue(DriveCommands.driveToCoralStation(drive, joystickSupplier, slowMode).alongWith(coral.intakeCommand()));
         targetCoralStation.onFalse(Commands.runOnce(() -> coral.getCurrentCommand().cancel(), coral)
             .andThen(coral.setVoltageCommand(0))
             .andThen(Commands.runOnce(() -> drive.getCurrentCommand().cancel(), drive)));
 
+        // Remove algae from reef
+        removeUpperAlgae.onTrue(algae.removeAlgaeCommand(true));
+        removeLowerAlgae.onTrue(algae.removeAlgaeCommand(false));
+
+        // Hold left trigger to enable elevator manual controls using the right stick.
+        elevatorManual.whileTrue(elevator.setVoltage(() ->
+            MathUtil.applyDeadband(-operatorController.getRightY(), 0.1) * 8));
+        elevatorManual.onFalse(elevator.setVoltage(() -> 0));
+
+        // Hold right trigger to enable cage manual controls using the right stick.
+        cageManual.whileTrue(cage.setVoltage(() ->
+            MathUtil.applyDeadband(-operatorController.getRightY(), 0.1) * 6));
+        cageManual.onFalse(cage.setVoltage(() -> 0));
+
+        // Hold right trigger to enable algae arm manual controls using the left stick.
+        cageManual.whileTrue(algae.setPivotVoltage(() ->
+            MathUtil.applyDeadband(-operatorController.getLeftY(), 0.1) * 12));
+        cageManual.onFalse(algae.setPivotVoltage(() -> 0));
+
+        // Schedule different reef heights
+        l1.onTrue(elevator.schedulePositionCommand(ElevatorConstants.L1));
+        l2.onTrue(elevator.schedulePositionCommand(ElevatorConstants.L2));
+        l3.onTrue(elevator.schedulePositionCommand(ElevatorConstants.L3));
+        l4.onTrue(elevator.schedulePositionCommand(ElevatorConstants.L4));
+
+        // Stow the elevator manually
+        stowManual.onTrue(elevator.setPositionCommand(ElevatorConstants.stow));
+
+        // Reset the elevator encoder position
+        resetElevator.onTrue(elevator.resetPositionCommand().ignoringDisable(true));
+
+        // Manually run the algae rollers
         algaeRollers.onTrue(coral.setVoltageCommand(-6));
         algaeRollers.onFalse(coral.setVoltageCommand(0));
 
+        // Manually apply the elevator's scheduled position
         elevatorApplyManual.onTrue(elevator.applyScheduledPositionCommand());
     }
 

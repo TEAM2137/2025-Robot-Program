@@ -40,4 +40,9 @@ public class AlgaeArm extends SubsystemBase {
     public Command resetPositionCommand() {
         return runOnce(() -> io.resetPosition());
     }
+
+    // TODO
+    public Command removeAlgaeCommand(boolean removeUpper) {
+        return runOnce(() -> {});
+    }
 }
