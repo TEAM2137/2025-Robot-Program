@@ -318,6 +318,10 @@ public class DriveCommands {
     }
 
     public static Pose2d getNewTargetPose(Drive drive, AutoAlignUtil.Target targetType, Supplier<Translation2d> motionSupplier) {
+        return AutoAlignUtil.flipIfRed(AutoAlignUtil.fromPoseId(getNewTargetPoseId(drive, targetType, motionSupplier), targetType));
+    }
+
+    public static int getNewTargetPoseId(Drive drive, AutoAlignUtil.Target targetType, Supplier<Translation2d> motionSupplier) {
         Pose2d pose = drive.getPose();
         Translation2d motionVector = new Translation2d();
 
@@ -335,7 +339,7 @@ public class DriveCommands {
         }
 
         // Find the correct pole to target
-        return AutoAlignUtil.flipIfRed(AutoAlignUtil.mapToPose(targetType, drive, motionVector));
+        return AutoAlignUtil.mapToPoseId(targetType, drive, motionVector);
     }
 
     private static Command driveToTargetCommand(Drive drive, ProfiledPIDController angleController) {

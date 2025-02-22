@@ -46,6 +46,7 @@ import frc.robot.subsystems.vision.Vision;
 import frc.robot.subsystems.vision.VisionConstants;
 import frc.robot.subsystems.vision.VisionIO;
 import frc.robot.subsystems.vision.VisionIOLimelight;
+import frc.robot.util.AutoAlignUtil;
 import frc.robot.util.FieldPOIs;
 import frc.robot.util.AutoAlignUtil.Target;
 
@@ -205,7 +206,7 @@ public class RobotContainer {
      */
     private void configureButtonBindings() {
         BooleanSupplier slowMode = () -> driverController.getLeftTriggerAxis() > 0.25;
-        Trigger didTargetAlgae = new Trigger(() -> FieldPOIs.ALGAE_LOCATIONS.contains(DriveCommands.getLastTargeted()));
+        Trigger didTargetAlgae = new Trigger(() -> FieldPOIs.ALGAE_LOCATIONS.contains(AutoAlignUtil.flipIfRed(DriveCommands.getLastTargeted())));
 
         // Default command, normal field-relative drive
         drive.setDefaultCommand(DriveCommands.joystickDrive(drive,
@@ -254,8 +255,7 @@ public class RobotContainer {
         targetAlgae.whileTrue(DriveCommands.autoAlignTo(Target.ALGAE, this, joystickSupplier)
             .beforeStarting(() -> {
                 // Schedule the proper elevator height
-                Pose2d pose = DriveCommands.getNewTargetPose(drive, Target.ALGAE, joystickSupplier);
-                int poseId = FieldPOIs.ALGAE_LOCATIONS.indexOf(pose);
+                int poseId = DriveCommands.getNewTargetPoseId(drive, Target.ALGAE, joystickSupplier);
                 elevator.schedulePosition(poseId % 2 == 0 ? ElevatorConstants.algaeHigh : ElevatorConstants.algaeLow);
             }));
 

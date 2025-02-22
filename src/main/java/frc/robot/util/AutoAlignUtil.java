@@ -48,6 +48,11 @@ public class AutoAlignUtil {
         return poseData.get(drive.getNearestPose(drive.getPose(), motionVector, poseData));
     }
 
+    public static Pose2d fromPoseId(int id, Target targetType) {
+        List<Pose2d> poseData = targetToPoseData.get(targetType);
+        return poseData.get(id);
+    }
+
     /**
      * Calculates a value to add to the selection "weight" of each reef pole.
      * This is determined by the dot product of the robot to reef pole vector and the vector of the

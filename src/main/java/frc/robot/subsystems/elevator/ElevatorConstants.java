@@ -27,12 +27,16 @@ public class ElevatorConstants {
     public static final double stage3Range = Units.inchesToMeters(19.500000);
 
     // Setpoints (m)
+
     public static final double stow = -0.1;
-    public static final double L1 = 0.45;
     public static final double L2 = 0.70;
     public static final double L3 = 1.25;
     public static final double L4 = 2.00;
+    // NOTE: To do L1, put the corner at the center of aprilTag, line up almost
+    // parallel to the reef face you're adjacent to, raise to l2, and score.
+    // This will have to be automated in the future.
+    public static final double L1 = L2;
 
-    public static final double algaeHigh = 1.25;
-    public static final double algaeLow = 0.70;
+    public static final double algaeHigh = L3;
+    public static final double algaeLow = L2;
 }
