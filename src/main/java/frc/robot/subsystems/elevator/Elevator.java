@@ -51,6 +51,10 @@ public class Elevator extends SubsystemBase {
         io.schedulePosition(targetPosition);
     }
 
+    public Command setPositionCommand(DoubleSupplier targetPosition) {
+        return runOnce(() -> io.setTargetPosition(targetPosition.getAsDouble()));
+    }
+
     public Command setPositionCommand(double targetPosition) {
         return runOnce(() -> io.setTargetPosition(targetPosition));
     }

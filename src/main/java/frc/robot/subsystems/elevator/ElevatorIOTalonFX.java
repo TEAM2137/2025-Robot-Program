@@ -101,8 +101,7 @@ public class ElevatorIOTalonFX implements ElevatorIO {
     @Override
     public void schedulePosition(double targetPosition) {
         this.scheduledPosition = targetPosition;
-        if (!(this.targetPosition == ElevatorConstants.stow
-            || this.targetPosition == 0.0)) setTargetPosition(targetPosition);
+        if (this.targetPosition > 0.05) setTargetPosition(targetPosition);
     }
 
     @Override

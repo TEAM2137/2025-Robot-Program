@@ -211,8 +211,9 @@ public class RobotContainer {
         // Default command, normal field-relative drive
         drive.setDefaultCommand(DriveCommands.joystickDrive(drive,
                 () -> joystickSupplier.get().div(1 / (1 - MathUtil.clamp(elevator.getExtensionMeters()
-                        / ElevatorConstants.L4, 0.0, 1.0) * 0.9)),
-                slowMode, () -> -driverController.getRightX() * 0.75));
+                        / ElevatorConstants.L4, 0.0, 0.82) * 1.0)),
+                slowMode, () -> -driverController.getRightX() * 0.75 * (1 - MathUtil.clamp(elevator.getExtensionMeters()
+                        / ElevatorConstants.L4, 0.0, 0.82) * 1.0)));
 
         // Switch to X wheel pattern
         xLock.onTrue(Commands.runOnce(drive::xLock, drive));
@@ -268,7 +269,7 @@ public class RobotContainer {
         // Hold left trigger to enable elevator manual controls using the right stick.
         elevatorManual.whileTrue(elevator.setVoltage(() ->
             MathUtil.applyDeadband(-operatorController.getRightY(), 0.1) * 8));
-        elevatorManual.onFalse(elevator.setVoltage(() -> 0));
+        elevatorManual.onFalse(elevator.setPositionCommand(() -> elevator.getExtensionMeters()));
 
         // Hold right trigger to enable cage manual controls using the right stick.
         cageManual.whileTrue(cage.setVoltage(() ->
