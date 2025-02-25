@@ -40,8 +40,8 @@ public class CageIOSparkMax implements CageIO {
     public void updateInputs(CageIOInputs inputs) {
         inputs.appliedVolts = motor.getAppliedOutput() * 12;
         inputs.currentAmps = motor.getOutputCurrent();
-        inputs.velocityRadPerSec = Units.rotationsPerMinuteToRadiansPerSecond(motor.getAbsoluteEncoder().getVelocity());
-        inputs.motorRotations = motor.getAbsoluteEncoder().getPosition();
+        inputs.velocityRadPerSec = Units.rotationsPerMinuteToRadiansPerSecond(motor.getEncoder().getVelocity());
+        inputs.motorRotations = motor.getEncoder().getPosition();
         inputs.armAngle = Rotation2d.fromRotations(inputs.motorRotations * CageConstants.motorPositionToArmAngle);
     }
 
@@ -53,5 +53,10 @@ public class CageIOSparkMax implements CageIO {
     @Override
     public void setVoltage(double volts) {
         controller.setReference(volts, ControlType.kVoltage);
+    }
+
+    @Override
+    public void resetPosition() {
+        motor.getEncoder().setPosition(0);
     }
 }

@@ -81,6 +81,7 @@ public class RobotContainer {
     public final Trigger resetGyro = driverController.start();
     public final Trigger resetElevator = operatorController.start();
     public final Trigger resetAlgae = operatorController.rightStick();
+    public final Trigger resetCage = operatorController.leftStick();
 
     // Drive/point to different field POIs
     public final Trigger targetRight = driverController.rightBumper();
@@ -278,7 +279,7 @@ public class RobotContainer {
 
         // Hold right trigger to enable algae arm manual controls using the left stick.
         cageManual.whileTrue(algae.setPivotVoltage(() ->
-            MathUtil.applyDeadband(-operatorController.getLeftY(), 0.1) * 4));
+            MathUtil.applyDeadband(-operatorController.getLeftY(), 0.1) * 6));
         cageManual.onFalse(algae.setPivotVoltage(() -> 0));
 
         // Schedule different reef heights. These commands cannot be run while targeting algae
@@ -293,6 +294,7 @@ public class RobotContainer {
         // Reset the elevator encoder position
         resetElevator.onTrue(elevator.resetPositionCommand().ignoringDisable(true));
         resetAlgae.onTrue(algae.resetPositionCommand().ignoringDisable(true));
+        resetCage.onTrue(cage.resetPositionCommand().ignoringDisable(true));
 
         // Manually run the algae arm rollers
         algaeRollers.onTrue(coral.setVoltageCommand(-6));
