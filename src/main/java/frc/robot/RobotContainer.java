@@ -80,8 +80,8 @@ public class RobotContainer {
     public final Trigger stopAll = driverController.y();
     public final Trigger resetGyro = driverController.start();
     public final Trigger resetElevator = operatorController.start();
-    public final Trigger resetAlgae = operatorController.rightStick();
-    public final Trigger resetCage = operatorController.leftStick();
+    public final Trigger resetCage = operatorController.rightStick();
+    public final Trigger resetAlgae = operatorController.leftStick();
 
     // Drive/point to different field POIs
     public final Trigger targetRight = driverController.rightBumper();
@@ -105,8 +105,7 @@ public class RobotContainer {
     public final Trigger elevatorManual = operatorController.leftTrigger(0.35);
     public final Trigger cageManual = operatorController.rightTrigger(0.35);
     public final Trigger algaeRollers = operatorController.rightBumper();
-    public final Trigger algaeDeploy = operatorController.povDown();
-    public final Trigger algaeStow = operatorController.povUp();
+    public final Trigger slowEject = operatorController.povDown();
     public final Trigger elevatorApplyManual = operatorController.back();
 
     /** The container for the robot. Contains subsystems, IO devices, and commands. */
@@ -279,7 +278,7 @@ public class RobotContainer {
 
         // Hold right trigger to enable algae arm manual controls using the left stick.
         cageManual.whileTrue(algae.setPivotVoltage(() ->
-            MathUtil.applyDeadband(-operatorController.getLeftY(), 0.1) * 6));
+            MathUtil.applyDeadband(-operatorController.getLeftY(), 0.1) * -6));
         cageManual.onFalse(algae.setPivotVoltage(() -> 0));
 
         // Schedule different reef heights. These commands cannot be run while targeting algae
@@ -300,12 +299,11 @@ public class RobotContainer {
         algaeRollers.onTrue(coral.setVoltageCommand(-6));
         algaeRollers.onFalse(coral.setVoltageCommand(0));
 
-        // Manually deploy and stow the algae arm
-        algaeStow.onTrue(algae.setPivotPosition(AlgaeConstants.stow));
-        algaeDeploy.onTrue(algae.setPivotPosition(AlgaeConstants.deploy));
-
         // Manually apply the elevator's scheduled position
         elevatorApplyManual.onTrue(elevator.applyScheduledPositionCommand());
+
+        slowEject.onTrue(coral.setVoltageCommand(4.5));
+        slowEject.onFalse(coral.setVoltageCommand(0));
     }
 
     /**
