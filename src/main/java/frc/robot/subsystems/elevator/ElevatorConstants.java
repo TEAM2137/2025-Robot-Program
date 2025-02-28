@@ -32,7 +32,7 @@ public class ElevatorConstants {
     public static final double L1 = 0.55;
     public static final double L2 = 0.70;
     public static final double L3 = 1.25;
-    public static final double L4 = 2.00;
+    public static final double L4 = 1.99;
 
     public static final double algaeHigh = L3;
     public static final double algaeLow = L2;
