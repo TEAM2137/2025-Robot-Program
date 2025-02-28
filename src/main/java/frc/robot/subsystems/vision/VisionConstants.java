@@ -32,7 +32,7 @@ public class VisionConstants {
   public static double[] cameraStdDevFactors =
       new double[] {
         1100.0, // Camera 0
-        18.0 // Camera 1
+        20.0 // Camera 1
       };
 
   // Multipliers to apply for MegaTag 2 observations
