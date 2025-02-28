@@ -197,7 +197,7 @@ public class RobotContainer {
         configureButtonBindings();
 
         // Setup webcam streaming
-        CameraServer.startAutomaticCapture(0);
+        // CameraServer.startAutomaticCapture(0);
         RobotModeTriggers.teleop().onTrue(Commands.runOnce(() -> CameraServer.startAutomaticCapture(0)));
     }
 
