@@ -1,6 +1,7 @@
 package frc.robot.commands;
 
 import frc.robot.RobotContainer;
+import frc.robot.subsystems.coral.CoralConstants;
 import choreo.auto.AutoTrajectory;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
@@ -54,7 +55,7 @@ public class AutoCommands {
      */
     public static void createScoringSequence(double duration, AutoTrajectory base, Command onComplete, RobotContainer robot) {
         base.doneDelayed(0.8).onTrue(Commands.sequence(
-            robot.coral.setVoltageCommand(3.6).repeatedly().withTimeout(duration)
+            robot.coral.setVoltageCommand(CoralConstants.scoreSpeed).repeatedly().withTimeout(duration)
             .andThen(robot.coral.setVoltageCommand(0))
             .andThen(robot.elevator.stowCommand())
         ));
