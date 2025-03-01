@@ -239,7 +239,7 @@ public class RobotContainer {
 
         // Driver score sequence
         // score.and(didTargetAlgae.negate()).onTrue(coral.setVoltageCommand(CoralConstants.scoreSpeed));
-        score.and(didTargetAlgae.negate()).onTrue(coral.setVoltageCommand(() -> 
+        score.and(didTargetAlgae.negate()).onTrue(coral.setVoltageCommand(() ->
             elevator.getTargetPosition() < ElevatorConstants.L4
                 ? CoralConstants.slowSpeed : CoralConstants.l4Speed));
         score.and(didTargetAlgae.negate()).onFalse(coral.setVoltageCommand(0)
