@@ -18,7 +18,7 @@ public class AutoCommands {
     public static void createIntakeSequence(AutoTrajectory base, AutoTrajectory onComplete, RobotContainer robot) {
         base.done().onTrue(robot.coral.intakeUntilBrokenCommand());
         base.recentlyDone().and(robot.coral.beamBroken).onTrue(
-            robot.coral.intakeWhileBrokenCommand().alongWith(onComplete.cmd()));
+            robot.coral.intakeWhileBrokenCommand().deadlineFor(onComplete.cmd()));
         // base.doneDelayed(1.0).onTrue(onComplete.cmd());
     }
 
