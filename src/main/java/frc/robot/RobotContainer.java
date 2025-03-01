@@ -5,7 +5,6 @@ import java.util.function.BooleanSupplier;
 import java.util.function.Supplier;
 
 import choreo.util.ChoreoAllianceFlipUtil;
-import edu.wpi.first.cameraserver.CameraServer;
 import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
@@ -196,7 +195,7 @@ public class RobotContainer {
         configureButtonBindings();
 
         // Setup webcam streaming
-        CameraServer.startAutomaticCapture(0);
+        // CameraServer.startAutomaticCapture(0);
     }
 
     /**
