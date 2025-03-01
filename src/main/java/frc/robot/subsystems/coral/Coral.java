@@ -1,5 +1,7 @@
 package frc.robot.subsystems.coral;
 
+import java.util.function.DoubleSupplier;
+
 import org.littletonrobotics.junction.Logger;
 
 import edu.wpi.first.wpilibj2.command.Command;
@@ -28,6 +30,10 @@ public class Coral extends SubsystemBase{
 
     public Command setVoltageCommand(double voltage){
         return runOnce(() -> io.setRollerVoltage(voltage));
+    }
+
+    public Command setVoltageCommand(DoubleSupplier voltage){
+        return runOnce(() -> io.setRollerVoltage(voltage.getAsDouble()));
     }
 
     public Command intakeCommand() {
