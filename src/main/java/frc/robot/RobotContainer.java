@@ -5,7 +5,6 @@ import java.util.function.BooleanSupplier;
 import java.util.function.Supplier;
 
 import choreo.util.ChoreoAllianceFlipUtil;
-import edu.wpi.first.cameraserver.CameraServer;
 import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
@@ -19,6 +18,7 @@ import edu.wpi.first.wpilibj2.command.button.Trigger;
 import frc.robot.commands.DriveCommands;
 import frc.robot.generated.TunerConstants;
 import frc.robot.subsystems.coral.Coral;
+import frc.robot.subsystems.coral.CoralConstants;
 import frc.robot.subsystems.coral.CoralIO;
 import frc.robot.subsystems.coral.CoralIOSim;
 import frc.robot.subsystems.coral.CoralIOTalonFX;
@@ -195,7 +195,7 @@ public class RobotContainer {
         configureButtonBindings();
 
         // Setup webcam streaming
-        CameraServer.startAutomaticCapture();
+        // CameraServer.startAutomaticCapture(0);
     }
 
     /**
@@ -238,7 +238,10 @@ public class RobotContainer {
             drive).ignoringDisable(true));
 
         // Driver score sequence
-        score.and(didTargetAlgae.negate()).onTrue(coral.setVoltageCommand(6));
+        // score.and(didTargetAlgae.negate()).onTrue(coral.setVoltageCommand(CoralConstants.scoreSpeed));
+        score.and(didTargetAlgae.negate()).onTrue(coral.setVoltageCommand(() ->
+            elevator.getTargetPosition() < ElevatorConstants.L4
+                ? CoralConstants.slowSpeed : CoralConstants.l4Speed));
         score.and(didTargetAlgae.negate()).onFalse(coral.setVoltageCommand(0)
             .andThen(elevator.setPositionCommand(ElevatorConstants.stow)));
 

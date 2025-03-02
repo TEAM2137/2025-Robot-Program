@@ -1,5 +1,6 @@
 package frc.robot;
 
+import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.Threads;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
 import frc.robot.generated.BuildConstants;
@@ -47,7 +48,9 @@ public class Robot extends LoggedRobot {
         // Set up data receivers & replay source
         switch (Constants.currentMode) {
             case REAL:
-                Logger.addDataReceiver(new WPILOGWriter("/home/lvuser/logs/" + Constants.currentRobotType.name().toLowerCase()));
+                String eventName = DriverStation.getEventName();
+                String addition = (DriverStation.isFMSAttached() && !eventName.isEmpty()) ? ("/" + eventName) : "";
+                Logger.addDataReceiver(new WPILOGWriter("/home/lvuser/logs/" + Constants.currentRobotType.name().toLowerCase() + addition));
                 Logger.addDataReceiver(new NT4Publisher());
             break;
 

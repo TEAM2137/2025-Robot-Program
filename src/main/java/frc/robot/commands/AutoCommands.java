@@ -1,6 +1,7 @@
 package frc.robot.commands;
 
 import frc.robot.RobotContainer;
+import frc.robot.subsystems.coral.CoralConstants;
 import choreo.auto.AutoTrajectory;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
@@ -17,7 +18,7 @@ public class AutoCommands {
     public static void createIntakeSequence(AutoTrajectory base, AutoTrajectory onComplete, RobotContainer robot) {
         base.done().onTrue(robot.coral.intakeUntilBrokenCommand());
         base.recentlyDone().and(robot.coral.beamBroken).onTrue(
-            robot.coral.intakeWhileBrokenCommand().alongWith(onComplete.cmd()));
+            onComplete.cmd().deadlineFor(robot.coral.intakeWhileBrokenCommand()));
         // base.doneDelayed(1.0).onTrue(onComplete.cmd());
     }
 
@@ -54,11 +55,11 @@ public class AutoCommands {
      */
     public static void createScoringSequence(double duration, AutoTrajectory base, Command onComplete, RobotContainer robot) {
         base.doneDelayed(0.8).onTrue(Commands.sequence(
-            robot.coral.setVoltageCommand(4).repeatedly().withTimeout(duration)
+            robot.coral.setVoltageCommand(CoralConstants.l4Speed).repeatedly().withTimeout(duration)
             .andThen(robot.coral.setVoltageCommand(0))
             .andThen(robot.elevator.stowCommand())
         ));
 
-        base.doneDelayed(0.95 + duration).onTrue(onComplete);
+        base.doneDelayed(0.96 + duration).onTrue(onComplete);
     }
 }
