@@ -8,7 +8,6 @@ import edu.wpi.first.hal.FRCNetComm.tInstances;
 import edu.wpi.first.hal.FRCNetComm.tResourceType;
 import edu.wpi.first.hal.HAL;
 import edu.wpi.first.math.Matrix;
-import edu.wpi.first.math.Pair;
 import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.math.estimator.SwerveDrivePoseEstimator;
 import edu.wpi.first.math.geometry.Pose2d;
@@ -38,12 +37,10 @@ import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
 import frc.robot.Constants;
 import frc.robot.Constants.Mode;
 import frc.robot.RobotContainer;
-import frc.robot.commands.DriveCommands;
 import frc.robot.generated.TunerConstants;
-import frc.robot.util.AutoAlignUtil;
-import frc.robot.util.AutoAlignUtil.Target;
+import frc.robot.autoalign.*;
+import frc.robot.autoalign.AutoAlign.Target;
 
-import java.util.List;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 import org.littletonrobotics.junction.AutoLogOutput;
@@ -204,15 +201,15 @@ public class Drive extends SubsystemBase {
         gyroDisconnectedAlert.set(!gyroInputs.connected && Constants.currentMode != Mode.SIM);
 
         // Post auto align debug displays in NetworkTables
-        Pose2d leftPole = DriveCommands.getNewTargetPose(this, Target.LEFT_POLE, RobotContainer.getInstance().joystickMotionSupplier());
-        Pose2d rightPole = DriveCommands.getNewTargetPose(this, Target.RIGHT_POLE, RobotContainer.getInstance().joystickMotionSupplier());
+        Pose2d leftPole = AutoAlign.getFlippedPose(this, Target.LEFT_POLE, RobotContainer.getInstance().joystickMotionSupplier());
+        Pose2d rightPole = AutoAlign.getFlippedPose(this, Target.RIGHT_POLE, RobotContainer.getInstance().joystickMotionSupplier());
         Pose2d offscreenPole = new Pose2d(new Translation2d(100, 100), new Rotation2d());
 
-        boolean isTargetingLeft = RobotContainer.getInstance().targetLeft.getAsBoolean() && DriveCommands.getActiveTarget() != null;
-        boolean isTargetingRight = RobotContainer.getInstance().targetRight.getAsBoolean() && DriveCommands.getActiveTarget() != null;
+        boolean isTargetingLeft = RobotContainer.getInstance().targetLeft.getAsBoolean() && AutoAlign.getActiveTarget() != null;
+        boolean isTargetingRight = RobotContainer.getInstance().targetRight.getAsBoolean() && AutoAlign.getActiveTarget() != null;
 
-        closestLeftPolePublisher.accept(isTargetingLeft ? DriveCommands.getActiveTarget() : offscreenPole);
-        closestRightPolePublisher.accept(isTargetingRight ? DriveCommands.getActiveTarget() : offscreenPole);
+        closestLeftPolePublisher.accept(isTargetingLeft ? AutoAlign.getActiveTarget() : offscreenPole);
+        closestRightPolePublisher.accept(isTargetingRight ? AutoAlign.getActiveTarget() : offscreenPole);
 
         toLeftReefPublisher.accept(createTrajectoryTo(leftPole.getTranslation()));
         toRightReefPublisher.accept(createTrajectoryTo(rightPole.getTranslation()));
@@ -231,30 +228,6 @@ public class Drive extends SubsystemBase {
         trajectory[0] = getPose().getTranslation();
         trajectory[1] = point;
         return trajectory;
-    }
-
-    public int getNearestPose(Translation2d motionVector, List<Pose2d> locations) {
-        return getNearestPose(this.getPose(), motionVector, locations);
-    }
-
-    public int getNearestPose(Pose2d pose, Translation2d motionVector, List<Pose2d> locations) {
-        Pair<Integer, Double> bestResult = new Pair<>(0, 1000.0);
-
-        for (int i = 0; i < locations.size(); i++) {
-            // Calculate the distance from the robot to the current reef pole
-            Pose2d poleLocation = AutoAlignUtil.flipIfRed(locations.get(i));
-            double dst = pose.getTranslation().getDistance(poleLocation.getTranslation());
-
-            // Calculate the additional weighting based on joystick angle
-            double addition = AutoAlignUtil.calculateBestReefPoleAddition(
-                poleLocation.minus(pose).getTranslation(), motionVector);
-
-            // Apply addition and assign new best result if applicable
-            double weight = dst + addition * 2.5;
-            if (weight <= bestResult.getSecond()) bestResult = new Pair<>(i, weight);
-        }
-
-        return bestResult.getFirst();
     }
 
     /**

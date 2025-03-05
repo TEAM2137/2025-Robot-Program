@@ -12,13 +12,11 @@ import edu.wpi.first.math.trajectory.TrapezoidProfile;
 import edu.wpi.first.math.util.Units;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.DriverStation.Alliance;
-import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
-import frc.robot.RobotContainer;
+import frc.robot.autoalign.AutoAlign;
 import frc.robot.subsystems.drive.Drive;
-import frc.robot.util.AutoAlignUtil;
 import frc.robot.util.FieldPOIs;
 
 import java.text.DecimalFormat;
@@ -38,11 +36,6 @@ public class DriveCommands {
     private static final double ANGLE_KD = 0.0;
     private static final double ANGLE_MAX_VELOCITY = 5.5;
     private static final double ANGLE_MAX_ACCELERATION = 45.0;
-
-    private static final double DRIVE_MAX_VELOCITY = 3.5; // Meters/Sec
-    private static final double DRIVE_MAX_ACCELERATION = 12.0; // Meters/Sec^2
-
-    private static final double ELEVATOR_RAISE_DISTANCE_METERS = 1.25; // For targeting
 
     private static final double FF_START_DELAY = 2.0; // Secs
     private static final double FF_RAMP_RATE = 0.1; // Volts/Sec
@@ -272,142 +265,19 @@ public class DriveCommands {
         double gyroDelta = 0.0;
     }
 
-    private static Pose2d target;
-    private static Pose2d lastTargeted = new Pose2d();
-
-    public static Pose2d getActiveTarget() {
-        return target;
-    }
-
-    public static Pose2d getLastTargeted() {
-        return lastTargeted;
-    }
-
-    public static Command autoAlignTo(AutoAlignUtil.Target targetType, RobotContainer robot, Supplier<Translation2d> motionSupplier) {
-        // Create PID controller
-        ProfiledPIDController angleController = new ProfiledPIDController(
+    public static ProfiledPIDController getAngleController() {
+        return new ProfiledPIDController(
             ANGLE_KP, 0.0, ANGLE_KD,
             new TrapezoidProfile.Constraints(ANGLE_MAX_VELOCITY, ANGLE_MAX_ACCELERATION)
         );
-        angleController.enableContinuousInput(-Math.PI, Math.PI);
-
-        // Construct command
-        return Commands.sequence(
-            Commands.runOnce(() -> {
-                target = getNewTargetPose(robot.drive, targetType, motionSupplier);
-                lastTargeted = target;
-            }),
-            driveToTargetCommand(robot.drive, angleController).alongWith(Commands.run(() -> {
-                Translation2d robotTranslation = robot.drive.getPose().getTranslation();
-                if (target.getTranslation().getDistance(robotTranslation) < ELEVATOR_RAISE_DISTANCE_METERS) {
-                    robot.elevator.applyScheduledPosition();
-                }
-            }))
-        );
     }
 
-    public static Command driveToCoralStation(Drive drive, Supplier<Translation2d> joystickSupplier, BooleanSupplier slowMode) {
+    public static Command alignToCoralStation(Drive drive, Supplier<Translation2d> joystickSupplier, BooleanSupplier slowMode) {
         // Construct command
         return joystickDriveAtAngle(drive, joystickSupplier, slowMode, () -> {
             return (drive.getPose().getY() < 8.19912 / 2.0 == !ChoreoAllianceFlipUtil.shouldFlip())
-                    ? AutoAlignUtil.flipIfRed(FieldPOIs.CORAL_STATION_BOTTOM).getRotation()
-                    : AutoAlignUtil.flipIfRed(FieldPOIs.CORAL_STATION_TOP).getRotation();
-        });
-    }
-
-    public static Pose2d getNewTargetPose(Drive drive, AutoAlignUtil.Target targetType, Supplier<Translation2d> motionSupplier) {
-        return AutoAlignUtil.flipIfRed(AutoAlignUtil.fromPoseId(getNewTargetPoseId(drive, targetType, motionSupplier), targetType));
-    }
-
-    public static int getNewTargetPoseId(Drive drive, AutoAlignUtil.Target targetType, Supplier<Translation2d> motionSupplier) {
-        Pose2d pose = drive.getPose();
-        Translation2d motionVector = new Translation2d();
-
-        // Ignore transformations if no joystick values are inputted
-        if (motionSupplier.get().getNorm() > 0.1) {
-            boolean isFlipped = DriverStation.getAlliance().isPresent()
-                && DriverStation.getAlliance().get() == Alliance.Red;
-
-            // Convert joystick inputs to robot relative (otherwise robot rotation messes with targeting)
-            motionVector = AutoAlignUtil.normalize(
-                motionSupplier.get().rotateBy((isFlipped
-                    ? pose.getRotation().plus(new Rotation2d(Math.PI))
-                    : pose.getRotation()).unaryMinus())
-            );
-        }
-
-        // Find the correct pole to target
-        return AutoAlignUtil.mapToPoseId(targetType, drive, motionVector);
-    }
-
-    private static Command driveToTargetCommand(Drive drive, ProfiledPIDController angleController) {
-        // Run the command
-        return Commands.runEnd(() -> {
-            // Dynamically calculate drive constraints based on elevator height
-            double elevatorHeight = RobotContainer.getInstance().elevator.getExtensionMeters();
-            double velocityScaling = 1 - (elevatorHeight / 3.0);
-            double accelScaling = 1 - (elevatorHeight / 6.0);
-
-            // Update profile constraints based on calculated scalars
-            TrapezoidProfile velocityProfile = new TrapezoidProfile(
-                new TrapezoidProfile.Constraints(
-                    DRIVE_MAX_VELOCITY * velocityScaling,
-                    DRIVE_MAX_ACCELERATION * accelScaling)
-            );
-
-            // Calculate vector to target
-            Translation2d toTarget = new Translation2d(
-                drive.getPose().getX() - target.getX(),
-                drive.getPose().getY() - target.getY()
-            );
-
-            // Calculate the robot's current speed towards the target
-            double velocityTowardsGoal = drive.getLinearSpeedMetersPerSec() * AutoAlignUtil.dot(
-                AutoAlignUtil.normalize(drive.getLinearSpeedsVector()),
-                AutoAlignUtil.normalize(toTarget)
-            );
-
-            // Grab the current drive state
-            TrapezoidProfile.State state = velocityProfile.calculate(0.02,
-                new TrapezoidProfile.State(toTarget.getNorm(), velocityTowardsGoal),
-                new TrapezoidProfile.State()
-            );
-
-            // Create a velocity vector based on the drive state's velocity
-            Translation2d normalized = new Translation2d(state.velocity, toTarget.getAngle());
-
-            // Debug info
-            SmartDashboard.putNumber("AA-Position", state.position);
-            SmartDashboard.putNumber("AA-Velocity", state.velocity);
-
-            // Calculate angular speed
-            double omega = angleController.calculate(drive.getRotation().getRadians(),
-                target.getRotation().getRadians());
-
-            // Check if it's red alliance
-            boolean isFlipped = DriverStation.getAlliance().isPresent()
-                && DriverStation.getAlliance().get() == Alliance.Red;
-
-            // Convert to field relative speeds
-            ChassisSpeeds speeds = new ChassisSpeeds(
-                normalized.getX() * (isFlipped ? -1 : 1),
-                normalized.getY() * (isFlipped ? -1 : 1),
-                omega
-            );
-
-            // Drive the robot to targets
-            drive.runVelocity(ChassisSpeeds.fromFieldRelativeSpeeds(speeds, isFlipped
-                ? drive.getRotation().plus(new Rotation2d(Math.PI))
-                : drive.getRotation()
-            ));
-
-        }, () -> target = null, drive)
-        .beforeStarting(() -> {
-            // Reset pid controllers
-            angleController.reset(
-                drive.getRotation().getRadians(),
-                drive.getAngularSpeedRadsPerSec()
-            );
+                    ? AutoAlign.flipIfRed(FieldPOIs.CORAL_STATION_BOTTOM).getRotation()
+                    : AutoAlign.flipIfRed(FieldPOIs.CORAL_STATION_TOP).getRotation();
         });
     }
 }

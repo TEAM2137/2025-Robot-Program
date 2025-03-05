@@ -46,9 +46,9 @@ import frc.robot.subsystems.vision.Vision;
 import frc.robot.subsystems.vision.VisionConstants;
 import frc.robot.subsystems.vision.VisionIO;
 import frc.robot.subsystems.vision.VisionIOLimelight;
-import frc.robot.util.AutoAlignUtil;
+import frc.robot.autoalign.AutoAlign;
+import frc.robot.autoalign.AutoAlign.Target;
 import frc.robot.util.FieldPOIs;
-import frc.robot.util.AutoAlignUtil.Target;
 
 public class RobotContainer {
     private static RobotContainer instance;
@@ -206,7 +206,7 @@ public class RobotContainer {
      */
     private void configureButtonBindings() {
         BooleanSupplier slowMode = () -> driverController.getLeftTriggerAxis() > 0.25;
-        Trigger didTargetAlgae = new Trigger(() -> FieldPOIs.ALGAE_LOCATIONS.contains(AutoAlignUtil.flipIfRed(DriveCommands.getLastTargeted())));
+        Trigger didTargetAlgae = new Trigger(() -> FieldPOIs.ALGAE_LOCATIONS.contains(AutoAlign.flipIfRed(AutoAlign.getLastTargeted())));
 
         // Default command, normal field-relative drive
         drive.setDefaultCommand(DriveCommands.joystickDrive(drive,
@@ -254,17 +254,17 @@ public class RobotContainer {
             .andThen(elevator.setPositionCommand(ElevatorConstants.stow)));
 
         // Driver reef auto align
-        targetLeft.whileTrue(DriveCommands.autoAlignTo(Target.LEFT_POLE, this, joystickSupplier));
-        targetRight.whileTrue(DriveCommands.autoAlignTo(Target.RIGHT_POLE, this, joystickSupplier));
-        targetAlgae.whileTrue(DriveCommands.autoAlignTo(Target.ALGAE, this, joystickSupplier)
+        targetLeft.whileTrue(AutoAlign.autoAlignTo(Target.LEFT_POLE, this, joystickSupplier));
+        targetRight.whileTrue(AutoAlign.autoAlignTo(Target.RIGHT_POLE, this, joystickSupplier));
+        targetAlgae.whileTrue(AutoAlign.autoAlignTo(Target.ALGAE, this, joystickSupplier)
             .beforeStarting(() -> {
                 // Schedule the proper elevator height
-                int poseId = DriveCommands.getNewTargetPoseId(drive, Target.ALGAE, joystickSupplier);
+                int poseId = AutoAlign.getNewTargetPoseId(drive, Target.ALGAE, joystickSupplier);
                 elevator.schedulePosition(poseId % 2 == 0 ? ElevatorConstants.algaeHigh : ElevatorConstants.algaeLow);
             }));
 
         // Driver coral station align
-        targetCoralStation.onTrue(DriveCommands.driveToCoralStation(drive, joystickSupplier, slowMode).alongWith(coral.intakeCommand()));
+        targetCoralStation.onTrue(DriveCommands.alignToCoralStation(drive, joystickSupplier, slowMode).alongWith(coral.intakeCommand()));
         targetCoralStation.onFalse(Commands.runOnce(() -> coral.getCurrentCommand().cancel(), coral)
             .andThen(coral.setVoltageCommand(0))
             .andThen(Commands.runOnce(() -> drive.getCurrentCommand().cancel(), drive)));

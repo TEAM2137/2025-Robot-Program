@@ -18,11 +18,11 @@ import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.button.RobotModeTriggers;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
+import frc.robot.autoalign.AutoAlign;
 import frc.robot.commands.AutoCommands;
 import frc.robot.commands.DriveCommands;
 import frc.robot.subsystems.drive.Drive;
 import frc.robot.subsystems.elevator.ElevatorConstants;
-import frc.robot.util.AutoAlignUtil;
 
 public class Autonomous {
     public final AutoFactory factory;
@@ -50,7 +50,7 @@ public class Autonomous {
             (trajectory, starting) -> {
                 // Log the supplied trajectory
                 autoTrajectoryPublisher.accept(Arrays.stream(trajectory.getPoses())
-                    .map(pose -> AutoAlignUtil.flipIfRed(pose).getTranslation())
+                    .map(pose -> AutoAlign.flipIfRed(pose).getTranslation())
                     .collect(Collectors.toList())
                     .toArray(new Translation2d[0])
                 );
