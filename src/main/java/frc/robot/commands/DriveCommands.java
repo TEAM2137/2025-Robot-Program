@@ -12,6 +12,7 @@ import edu.wpi.first.math.trajectory.TrapezoidProfile;
 import edu.wpi.first.math.util.Units;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.DriverStation.Alliance;
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
@@ -33,16 +34,13 @@ import choreo.util.ChoreoAllianceFlipUtil;
 public class DriveCommands {
     private static final double DEADBAND = 0.1;
 
-    private static final double ANGLE_KP = 4.8;
+    private static final double ANGLE_KP = 5.2;
     private static final double ANGLE_KD = 0.0;
     private static final double ANGLE_MAX_VELOCITY = 5.5;
-    private static final double ANGLE_MAX_ACCELERATION = 40.0;
+    private static final double ANGLE_MAX_ACCELERATION = 45.0;
 
-    private static final double DRIVE_KP = 2.8;
-    private static final double DRIVE_KD = 0.0;
-    private static final double DRIVE_MAX_VELOCITY = 3.0; // Meters/Sec
+    private static final double DRIVE_MAX_VELOCITY = 3.5; // Meters/Sec
     private static final double DRIVE_MAX_ACCELERATION = 18.0; // Meters/Sec^2
-    private static final double DRIVE_DEADBAND_METERS = 0.01; // For targeting
 
     private static final double ELEVATOR_RAISE_DISTANCE_METERS = 1.25; // For targeting
 
@@ -343,31 +341,45 @@ public class DriveCommands {
     }
 
     private static Command driveToTargetCommand(Drive drive, ProfiledPIDController angleController) {
-        // Create drive PID controller
-        ProfiledPIDController driveController = new ProfiledPIDController(
-            DRIVE_KP, 0.0, DRIVE_KD,
-            new TrapezoidProfile.Constraints(DRIVE_MAX_VELOCITY, DRIVE_MAX_ACCELERATION)
-        );
-
         // Run the command
         return Commands.runEnd(() -> {
             // Dynamically calculate drive constraints based on elevator height
             double elevatorHeight = RobotContainer.getInstance().elevator.getExtensionMeters();
             double velocityScaling = 1 - (elevatorHeight / 3.0);
             double accelScaling = 1 - (elevatorHeight / 6.0);
-            TrapezoidProfile.Constraints driveConstraints = new TrapezoidProfile.Constraints(
-                DRIVE_MAX_VELOCITY * velocityScaling,
-                DRIVE_MAX_ACCELERATION * accelScaling);
 
+            // Update profile constraints based on calculated scalars
+            TrapezoidProfile velocityProfile = new TrapezoidProfile(
+                new TrapezoidProfile.Constraints(
+                    DRIVE_MAX_VELOCITY * velocityScaling,
+                    DRIVE_MAX_ACCELERATION * accelScaling)
+            );
+
+            // Calculate vector to target
             Translation2d toTarget = new Translation2d(
                 drive.getPose().getX() - target.getX(),
                 drive.getPose().getY() - target.getY()
             );
-            Translation2d normalized = new Translation2d(
-                driveController.calculate(MathUtil.applyDeadband(toTarget.getNorm(), DRIVE_DEADBAND_METERS),
-                    new TrapezoidProfile.State(), driveConstraints),
-                toTarget.getAngle()
+
+            // Calculate the robot's current speed towards the target
+            double speedTowardsGoal = drive.getLinearSpeedMetersPerSec() * AutoAlignUtil.dot(
+                AutoAlignUtil.normalize(drive.getLinearSpeedsVector()),
+                AutoAlignUtil.normalize(toTarget)
             );
+
+            // Grab the current drive state
+            TrapezoidProfile.State state = velocityProfile.calculate(0.02,
+                new TrapezoidProfile.State(toTarget.getNorm(), speedTowardsGoal),
+                new TrapezoidProfile.State()
+            );
+
+            // Create a velocity vector based on the drive state's velocity
+            Translation2d normalized = new Translation2d(state.velocity, toTarget.getAngle());
+
+            // Debug info
+            SmartDashboard.putNumber("AA-SpeedTowardsGoal", speedTowardsGoal);
+            SmartDashboard.putNumber("AA-Position", state.position);
+            SmartDashboard.putNumber("AA-Velocity", state.velocity);
 
             // Calculate angular speed
             double omega = angleController.calculate(drive.getRotation().getRadians(),
@@ -389,18 +401,10 @@ public class DriveCommands {
                 ? drive.getRotation().plus(new Rotation2d(Math.PI))
                 : drive.getRotation()
             ));
+
         }, () -> target = null, drive)
         .beforeStarting(() -> {
             // Reset pid controllers
-            double targetDistance = drive.getPose().getTranslation().getDistance(target.getTranslation());
-            driveController.reset(
-                targetDistance,
-                // Calculate the robots starting velocity towards the target
-                drive.getLinearSpeedMetersPerSec() * AutoAlignUtil.dot(
-                    AutoAlignUtil.normalize(drive.getLinearSpeedsVector()),
-                    AutoAlignUtil.normalize(drive.getPose().getTranslation().minus(target.getTranslation())))
-            );
-            driveController.calculate(targetDistance);
             angleController.reset(
                 drive.getRotation().getRadians(),
                 drive.getAngularSpeedRadsPerSec()
