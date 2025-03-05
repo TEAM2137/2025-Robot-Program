@@ -40,7 +40,7 @@ public class DriveCommands {
     private static final double ANGLE_MAX_ACCELERATION = 45.0;
 
     private static final double DRIVE_MAX_VELOCITY = 3.5; // Meters/Sec
-    private static final double DRIVE_MAX_ACCELERATION = 18.0; // Meters/Sec^2
+    private static final double DRIVE_MAX_ACCELERATION = 12.0; // Meters/Sec^2
 
     private static final double ELEVATOR_RAISE_DISTANCE_METERS = 1.25; // For targeting
 
@@ -362,14 +362,14 @@ public class DriveCommands {
             );
 
             // Calculate the robot's current speed towards the target
-            double speedTowardsGoal = drive.getLinearSpeedMetersPerSec() * AutoAlignUtil.dot(
+            double velocityTowardsGoal = drive.getLinearSpeedMetersPerSec() * AutoAlignUtil.dot(
                 AutoAlignUtil.normalize(drive.getLinearSpeedsVector()),
                 AutoAlignUtil.normalize(toTarget)
             );
 
             // Grab the current drive state
             TrapezoidProfile.State state = velocityProfile.calculate(0.02,
-                new TrapezoidProfile.State(toTarget.getNorm(), speedTowardsGoal),
+                new TrapezoidProfile.State(toTarget.getNorm(), velocityTowardsGoal),
                 new TrapezoidProfile.State()
             );
 
@@ -377,7 +377,6 @@ public class DriveCommands {
             Translation2d normalized = new Translation2d(state.velocity, toTarget.getAngle());
 
             // Debug info
-            SmartDashboard.putNumber("AA-SpeedTowardsGoal", speedTowardsGoal);
             SmartDashboard.putNumber("AA-Position", state.position);
             SmartDashboard.putNumber("AA-Velocity", state.velocity);
 
