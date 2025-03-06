@@ -291,7 +291,8 @@ public class RobotContainer {
         l4.and(targetAlgae.negate()).onTrue(elevator.schedulePositionCommand(ElevatorConstants.L4).ignoringDisable(true));
 
         // Stow the elevator manually
-        stowManual.onTrue(elevator.setPositionCommand(ElevatorConstants.stow));
+        stowManual.onTrue(elevator.setPositionCommand(ElevatorConstants.stow)
+            .andThen(algae.setPivotPosition(AlgaeConstants.stow)));
 
         // Reset the elevator encoder position
         resetElevator.onTrue(elevator.resetPositionCommand().ignoringDisable(true));
