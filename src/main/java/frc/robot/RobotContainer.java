@@ -207,6 +207,7 @@ public class RobotContainer {
     private void configureButtonBindings() {
         BooleanSupplier slowMode = () -> driverController.getLeftTriggerAxis() > 0.25;
         Trigger didTargetAlgae = new Trigger(() -> FieldPOIs.ALGAE_LOCATIONS.contains(AutoAlign.flipIfRed(AutoAlign.getLastTargeted())));
+        Trigger isTargetingL1 = new Trigger(() -> elevator.getScheduledPosition() == ElevatorConstants.L1);
 
         // Default command, normal field-relative drive
         drive.setDefaultCommand(DriveCommands.joystickDrive(drive,
@@ -235,15 +236,20 @@ public class RobotContainer {
             )),
             drive).ignoringDisable(true));
 
-        // Driver score sequence
-        // score.and(didTargetAlgae.negate()).onTrue(coral.setVoltageCommand(CoralConstants.scoreSpeed));
-        score.and(didTargetAlgae.negate()).onTrue(coral.setVoltageCommand(() ->
+        // Driver score sequence (L2-L4)
+        score.and(didTargetAlgae.negate().and(isTargetingL1.negate())).onTrue(coral.setVoltageCommand(() ->
             elevator.getTargetPosition() < ElevatorConstants.L4
                 ? CoralConstants.slowSpeed : CoralConstants.l4Speed));
-        score.and(didTargetAlgae.negate()).onFalse(coral.setVoltageCommand(0)
+        score.and(didTargetAlgae.negate().and(isTargetingL1.negate())).onFalse(coral.setVoltageCommand(0)
             .andThen(elevator.setPositionCommand(ElevatorConstants.stow)));
 
-        // Driver remove algae sequence
+        // Drive score sequence (L1)
+        score.and(didTargetAlgae.negate().and(isTargetingL1)).onTrue(coral.setVoltageCommand(CoralConstants.l1Speed)
+            .andThen(elevator.setPositionCommand(ElevatorConstants.L2)));
+        score.and(didTargetAlgae.negate().and(isTargetingL1)).onFalse(coral.setVoltageCommand(0)
+            .andThen(elevator.setPositionCommand(ElevatorConstants.stow)));
+
+        // Driver score sequence (remove algae)
         score.and(didTargetAlgae).onTrue(algae.setPivotPosition(AlgaeConstants.deploy)
             .andThen(coral.setVoltageCommand(-6)));
         score.and(didTargetAlgae).onFalse(algae.setPivotPosition(AlgaeConstants.stow)
@@ -283,7 +289,7 @@ public class RobotContainer {
         cageManual.onFalse(algae.setPivotVoltage(() -> 0));
 
         // Schedule different reef heights. These commands cannot be run while targeting algae
-        l1.and(targetAlgae.negate()).onTrue(elevator.schedulePositionCommand(ElevatorConstants.L1).ignoringDisable(true));
+        l1.and(targetAlgae.negate()).onTrue(elevator.schedulePositionCommand(ElevatorConstants.L1));
         l2.and(targetAlgae.negate()).onTrue(elevator.schedulePositionCommand(ElevatorConstants.L2).ignoringDisable(true));
         l3.and(targetAlgae.negate()).onTrue(elevator.schedulePositionCommand(ElevatorConstants.L3).ignoringDisable(true));
         l4.and(targetAlgae.negate()).onTrue(elevator.schedulePositionCommand(ElevatorConstants.L4).ignoringDisable(true));

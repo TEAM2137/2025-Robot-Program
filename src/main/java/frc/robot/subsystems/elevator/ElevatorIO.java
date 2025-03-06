@@ -25,6 +25,8 @@ public interface ElevatorIO {
 
     public default void schedulePosition(double targetPosition) {}
 
+    public default double getScheduledPosition() { return 0.0; }
+
     public default void applyScheduledPosition() {}
 
     /** Sets the setpoint for the elevator height, in meters */

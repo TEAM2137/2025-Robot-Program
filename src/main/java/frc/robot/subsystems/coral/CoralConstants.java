@@ -2,7 +2,10 @@ package frc.robot.subsystems.coral;
 
 public class CoralConstants {
     public static final int rollersID = 32;
+
+    // Roller Speeds
     public static final double slowSpeed = 3.8;
+    public static final double l1Speed = 3.5;
     public static final double l4Speed = 4.6;
     
     // PID Constants

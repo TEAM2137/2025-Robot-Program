@@ -67,6 +67,10 @@ public class Elevator extends SubsystemBase {
         return inputs.targetPositionMeters;
     }
 
+    public double getScheduledPosition() {
+        return io.getScheduledPosition();
+    }
+
     public Command setVoltage(DoubleSupplier voltageSupplier) {
         return run(() -> io.setVolts(voltageSupplier.getAsDouble()));
     }
