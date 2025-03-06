@@ -13,6 +13,8 @@ import com.ctre.phoenix6.hardware.TalonFX;
 import com.ctre.phoenix6.signals.InvertedValue;
 import com.ctre.phoenix6.signals.NeutralModeValue;
 
+import edu.wpi.first.wpilibj.DriverStation;
+
 public class ElevatorIOTalonFX implements ElevatorIO {
     private TalonFX leadMotor = new TalonFX(ElevatorConstants.leaderID, "rio");
     private TalonFX followMotor = new TalonFX(ElevatorConstants.followerID, "rio");
@@ -101,7 +103,7 @@ public class ElevatorIOTalonFX implements ElevatorIO {
     @Override
     public void schedulePosition(double targetPosition) {
         this.scheduledPosition = targetPosition;
-        if (this.targetPosition > 0.05) setTargetPosition(targetPosition);
+        if (this.targetPosition > 0.05 && DriverStation.isEnabled()) setTargetPosition(targetPosition);
     }
 
     @Override

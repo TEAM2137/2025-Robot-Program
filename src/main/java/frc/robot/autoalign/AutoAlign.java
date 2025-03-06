@@ -24,7 +24,7 @@ import frc.robot.util.FieldPOIs;
 
 public class AutoAlign {
     private static final double DRIVE_MAX_VELOCITY = 3.5; // Meters/Sec
-    private static final double DRIVE_MAX_ACCELERATION = 12.0; // Meters/Sec^2
+    private static final double DRIVE_MAX_ACCELERATION = 18.0; // Meters/Sec^2
 
     private static final double JOYSTICK_ADDITION_SCALAR = 2.5;
 
@@ -53,7 +53,6 @@ public class AutoAlign {
         Target.ALGAE, FieldPOIs.ALGAE_LOCATIONS
     );
 
-    
     private static Pose2d target; // The currently targeted position (can be null)
     private static Pose2d lastTargeted = new Pose2d(); // The most recently targeted position (not null)
 
