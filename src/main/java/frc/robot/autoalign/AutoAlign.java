@@ -5,6 +5,7 @@ import java.util.Map;
 import java.util.function.Supplier;
 
 import choreo.util.ChoreoAllianceFlipUtil;
+import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.Pair;
 import edu.wpi.first.math.controller.ProfiledPIDController;
 import edu.wpi.first.math.geometry.Pose2d;
@@ -24,7 +25,7 @@ import frc.robot.util.FieldPOIs;
 
 public class AutoAlign {
     private static final double DRIVE_MAX_VELOCITY = 3.5; // Meters/Sec
-    private static final double DRIVE_MAX_ACCELERATION = 18.0; // Meters/Sec^2
+    private static final double DRIVE_MAX_ACCELERATION = 20.0; // Meters/Sec^2
 
     private static final double JOYSTICK_ADDITION_SCALAR = 2.5;
 
@@ -157,8 +158,8 @@ public class AutoAlign {
         return Commands.runEnd(() -> {
             // Dynamically calculate drive constraints based on elevator height
             double elevatorHeight = RobotContainer.getInstance().elevator.getExtensionMeters();
-            double velocityScaling = 1 - (elevatorHeight / 3.0);
-            double accelScaling = 1 - (elevatorHeight / 6.0);
+            double accelScaling = MathUtil.clamp(1 - (elevatorHeight / 2.0), 0, 1);
+            double velocityScaling = MathUtil.clamp(1 - (elevatorHeight / 3.5), 0, 1);
 
             // Update profile constraints based on calculated scalars
             TrapezoidProfile velocityProfile = new TrapezoidProfile(
@@ -200,10 +201,17 @@ public class AutoAlign {
             boolean isFlipped = DriverStation.getAlliance().isPresent()
                 && DriverStation.getAlliance().get() == Alliance.Red;
 
+            // Limit acceleration
+            Translation2d finalVelocity = DriveCommands.limitAccelerationFor(
+                drive.getLinearSpeedsVector(),
+                normalized,
+                DRIVE_MAX_ACCELERATION * accelScaling
+            );
+
             // Convert to field relative speeds
             ChassisSpeeds speeds = new ChassisSpeeds(
-                normalized.getX() * (isFlipped ? -1 : 1),
-                normalized.getY() * (isFlipped ? -1 : 1),
+                finalVelocity.getX() * (isFlipped ? -1 : 1),
+                finalVelocity.getY() * (isFlipped ? -1 : 1),
                 omega
             );
 

@@ -41,6 +41,11 @@ public class ElevatorIOSim implements ElevatorIO {
     }
 
     @Override
+    public void applyScheduledPosition() {
+        this.setTargetPosition(scheduledPosition);
+    }
+
+    @Override
     public void schedulePosition(double targetPosition) {
         this.scheduledPosition = targetPosition;
     }

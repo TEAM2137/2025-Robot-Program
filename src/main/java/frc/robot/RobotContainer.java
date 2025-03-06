@@ -210,10 +210,8 @@ public class RobotContainer {
 
         // Default command, normal field-relative drive
         drive.setDefaultCommand(DriveCommands.joystickDrive(drive,
-                () -> joystickSupplier.get().div(1 / (1 - MathUtil.clamp(elevator.getExtensionMeters()
-                        / ElevatorConstants.L4, 0.0, 0.82) * 1.0)),
-                slowMode, () -> -driverController.getRightX() * 0.75 * (1 - MathUtil.clamp(elevator.getExtensionMeters()
-                        / ElevatorConstants.L4, 0.0, 0.82) * 1.0)));
+                () -> joystickSupplier.get(),
+                slowMode, () -> -driverController.getRightX() * 0.75));
 
         // Switch to X wheel pattern
         xLock.onTrue(Commands.runOnce(drive::xLock, drive));

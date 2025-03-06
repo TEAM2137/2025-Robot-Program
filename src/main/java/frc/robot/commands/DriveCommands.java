@@ -10,11 +10,14 @@ import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.math.trajectory.TrapezoidProfile;
 import edu.wpi.first.math.util.Units;
+import edu.wpi.first.networktables.NetworkTableInstance;
+import edu.wpi.first.networktables.StructPublisher;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.DriverStation.Alliance;
 import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
+import frc.robot.RobotContainer;
 import frc.robot.autoalign.AutoAlign;
 import frc.robot.subsystems.drive.Drive;
 import frc.robot.util.FieldPOIs;
@@ -42,6 +45,8 @@ public class DriveCommands {
 
     private static final double WHEEL_RADIUS_MAX_VELOCITY = 1.0; // Rad/Sec
     private static final double WHEEL_RADIUS_RAMP_RATE = 0.5; // Rad/Sec^2
+
+    private static final double DRIVE_MAX_ACCELERATION = 40.0; // Meters/Sec^2
 
     private DriveCommands() {}
 
@@ -80,11 +85,25 @@ public class DriveCommands {
 
             double multiplier = slowMode.getAsBoolean() ? 0.3 : 1.0;
 
+            double elevatorHeight = RobotContainer.getInstance().elevator.getExtensionMeters();
+            double accelScaling = MathUtil.clamp(1 - (elevatorHeight / 2.0), 0, 1);
+            double velocityScaling = MathUtil.clamp(1 - (elevatorHeight / 3.5), 0, 1);
+
+            Translation2d finalVelocity = limitAccelerationFor(
+                drive.getLinearSpeedsVector(),
+                new Translation2d(
+                    linearVelocity.getX() * drive.getMaxLinearSpeedMetersPerSec() * multiplier,
+                    linearVelocity.getY() * drive.getMaxLinearSpeedMetersPerSec() * multiplier
+                ).times(velocityScaling),
+                DRIVE_MAX_ACCELERATION * accelScaling
+            );
+
+            finalVelocityPublisher.accept(finalVelocity);
+
             // Convert to field relative speeds & send command
             ChassisSpeeds speeds = new ChassisSpeeds(
-                linearVelocity.getX() * drive.getMaxLinearSpeedMetersPerSec() * multiplier,
-                linearVelocity.getY() * drive.getMaxLinearSpeedMetersPerSec() * multiplier,
-                omega * drive.getMaxAngularSpeedRadPerSec()
+                finalVelocity.getX(), finalVelocity.getY(),
+                omega * drive.getMaxAngularSpeedRadPerSec() * velocityScaling
             );
             boolean isFlipped = DriverStation.getAlliance().isPresent()
                 && DriverStation.getAlliance().get() == Alliance.Red;
@@ -125,11 +144,25 @@ public class DriveCommands {
 
             double multiplier = slowMode.getAsBoolean() ? 0.3 : 1.0;
 
+            double elevatorHeight = RobotContainer.getInstance().elevator.getExtensionMeters();
+            double accelScaling = MathUtil.clamp(1 - (elevatorHeight / 2.0), 0, 1);
+            double velocityScaling = MathUtil.clamp(1 - (elevatorHeight / 3.5), 0, 1);
+
+            Translation2d finalVelocity = limitAccelerationFor(
+                drive.getLinearSpeedsVector(),
+                new Translation2d(
+                    linearVelocity.getX() * drive.getMaxLinearSpeedMetersPerSec() * multiplier,
+                    linearVelocity.getY() * drive.getMaxLinearSpeedMetersPerSec() * multiplier
+                ).times(velocityScaling),
+                DRIVE_MAX_ACCELERATION * accelScaling
+            );
+
+            finalVelocityPublisher.accept(finalVelocity);
+
             // Convert to field relative speeds & send command
             ChassisSpeeds speeds = new ChassisSpeeds(
-                linearVelocity.getX() * drive.getMaxLinearSpeedMetersPerSec() * multiplier,
-                linearVelocity.getY() * drive.getMaxLinearSpeedMetersPerSec() * multiplier,
-                omega
+                finalVelocity.getX(), finalVelocity.getY(),
+                omega * velocityScaling
             );
             boolean isFlipped = DriverStation.getAlliance().isPresent()
                 && DriverStation.getAlliance().get() == Alliance.Red;
@@ -279,5 +312,22 @@ public class DriveCommands {
                     ? AutoAlign.flipIfRed(FieldPOIs.CORAL_STATION_BOTTOM).getRotation()
                     : AutoAlign.flipIfRed(FieldPOIs.CORAL_STATION_TOP).getRotation();
         });
+    }
+
+    private static StructPublisher<Translation2d> currentVelocityPublisher = NetworkTableInstance.getDefault()
+        .getStructTopic("AccelLimiting/CurrentVelocity", Translation2d.struct).publish();
+        private static StructPublisher<Translation2d> finalVelocityPublisher = NetworkTableInstance.getDefault()
+        .getStructTopic("AccelLimiting/FinalVelocity", Translation2d.struct).publish();
+    private static StructPublisher<Translation2d> wantedVelocityPublisher = NetworkTableInstance.getDefault()
+        .getStructTopic("AccelLimiting/WantedVelocity", Translation2d.struct).publish();
+
+    public static Translation2d limitAccelerationFor(Translation2d currentVelocity, Translation2d wantedVelocity, double maxAcceleration) {
+        currentVelocityPublisher.accept(currentVelocity);
+        wantedVelocityPublisher.accept(wantedVelocity);
+
+        Translation2d desiredAccel = wantedVelocity.minus(currentVelocity);
+        if (desiredAccel.getNorm() > maxAcceleration * 0.04)
+            return currentVelocity.plus(AutoAlign.normalize(desiredAccel).times(maxAcceleration * 0.04));
+        else return wantedVelocity;
     }
 }
