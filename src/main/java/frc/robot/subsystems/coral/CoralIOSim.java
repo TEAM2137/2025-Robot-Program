@@ -1,5 +1,7 @@
 package frc.robot.subsystems.coral;
 
+import static edu.wpi.first.units.Units.RadiansPerSecond;
+
 import edu.wpi.first.math.system.plant.DCMotor;
 import edu.wpi.first.math.system.plant.LinearSystemId;
 import edu.wpi.first.wpilibj.simulation.DCMotorSim;
@@ -26,10 +28,17 @@ public class CoralIOSim implements CoralIO {
         inputs.appliedVolts = sim.getInputVoltage();
         inputs.currentAmps = sim.getCurrentDrawAmps();
         inputs.isBeamBroken = isBeamBroken;
+        inputs.velocityRadPerSec = sim.getAngularVelocity().in(RadiansPerSecond);
+        inputs.velocityRadPerSec = sim.getAngularVelocity().in(RadiansPerSecond);
     }
 
     @Override
     public void setRollerVoltage(double voltage) {
         sim.setInputVoltage(voltage);
+    }
+
+    @Override
+    public void setRollerVelocity(double velocityRadPerSec) {
+        sim.setAngularVelocity(velocityRadPerSec);
     }
 }
