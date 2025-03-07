@@ -25,7 +25,7 @@ import frc.robot.util.FieldPOIs;
 
 public class AutoAlign {
     private static final double DRIVE_MAX_VELOCITY = 3.5; // Meters/Sec
-    private static final double DRIVE_MAX_ACCELERATION = 20.0; // Meters/Sec^2
+    private static final double DRIVE_MAX_ACCELERATION = 12.0; // Meters/Sec^2
 
     private static final double JOYSTICK_ADDITION_SCALAR = 2.5;
 
@@ -181,7 +181,7 @@ public class AutoAlign {
             );
 
             // Grab the current drive state
-            TrapezoidProfile.State state = velocityProfile.calculate(0.02,
+            TrapezoidProfile.State state = velocityProfile.calculate(0.12,
                 new TrapezoidProfile.State(toTarget.getNorm(), velocityTowardsGoal),
                 new TrapezoidProfile.State()
             );
@@ -194,8 +194,11 @@ public class AutoAlign {
             SmartDashboard.putNumber("AA-Velocity", state.velocity);
 
             // Calculate angular speed
-            double omega = angleController.calculate(drive.getRotation().getRadians(),
-                target.getRotation().getRadians());
+            double omega = angleController.calculate(drive.getRotation().getRadians(), target.getRotation().getRadians());
+            if (Math.abs(angleController.getPositionError()) < DriveCommands.ANGLE_DEADBAND) omega = 0.0;
+
+            SmartDashboard.putNumber("AA-CurrentAngle", drive.getRotation().getRadians());
+            SmartDashboard.putNumber("AA-TargetAngle", target.getRotation().getRadians());
 
             // Check if it's red alliance
             boolean isFlipped = DriverStation.getAlliance().isPresent()
