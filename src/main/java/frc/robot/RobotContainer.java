@@ -237,16 +237,16 @@ public class RobotContainer {
             drive).ignoringDisable(true));
 
         // Driver score sequence (L2-L4)
-        score.and(didTargetAlgae.negate().and(isTargetingL1.negate())).onTrue(coral.setVoltageCommand(() ->
-            elevator.getTargetPosition() < ElevatorConstants.L4
-                ? CoralConstants.slowSpeed : CoralConstants.l4Speed));
-        score.and(didTargetAlgae.negate().and(isTargetingL1.negate())).onFalse(coral.setVoltageCommand(0)
-            .andThen(elevator.setPositionCommand(ElevatorConstants.stow)));
+        // score.and(didTargetAlgae.negate().and(isTargetingL1.negate())).onTrue(coral.setVoltageCommand(() ->
+        //     elevator.getTargetPosition() < ElevatorConstants.L4
+        //         ? CoralConstants.slowSpeed : CoralConstants.l4Speed));
+        // score.and(didTargetAlgae.negate().and(isTargetingL1.negate())).onFalse(coral.setVoltageCommand(0)
+        //     .andThen(elevator.setPositionCommand(ElevatorConstants.stow)));
 
         // Drive score sequence (L1)
-        score.and(didTargetAlgae.negate().and(isTargetingL1)).onTrue(coral.setVoltageCommand(CoralConstants.l1Speed)
+        score.and(didTargetAlgae.negate()).onTrue(coral.setVoltageCommand(CoralConstants.l1Speed)
             .andThen(elevator.setPositionCommand(ElevatorConstants.L2)));
-        score.and(didTargetAlgae.negate().and(isTargetingL1)).onFalse(coral.setVoltageCommand(0)
+        score.and(didTargetAlgae.negate()).onFalse(coral.setVoltageCommand(0)
             .andThen(elevator.setPositionCommand(ElevatorConstants.stow)));
 
         // Driver score sequence (remove algae)

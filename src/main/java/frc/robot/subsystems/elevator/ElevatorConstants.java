@@ -29,7 +29,7 @@ public class ElevatorConstants {
     // Setpoints (m)
 
     public static final double stow = -0.1;
-    public static final double L1 = 0.55;
+    public static final double L1 = 0.05;
     public static final double L2 = 0.71;
     public static final double L3 = 1.22;
     public static final double L4 = 1.97;

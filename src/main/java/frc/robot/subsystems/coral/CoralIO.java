@@ -7,10 +7,10 @@ public interface CoralIO {
     public static class CoralIOInputs{
         public double velocityRadPerSec = 0.0;
         public double targetVelocityRadPerSec = 0.0;
-        
+
         public double appliedVolts = 0.0;
         public double currentAmps = 0.0;
-        
+
         public boolean isBeamBroken = false;
     }
 

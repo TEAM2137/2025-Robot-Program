@@ -5,9 +5,9 @@ public class CoralConstants {
 
     // Roller Speeds
     public static final double slowSpeed = 3.8;
-    public static final double l1Speed = 3.5;
+    public static final double l1Speed = 3.0;
     public static final double l4Speed = 4.6;
-    
+
     // PID Constants
     public static final double kP = 1.0; // PID P
     public static final double kD = 0.0; // PID D
