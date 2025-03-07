@@ -87,8 +87,8 @@ public class DriveCommands {
             double multiplier = slowMode.getAsBoolean() ? 0.3 : 1.0;
 
             double elevatorHeight = RobotContainer.getInstance().elevator.getExtensionMeters();
-            double accelScaling = MathUtil.clamp(1 - (elevatorHeight / 2.0), 0, 1);
-            double velocityScaling = MathUtil.clamp(1 - (elevatorHeight / 3.5), 0, 1);
+            double accelScaling = MathUtil.clamp(1 - (elevatorHeight / 1.8), 0.2, 1);
+            double velocityScaling = MathUtil.clamp(1 - (elevatorHeight / 2.5), 0.2, 1);
 
             Translation2d finalVelocity = limitAccelerationFor(
                 drive.getLinearSpeedsVector(),

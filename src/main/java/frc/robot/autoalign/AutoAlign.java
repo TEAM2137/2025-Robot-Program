@@ -158,8 +158,8 @@ public class AutoAlign {
         return Commands.runEnd(() -> {
             // Dynamically calculate drive constraints based on elevator height
             double elevatorHeight = RobotContainer.getInstance().elevator.getExtensionMeters();
-            double accelScaling = MathUtil.clamp(1 - (elevatorHeight / 2.0), 0, 1);
-            double velocityScaling = MathUtil.clamp(1 - (elevatorHeight / 3.5), 0, 1);
+            double accelScaling = MathUtil.clamp(1 - (elevatorHeight / 1.8), 0.4, 1);
+            double velocityScaling = MathUtil.clamp(1 - (elevatorHeight / 2.5), 0.2, 1);
 
             // Update profile constraints based on calculated scalars
             TrapezoidProfile velocityProfile = new TrapezoidProfile(

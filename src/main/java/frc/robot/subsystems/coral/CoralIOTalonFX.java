@@ -28,7 +28,6 @@ public class CoralIOTalonFX implements CoralIO {
 
         var slot0Configs = config.Slot0;
         slot0Configs.kP = CoralConstants.kP;
-        slot0Configs.kD = CoralConstants.kD;
         slot0Configs.kS = CoralConstants.kS;
         slot0Configs.kV = CoralConstants.kV;
 
@@ -47,7 +46,7 @@ public class CoralIOTalonFX implements CoralIO {
     @Override
     public void updateInputs(CoralIOInputs inputs) {
         inputs.velocityRadPerSec = rollers.getVelocity().getValue().in(RadiansPerSecond);
-        inputs.targetVelocityRadPerSec = RadiansPerSecond.convertFrom(velocityControl.Velocity, RotationsPerSecond);
+        inputs.targetVelocityRadPerSec = RotationsPerSecond.of(velocityControl.Velocity).in(RadiansPerSecond);
 
         inputs.appliedVolts = rollers.getMotorVoltage().getValueAsDouble();
         inputs.currentAmps = rollers.getSupplyCurrent().getValueAsDouble();
@@ -62,6 +61,6 @@ public class CoralIOTalonFX implements CoralIO {
 
     @Override
     public void setRollerVelocity(double velocityRadPerSec) {
-        rollers.setControl(velocityControl.withVelocity(RadiansPerSecond.of(velocityRadPerSec)));
+        rollers.setControl(velocityControl.withVelocity(RadiansPerSecond.of(velocityRadPerSec).in(RotationsPerSecond)));
     }
 }
