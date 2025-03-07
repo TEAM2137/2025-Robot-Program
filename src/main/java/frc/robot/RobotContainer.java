@@ -268,10 +268,9 @@ public class RobotContainer {
             }));
 
         // Driver coral station align
-        targetCoralStation.onTrue(DriveCommands.alignToCoralStation(drive, joystickSupplier, slowMode).alongWith(coral.intakeCommand()));
-        targetCoralStation.onFalse(Commands.runOnce(() -> coral.getCurrentCommand().cancel(), coral)
-            .andThen(coral.setVoltageCommand(0))
-            .andThen(Commands.runOnce(() -> drive.getCurrentCommand().cancel(), drive)));
+        targetCoralStation.onTrue(DriveCommands.alignToCoralStation(drive, joystickSupplier, slowMode));
+        targetCoralStation.onTrue(coral.intakeCommand());
+        targetCoralStation.onFalse(Commands.runOnce(() -> drive.getCurrentCommand().cancel(), drive));
 
         // Hold left trigger to enable elevator manual controls using the right stick.
         elevatorManual.whileTrue(elevator.setVoltage(() ->
