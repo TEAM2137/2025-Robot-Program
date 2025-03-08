@@ -326,9 +326,10 @@ public class DriveCommands {
         currentVelocityPublisher.accept(currentVelocity);
         wantedVelocityPublisher.accept(wantedVelocity);
 
-        Translation2d desiredAccel = wantedVelocity.minus(currentVelocity);
+        Translation2d flippedVelocity = ChoreoAllianceFlipUtil.shouldFlip() ? new Translation2d().minus(currentVelocity) : currentVelocity;
+        Translation2d desiredAccel = wantedVelocity.minus(flippedVelocity);
         if (desiredAccel.getNorm() > maxAcceleration * 0.04)
-            return currentVelocity.plus(AutoAlign.normalize(desiredAccel).times(maxAcceleration * 0.04));
+            return flippedVelocity.plus(AutoAlign.normalize(desiredAccel).times(maxAcceleration * 0.04));
         else return wantedVelocity;
     }
 }
