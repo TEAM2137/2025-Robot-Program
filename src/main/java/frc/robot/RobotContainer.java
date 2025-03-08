@@ -257,14 +257,22 @@ public class RobotContainer {
             .andThen(Commands.waitSeconds(0.3))
             .andThen(elevator.setPositionCommand(ElevatorConstants.stow)));
 
-        // Driver reef auto align
-        targetLeft.whileTrue(AutoAlign.autoAlignTo(Target.LEFT_POLE, this, joystickSupplier));
-        targetRight.whileTrue(AutoAlign.autoAlignTo(Target.RIGHT_POLE, this, joystickSupplier));
+        // Driver coral auto align
+        targetLeft.whileTrue(AutoAlign.autoAlignTo(Target.LEFT_POLE, this, joystickSupplier)
+            .beforeStarting(() -> {
+                AutoAlign.setElevatorHeight(elevator.getScheduledPosition());
+            }));
+        targetRight.whileTrue(AutoAlign.autoAlignTo(Target.RIGHT_POLE, this, joystickSupplier)
+            .beforeStarting(() -> {
+                AutoAlign.setElevatorHeight(elevator.getScheduledPosition());
+            }));
+
+        // Driver algae auto align
         targetAlgae.whileTrue(AutoAlign.autoAlignTo(Target.ALGAE, this, joystickSupplier)
             .beforeStarting(() -> {
                 // Schedule the proper elevator height
                 int poseId = AutoAlign.getNewTargetPoseId(drive, Target.ALGAE, joystickSupplier);
-                elevator.schedulePosition(poseId % 2 == 0 ? ElevatorConstants.algaeHigh : ElevatorConstants.algaeLow);
+                AutoAlign.setElevatorHeight(poseId % 2 == 0 ? ElevatorConstants.algaeHigh : ElevatorConstants.algaeLow);
             }));
 
         // Driver coral station align

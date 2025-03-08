@@ -56,6 +56,7 @@ public class AutoAlign {
 
     private static Pose2d target; // The currently targeted position (can be null)
     private static Pose2d lastTargeted = new Pose2d(); // The most recently targeted position (not null)
+    private static double elevatorHeight = 0.0;
 
     public static Pose2d getActiveTarget() {
         return target;
@@ -110,7 +111,7 @@ public class AutoAlign {
             driveToTargetCommand(robot.drive, angleController).alongWith(Commands.run(() -> {
                 Translation2d robotTranslation = robot.drive.getPose().getTranslation();
                 if (target.getTranslation().getDistance(robotTranslation) < ELEVATOR_RAISE_DISTANCE_METERS) {
-                    robot.elevator.applyScheduledPosition();
+                    robot.elevator.setPositionCommand(AutoAlign.elevatorHeight);
                 }
             }))
         );
@@ -287,5 +288,9 @@ public class AutoAlign {
      */
     public static Pose2d flipIfRed(Pose2d pose) {
         return ChoreoAllianceFlipUtil.shouldFlip() ? ChoreoAllianceFlipUtil.flip(pose) : pose;
+    }
+
+    public static void setElevatorHeight(double elevatorHeight) {
+        AutoAlign.elevatorHeight = elevatorHeight;
     }
 }
