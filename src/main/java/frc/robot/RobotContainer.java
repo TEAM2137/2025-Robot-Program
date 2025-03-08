@@ -206,8 +206,12 @@ public class RobotContainer {
      */
     private void configureButtonBindings() {
         BooleanSupplier slowMode = () -> driverController.getLeftTriggerAxis() > 0.25;
-        Trigger didTargetAlgae = new Trigger(() -> FieldPOIs.ALGAE_LOCATIONS.contains(AutoAlign.flipIfRed(AutoAlign.getLastTargeted())));
-        Trigger isTargetingL1 = new Trigger(() -> elevator.getScheduledPosition() == ElevatorConstants.L1);
+
+        // Scoring conditionals
+        Trigger scoreNet = new Trigger(() -> algae.isHoldingAlgae());
+        Trigger scoreAlgae = scoreNet.negate().and(new Trigger(() -> FieldPOIs.ALGAE_LOCATIONS.contains(AutoAlign.flipIfRed(AutoAlign.getLastTargeted()))));
+        Trigger scoreL1 = scoreAlgae.negate().and(new Trigger(() -> elevator.getScheduledPosition() == ElevatorConstants.L1));
+        Trigger scoreCoral = scoreAlgae.negate().and(scoreNet.negate()).and(scoreL1.negate());
 
         // Default command, normal field-relative drive
         drive.setDefaultCommand(DriveCommands.joystickDrive(drive,
@@ -237,24 +241,30 @@ public class RobotContainer {
             drive).ignoringDisable(true));
 
         // Driver score sequence (L2-L4)
-        score.and(didTargetAlgae.negate().and(isTargetingL1.negate())).onTrue(coral.setVelocityCommand(() ->
+        score.and(scoreCoral).onTrue(coral.setVelocityCommand(() ->
             elevator.getTargetPosition() < ElevatorConstants.L4
                 ? CoralConstants.scoreRadPerSec : CoralConstants.l4RadPerSec));
-        score.and(didTargetAlgae.negate().and(isTargetingL1.negate())).onFalse(coral.setVoltageCommand(0)
+        score.and(scoreCoral).onFalse(coral.setVoltageCommand(0)
             .andThen(elevator.setPositionCommand(ElevatorConstants.stow)));
 
         // Drive score sequence (L1)
-        score.and(didTargetAlgae.negate().and(isTargetingL1)).onTrue(coral.setVelocityCommand(CoralConstants.l1RadPerSec)
+        score.and(scoreL1).onTrue(coral.setVelocityCommand(CoralConstants.l1RadPerSec)
             .andThen(elevator.setPositionCommand(ElevatorConstants.L2)));
-        score.and(didTargetAlgae.negate().and(isTargetingL1)).onFalse(coral.setVoltageCommand(0)
+        score.and(scoreL1).onFalse(coral.setVoltageCommand(0)
             .andThen(elevator.setPositionCommand(ElevatorConstants.stow)));
 
         // Driver score sequence (remove algae)
-        score.and(didTargetAlgae).onTrue(algae.setPivotPosition(AlgaeConstants.deploy)
+        score.and(scoreAlgae).onTrue(algae.setPivotPosition(AlgaeConstants.deploy)
             .andThen(coral.setVoltageCommand(-6)));
-        score.and(didTargetAlgae).onFalse(algae.setPivotPosition(AlgaeConstants.stow)
+        score.and(scoreAlgae).onFalse(algae.setPivotPosition(AlgaeConstants.algae)
             .andThen(coral.setVoltageCommand(0))
             .andThen(Commands.waitSeconds(0.3))
+            .andThen(elevator.setPositionCommand(ElevatorConstants.stow)));
+
+        // Drive score sequence (net)
+        score.and(scoreNet).onTrue(coral.setVoltageCommand(-12));
+        score.and(scoreNet).onFalse(algae.setPivotPosition(AlgaeConstants.stow)
+            .andThen(coral.setVoltageCommand(0))
             .andThen(elevator.setPositionCommand(ElevatorConstants.stow)));
 
         // Driver coral auto align

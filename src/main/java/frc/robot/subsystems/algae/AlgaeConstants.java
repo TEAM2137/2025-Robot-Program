@@ -12,5 +12,6 @@ public class AlgaeConstants {
 
     // Setpoints
     public static final double deploy = -15.79;
+    public static final double algae = -6.0; // TODO tune this
     public static final double stow = 0.0;
 }

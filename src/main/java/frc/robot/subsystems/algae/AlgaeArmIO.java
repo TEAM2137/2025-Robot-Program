@@ -18,4 +18,6 @@ public interface AlgaeArmIO {
     public default void resetPosition() {}
 
     public default void setPivotVoltage(double voltage) {}
+
+    public default double getTargetPosition() { return AlgaeConstants.stow; };
 }

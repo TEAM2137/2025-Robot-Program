@@ -45,4 +45,8 @@ public class AlgaeArm extends SubsystemBase {
     public Command removeAlgaeCommand(boolean removeUpper) {
         return runOnce(() -> {});
     }
+
+    public boolean isHoldingAlgae() {
+        return io.getTargetPosition() == AlgaeConstants.algae;
+    }
 }
