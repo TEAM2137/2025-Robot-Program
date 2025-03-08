@@ -29,11 +29,14 @@ public class ElevatorConstants {
     // Setpoints (m)
 
     public static final double stow = -0.1;
+
     public static final double L1 = 0.05;
     public static final double L2 = 0.71;
     public static final double L3 = 1.22;
     public static final double L4 = 1.97;
 
-    public static final double algaeHigh = L3;
+    public static final double algaeHigh = 0.65;
     public static final double algaeLow = L2;
+
+    public static final double net = 2.00;
 }

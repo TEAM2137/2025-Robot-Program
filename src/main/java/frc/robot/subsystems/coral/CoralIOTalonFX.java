@@ -24,7 +24,7 @@ public class CoralIOTalonFX implements CoralIO {
     public CoralIOTalonFX() {
         // Create TalonFX config
         var config = new TalonFXConfiguration();
-        config.MotorOutput.NeutralMode = NeutralModeValue.Coast;
+        config.MotorOutput.NeutralMode = NeutralModeValue.Brake;
 
         var slot0Configs = config.Slot0;
         slot0Configs.kP = CoralConstants.kP;

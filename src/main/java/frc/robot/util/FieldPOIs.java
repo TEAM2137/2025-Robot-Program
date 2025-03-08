@@ -16,10 +16,12 @@ public class FieldPOIs {
     private static final double END_EFFECTOR_OFFSET = Units.inchesToMeters(-2.3);
 
     public static final Pose2d REEF = new Pose2d(new Translation2d(4.49, 4.03), new Rotation2d());
-    public static final List<Pose2d> REEF_LOCATIONS = createReefScoringLocations();
-    public static final List<Pose2d> REEF_LOCATIONS_RIGHT = filterEveryThird(0, REEF_LOCATIONS);
-    public static final List<Pose2d> REEF_LOCATIONS_LEFT = filterEveryThird(1, REEF_LOCATIONS);
-    public static final List<Pose2d> ALGAE_LOCATIONS = filterEveryThird(2, REEF_LOCATIONS);
+    public static final List<Pose2d> REEF_BRANCHES = createReefScoringLocations();
+    public static final List<Pose2d> REEF_BRANCHES_RIGHT = filterEveryThird(0, REEF_BRANCHES);
+    public static final List<Pose2d> REEF_BRANCHES_LEFT = filterEveryThird(1, REEF_BRANCHES);
+    public static final List<Pose2d> ALGAE_LOCATIONS = filterEveryThird(2, REEF_BRANCHES);
+
+    public static final Pose2d NET = new Pose2d(new Translation2d(7.42, 0.0), new Rotation2d(0.0));
 
     public static final Pose2d CORAL_STATION_TOP = new Pose2d(new Translation2d(1.0, 7.107), new Rotation2d(-0.939));
     public static final Pose2d CORAL_STATION_BOTTOM = new Pose2d(new Translation2d(1.0, 0.918), new Rotation2d(0.939));
@@ -31,7 +33,7 @@ public class FieldPOIs {
                 .publish().accept(REEF);
         NetworkTableInstance.getDefault()
                 .getStructArrayTopic("ReefLocations", Pose2d.struct)
-                .publish().accept(REEF_LOCATIONS.toArray(new Pose2d[0]));
+                .publish().accept(REEF_BRANCHES.toArray(new Pose2d[0]));
     }
 
     private static List<Pose2d> createReefScoringLocations() {

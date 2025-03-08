@@ -35,9 +35,16 @@ public class AutoAlign {
      * Target types for auto align
      */
     public enum Target {
-        LEFT_POLE,
-        RIGHT_POLE,
-        ALGAE
+        LEFT_BRANCH,
+        RIGHT_BRANCH,
+        ALGAE,
+        NET(true);
+
+        private boolean moveY = false;
+        public boolean allowYMovement() { return moveY; }
+
+        Target() {}
+        Target(boolean moveY) { this.moveY = moveY; }
     }
 
     /**
@@ -45,18 +52,21 @@ public class AutoAlign {
      */
     private static final Map<Target, List<Pose2d>> targetToPoseData = Map.of(
         // Left reef poles
-        Target.LEFT_POLE, FieldPOIs.REEF_LOCATIONS_LEFT,
+        Target.LEFT_BRANCH, FieldPOIs.REEF_BRANCHES_LEFT,
 
         // Right reef poles
-        Target.RIGHT_POLE, FieldPOIs.REEF_LOCATIONS_RIGHT,
+        Target.RIGHT_BRANCH, FieldPOIs.REEF_BRANCHES_RIGHT,
 
         // Locations for removing algae
-        Target.ALGAE, FieldPOIs.ALGAE_LOCATIONS
+        Target.ALGAE, FieldPOIs.ALGAE_LOCATIONS,
+
+        // X alignment for net scoring
+        Target.NET, List.of(FieldPOIs.NET)
     );
 
     private static Pose2d target; // The currently targeted position (can be null)
     private static Pose2d lastTargeted = new Pose2d(); // The most recently targeted position (not null)
-    private static double elevatorHeight = 0.0;
+    private static double scheduledElevatorHeight = 0.0;
 
     public static Pose2d getActiveTarget() {
         return target;
@@ -108,11 +118,11 @@ public class AutoAlign {
                 target = getFlippedPose(robot.drive, targetType, motionSupplier);
                 lastTargeted = target;
             }),
-            driveToTargetCommand(robot.drive, angleController).alongWith(Commands.run(() -> {
+            driveToTargetCommand(targetType, robot.drive, angleController).alongWith(Commands.run(() -> {
                 Translation2d robotTranslation = robot.drive.getPose().getTranslation();
-                if (target.getTranslation().getDistance(robotTranslation) < ELEVATOR_RAISE_DISTANCE_METERS) {
-                    robot.elevator.setPositionCommand(AutoAlign.elevatorHeight);
-                }
+                Translation2d adjustedTranslation = new Translation2d(robotTranslation.getX(), targetType.allowYMovement() ? 0.0 : robotTranslation.getY());
+                if (target.getTranslation().getDistance(adjustedTranslation) < ELEVATOR_RAISE_DISTANCE_METERS)
+                    robot.elevator.setPosition(AutoAlign.scheduledElevatorHeight);
             }))
         );
     }
@@ -154,12 +164,12 @@ public class AutoAlign {
      * @param angleController A ProfiledPIDController from DriveCommands
      * @return The command
      */
-    private static Command driveToTargetCommand(Drive drive, ProfiledPIDController angleController) {
+    private static Command driveToTargetCommand(Target targetType, Drive drive, ProfiledPIDController angleController) {
         // Run the command
         return Commands.runEnd(() -> {
             // Dynamically calculate drive constraints based on elevator height
             double elevatorHeight = RobotContainer.getInstance().elevator.getExtensionMeters();
-            double accelScaling = MathUtil.clamp(1 - (elevatorHeight / 1.8), 0.4, 1);
+            double accelScaling = MathUtil.clamp(1 - (elevatorHeight / 2.0), 0.5, 1);
             double velocityScaling = MathUtil.clamp(1 - (elevatorHeight / 2.5), 0.2, 1);
 
             // Update profile constraints based on calculated scalars
@@ -172,7 +182,7 @@ public class AutoAlign {
             // Calculate vector to target
             Translation2d toTarget = new Translation2d(
                 drive.getPose().getX() - target.getX(),
-                drive.getPose().getY() - target.getY()
+                targetType.allowYMovement() ? 0 : drive.getPose().getY() - target.getY()
             );
 
             // Calculate the robot's current speed towards the target
@@ -189,6 +199,7 @@ public class AutoAlign {
 
             // Create a velocity vector based on the drive state's velocity
             Translation2d normalized = new Translation2d(state.velocity, toTarget.getAngle());
+            if (targetType.allowYMovement()) normalized = new Translation2d(normalized.getX(), 0.0);
 
             // Debug info
             SmartDashboard.putNumber("AA-Position", state.position);
@@ -209,7 +220,7 @@ public class AutoAlign {
             Translation2d finalVelocity = DriveCommands.limitAccelerationFor(
                 drive.getLinearSpeedsVector(),
                 normalized,
-                DRIVE_MAX_ACCELERATION * accelScaling
+                DRIVE_MAX_ACCELERATION
             );
 
             // Convert to field relative speeds
@@ -247,7 +258,7 @@ public class AutoAlign {
             double dst = pose.getTranslation().getDistance(poleLocation.getTranslation());
 
             // Calculate the additional weighting based on joystick angle
-            double addition = AutoAlign.calculateBestReefPoleAddition(
+            double addition = AutoAlign.calculateBestPoseAddition(
                 poleLocation.minus(pose).getTranslation(), motionVector);
 
             // Apply addition and assign new best result if applicable
@@ -264,7 +275,7 @@ public class AutoAlign {
      * joystick motion. This is to ensure that the robot will prefer to target reef faces that the
      * driver is moving towards.
      */
-    public static double calculateBestReefPoleAddition(Translation2d toReefVector, Translation2d motionVector) {
+    public static double calculateBestPoseAddition(Translation2d toReefVector, Translation2d motionVector) {
         if (motionVector.getNorm() < 0.1) return 0.0;
         return dot(normalize(toReefVector), normalize(motionVector));
     }
@@ -290,7 +301,8 @@ public class AutoAlign {
         return ChoreoAllianceFlipUtil.shouldFlip() ? ChoreoAllianceFlipUtil.flip(pose) : pose;
     }
 
-    public static void setElevatorHeight(double elevatorHeight) {
-        AutoAlign.elevatorHeight = elevatorHeight;
+    public static void setScheduledElevatorHeight(double elevatorHeight) {
+        AutoAlign.scheduledElevatorHeight = elevatorHeight;
+        SmartDashboard.putNumber("AA-ElevatorHeight", elevatorHeight);
     }
 }

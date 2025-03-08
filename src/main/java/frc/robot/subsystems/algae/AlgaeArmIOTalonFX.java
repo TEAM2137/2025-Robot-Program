@@ -13,6 +13,8 @@ import com.ctre.phoenix6.signals.NeutralModeValue;
 public class AlgaeArmIOTalonFX implements AlgaeArmIO {
     public TalonFX pivotMotor = new TalonFX(AlgaeConstants.deviceID, "rio");
 
+    private double targetPosition;
+
     public AlgaeArmIOTalonFX() {
         var config = new TalonFXConfiguration();
 
@@ -56,6 +58,11 @@ public class AlgaeArmIOTalonFX implements AlgaeArmIO {
     }
 
     @Override
+    public double getTargetPosition() {
+        return this.targetPosition;
+    }
+
+    @Override
     public void updateInputs(AlgaeIntakeIOInputs inputs) {
         inputs.pivotPosition = pivotMotor.getPosition().getValueAsDouble();
         inputs.pivotVelocity = pivotMotor.getVelocity().getValueAsDouble();
@@ -65,16 +72,19 @@ public class AlgaeArmIOTalonFX implements AlgaeArmIO {
 
     @Override
     public void setPivotPosition(double targetPosition) {
+        this.targetPosition = targetPosition;
         pivotMotor.setControl(new MotionMagicVoltage(targetPosition));
     }
 
     @Override
     public void setPivotVoltage(double voltage) {
+        this.targetPosition = AlgaeConstants.stow;
         pivotMotor.setControl(new VoltageOut(voltage));
     }
 
     @Override
     public void resetPosition() {
+        this.targetPosition = AlgaeConstants.stow;
         pivotMotor.setPosition(0);
     }
 }

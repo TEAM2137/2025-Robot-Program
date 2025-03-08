@@ -76,7 +76,6 @@ public class RobotContainer {
     /* Controller trigger bindings */
 
     // Utilities
-    public final Trigger xLock = driverController.x();
     public final Trigger stopAll = driverController.y();
     public final Trigger resetGyro = driverController.start();
     public final Trigger resetElevator = operatorController.start();
@@ -87,6 +86,7 @@ public class RobotContainer {
     public final Trigger targetRight = driverController.rightBumper();
     public final Trigger targetLeft = driverController.leftBumper();
     public final Trigger targetAlgae = driverController.b();
+    public final Trigger targetNet = driverController.x();
     public final Trigger targetCoralStation = driverController.a();
 
     // Run coral rollers to score and stow elevator
@@ -218,13 +218,6 @@ public class RobotContainer {
                 () -> joystickSupplier.get(),
                 slowMode, () -> -driverController.getRightX() * 0.75));
 
-        // Switch to X wheel pattern
-        xLock.onTrue(Commands.runOnce(drive::xLock, drive));
-        // xLock.whileTrue(Commands.run(() -> drive.runVelocity(
-        //     new ChassisSpeeds(2, 0, 0)), drive));
-        // xLock.onFalse(Commands.run(() -> drive.runVelocity(
-        //     new ChassisSpeeds(0, 0, 0)), drive));
-
         // Stop all active subsystems
         stopAll.onTrue(coral.setVoltageCommand(0)
             .andThen(elevator.setVoltage(() -> 0))
@@ -255,37 +248,41 @@ public class RobotContainer {
 
         // Driver score sequence (remove algae)
         score.and(scoreAlgae).onTrue(algae.setPivotPosition(AlgaeConstants.deploy)
-            .andThen(coral.setVoltageCommand(-6)));
+            .andThen(coral.setVoltageCommand(-2)));
         score.and(scoreAlgae).onFalse(algae.setPivotPosition(AlgaeConstants.algae)
-            .andThen(coral.setVoltageCommand(0))
+            // .andThen(elevator.setPositionCommand(ElevatorConstants.algaeHigh + 0.3))
             .andThen(Commands.waitSeconds(0.3))
-            .andThen(elevator.setPositionCommand(ElevatorConstants.stow)));
+            .andThen(elevator.setPositionCommand(ElevatorConstants.stow))
+            .andThen(Commands.waitSeconds(0.5))
+            .andThen(coral.setVoltageCommand(-1)));
 
         // Drive score sequence (net)
-        score.and(scoreNet).onTrue(coral.setVoltageCommand(-12));
+        score.and(scoreNet).onTrue(algae.setPivotPosition(AlgaeConstants.deploy)
+            .andThen(Commands.waitSeconds(0.1))
+            .andThen(coral.setVoltageCommand(12)));
         score.and(scoreNet).onFalse(algae.setPivotPosition(AlgaeConstants.stow)
             .andThen(coral.setVoltageCommand(0))
             .andThen(elevator.setPositionCommand(ElevatorConstants.stow)));
 
         // Driver coral auto align
-        targetLeft.whileTrue(AutoAlign.autoAlignTo(Target.LEFT_POLE, this, joystickSupplier)
-            .beforeStarting(() -> {
-                AutoAlign.setElevatorHeight(elevator.getScheduledPosition());
-            }));
-        targetRight.whileTrue(AutoAlign.autoAlignTo(Target.RIGHT_POLE, this, joystickSupplier)
-            .beforeStarting(() -> {
-                AutoAlign.setElevatorHeight(elevator.getScheduledPosition());
-            }));
+        targetLeft.whileTrue(AutoAlign.autoAlignTo(Target.LEFT_BRANCH, this, joystickSupplier)
+            .beforeStarting(() -> AutoAlign.setScheduledElevatorHeight(elevator.getScheduledPosition())));
+        targetRight.whileTrue(AutoAlign.autoAlignTo(Target.RIGHT_BRANCH, this, joystickSupplier)
+            .beforeStarting(() -> AutoAlign.setScheduledElevatorHeight(elevator.getScheduledPosition())));
 
         // Driver algae auto align
         targetAlgae.whileTrue(AutoAlign.autoAlignTo(Target.ALGAE, this, joystickSupplier)
             .beforeStarting(() -> {
                 // Schedule the proper elevator height
                 int poseId = AutoAlign.getNewTargetPoseId(drive, Target.ALGAE, joystickSupplier);
-                AutoAlign.setElevatorHeight(poseId % 2 == 0 ? ElevatorConstants.algaeHigh : ElevatorConstants.algaeLow);
+                AutoAlign.setScheduledElevatorHeight(poseId % 2 == 0 ? ElevatorConstants.algaeHigh : ElevatorConstants.algaeLow);
             }));
 
-        // Driver coral station align
+        // Driver net auto align
+        targetNet.whileTrue(AutoAlign.autoAlignTo(Target.NET, this, joystickSupplier)
+            .beforeStarting(() -> AutoAlign.setScheduledElevatorHeight(ElevatorConstants.net)));
+
+        // Driver coral station auto align
         targetCoralStation.onTrue(DriveCommands.alignToCoralStation(drive, joystickSupplier, slowMode));
         targetCoralStation.onTrue(coral.intakeCommand());
         targetCoralStation.onFalse(Commands.runOnce(() -> drive.getCurrentCommand().cancel(), drive));

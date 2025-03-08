@@ -51,6 +51,11 @@ public class ElevatorIOSim implements ElevatorIO {
     }
 
     @Override
+    public double getScheduledPosition() {
+        return this.scheduledPosition;
+    }
+
+    @Override
     public void resetPosition() {
         // sim.setState(0.26035, 0);
         sim.setState(0, 0);
@@ -68,7 +73,7 @@ public class ElevatorIOSim implements ElevatorIO {
         pidControlEnabled = false;
     }
 
-        @Override
+    @Override
     public void setPIDConstants(double kP, double kD) {
         pid.setP(kP);
         pid.setD(kD);

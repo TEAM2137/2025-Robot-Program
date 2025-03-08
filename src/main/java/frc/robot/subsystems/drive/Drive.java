@@ -201,8 +201,8 @@ public class Drive extends SubsystemBase {
         gyroDisconnectedAlert.set(!gyroInputs.connected && Constants.currentMode != Mode.SIM);
 
         // Post auto align debug displays in NetworkTables
-        Pose2d leftPole = AutoAlign.getFlippedPose(this, Target.LEFT_POLE, RobotContainer.getInstance().joystickMotionSupplier());
-        Pose2d rightPole = AutoAlign.getFlippedPose(this, Target.RIGHT_POLE, RobotContainer.getInstance().joystickMotionSupplier());
+        Pose2d leftPole = AutoAlign.getFlippedPose(this, Target.LEFT_BRANCH, RobotContainer.getInstance().joystickMotionSupplier());
+        Pose2d rightPole = AutoAlign.getFlippedPose(this, Target.RIGHT_BRANCH, RobotContainer.getInstance().joystickMotionSupplier());
         Pose2d offscreenPole = new Pose2d(new Translation2d(100, 100), new Rotation2d());
 
         boolean isTargetingLeft = RobotContainer.getInstance().targetLeft.getAsBoolean() && AutoAlign.getActiveTarget() != null;
