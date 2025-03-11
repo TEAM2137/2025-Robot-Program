@@ -250,11 +250,8 @@ public class RobotContainer {
         score.and(scoreAlgae).onTrue(algae.setPivotPosition(AlgaeConstants.deploy)
             .andThen(coral.setVoltageCommand(-2)));
         score.and(scoreAlgae).onFalse(algae.setPivotPosition(AlgaeConstants.algae)
-            // .andThen(elevator.setPositionCommand(ElevatorConstants.algaeHigh + 0.3))
             .andThen(Commands.waitSeconds(0.3))
-            .andThen(elevator.setPositionCommand(ElevatorConstants.stow))
-            .andThen(Commands.waitSeconds(0.5))
-            .andThen(coral.setVoltageCommand(-1)));
+            .andThen(elevator.setPositionCommand(ElevatorConstants.stow)));
 
         // Drive score sequence (net)
         score.and(scoreNet).onTrue(algae.setPivotPosition(AlgaeConstants.deploy)

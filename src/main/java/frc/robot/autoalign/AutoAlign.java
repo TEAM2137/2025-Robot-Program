@@ -25,11 +25,12 @@ import frc.robot.util.FieldPOIs;
 
 public class AutoAlign {
     private static final double DRIVE_MAX_VELOCITY = 3.5; // Meters/Sec
-    private static final double DRIVE_MAX_ACCELERATION = 12.0; // Meters/Sec^2
+    private static final double DRIVE_MAX_ACCELERATION = 10.0; // Meters/Sec^2
 
     private static final double JOYSTICK_ADDITION_SCALAR = 2.5;
 
     private static final double ELEVATOR_RAISE_DISTANCE_METERS = 1.25; // For targeting
+    private static final double ACCEL_LIMIT_DISTANCE_METERS = 1.75;
 
     /**
      * Target types for auto align
@@ -167,10 +168,16 @@ public class AutoAlign {
     private static Command driveToTargetCommand(Target targetType, Drive drive, ProfiledPIDController angleController) {
         // Run the command
         return Commands.runEnd(() -> {
+            // Get scheduled or real elevator height depending on distance from reef
+            Translation2d adjustedTranslation = new Translation2d(drive.getPose().getX(), targetType.allowYMovement() ? 0.0 : drive.getPose().getY());
+            double velocityDecrease = RobotContainer.getInstance().elevator.getExtensionMeters();
+            double accelDecrease = velocityDecrease;
+            if (target.getTranslation().getDistance(adjustedTranslation) < ACCEL_LIMIT_DISTANCE_METERS)
+                accelDecrease = RobotContainer.getInstance().elevator.getScheduledPosition();
+
             // Dynamically calculate drive constraints based on elevator height
-            double elevatorHeight = RobotContainer.getInstance().elevator.getExtensionMeters();
-            double accelScaling = MathUtil.clamp(1 - (elevatorHeight / 2.0), 0.5, 1);
-            double velocityScaling = MathUtil.clamp(1 - (elevatorHeight / 2.5), 0.2, 1);
+            double accelScaling = MathUtil.clamp(1 - (accelDecrease / 3.0), 0.5, 1);
+            double velocityScaling = MathUtil.clamp(1 - (velocityDecrease / 2.5), 0.2, 1);
 
             // Update profile constraints based on calculated scalars
             TrapezoidProfile velocityProfile = new TrapezoidProfile(
