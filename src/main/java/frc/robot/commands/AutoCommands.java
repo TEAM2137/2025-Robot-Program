@@ -54,12 +54,12 @@ public class AutoCommands {
      * @param robot - the robot container instance
      */
     public static void createScoringSequence(double duration, AutoTrajectory base, Command onComplete, RobotContainer robot) {
-        base.doneDelayed(0.8).onTrue(Commands.sequence(
+        base.doneDelayed(0.34).onTrue(Commands.sequence(
             robot.coral.setVoltageCommand(CoralConstants.l4Speed).repeatedly().withTimeout(duration)
             .andThen(robot.coral.setVoltageCommand(0))
             .andThen(robot.elevator.stowCommand())
         ));
 
-        base.doneDelayed(0.96 + duration).onTrue(onComplete);
+        base.doneDelayed(0.41 + duration).onTrue(onComplete);
     }
 }
