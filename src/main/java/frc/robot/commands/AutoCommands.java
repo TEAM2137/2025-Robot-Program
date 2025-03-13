@@ -16,10 +16,9 @@ public class AutoCommands {
      * @param robot - the robot container instance
      */
     public static void createIntakeSequence(AutoTrajectory base, AutoTrajectory onComplete, RobotContainer robot) {
-        base.done().onTrue(robot.coral.intakeUntilBrokenCommand());
-        base.recentlyDone().and(robot.coral.beamBroken).onTrue(
-            onComplete.cmd().deadlineFor(robot.coral.intakeWhileBrokenCommand()));
-        // base.doneDelayed(1.0).onTrue(onComplete.cmd());
+        base.done().onTrue(robot.coral.intakeUntilFunnelEnter());
+        base.recentlyDone().and(robot.coral.funnelSensor).onTrue(
+            onComplete.cmd().deadlineFor(robot.coral.completeIntaking()));
     }
 
     /**
@@ -57,9 +56,10 @@ public class AutoCommands {
         base.doneDelayed(0.34).onTrue(Commands.sequence(
             robot.coral.setVoltageCommand(CoralConstants.l4Speed).repeatedly().withTimeout(duration)
             .andThen(robot.coral.setVoltageCommand(0))
-            .andThen(robot.elevator.stowCommand())
+            .andThen(robot.elevator.stowCommand()
+            .andThen(Commands.waitSeconds(0.5))
+            .andThen(robot.coral.intakeUntilFunnelEnter()))
         ));
-
         base.doneDelayed(0.41 + duration).onTrue(onComplete);
     }
 }

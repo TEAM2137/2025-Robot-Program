@@ -29,8 +29,8 @@ public class AutoAlign {
 
     private static final double JOYSTICK_ADDITION_SCALAR = 2.5;
 
-    private static final double ELEVATOR_RAISE_DISTANCE_METERS = 1.25; // For targeting
-    private static final double ACCEL_LIMIT_DISTANCE_METERS = 1.75;
+    private static final double ELEVATOR_RAISE_DISTANCE_METERS = 1.0; // For targeting
+    private static final double ACCEL_LIMIT_DISTANCE_METERS = 1.5;
 
     /**
      * Target types for auto align

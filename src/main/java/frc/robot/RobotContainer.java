@@ -105,7 +105,8 @@ public class RobotContainer {
     public final Trigger elevatorManual = operatorController.leftTrigger(0.35);
     public final Trigger cageManual = operatorController.rightTrigger(0.35);
     public final Trigger algaeRollers = operatorController.rightBumper();
-    public final Trigger slowEject = operatorController.povDown();
+    public final Trigger slowEject = operatorController.povRight();
+    public final Trigger reverseRollers = operatorController.povLeft();
     public final Trigger elevatorApplyManual = operatorController.back();
 
     /** The container for the robot. Contains subsystems, IO devices, and commands. */
@@ -322,7 +323,10 @@ public class RobotContainer {
         elevatorApplyManual.onTrue(elevator.applyScheduledPositionCommand());
 
         slowEject.onTrue(coral.setVoltageCommand(4.5));
-        slowEject.onFalse(coral.setVoltageCommand(0));
+        slowEject.onFalse(coral.setVoltageCommand(0.0));
+
+        reverseRollers.onTrue(coral.setVoltageCommand(-4));
+        reverseRollers.onFalse(coral.setVoltageCommand(0.0));
     }
 
     /**

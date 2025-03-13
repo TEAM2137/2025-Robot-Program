@@ -1,5 +1,6 @@
 package frc.robot.subsystems.coral;
 
+import static edu.wpi.first.units.Units.Centimeters;
 import static edu.wpi.first.units.Units.Hertz;
 import static edu.wpi.first.units.Units.RadiansPerSecond;
 import static edu.wpi.first.units.Units.RotationsPerSecond;
@@ -9,14 +10,14 @@ import com.ctre.phoenix6.BaseStatusSignal;
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
 import com.ctre.phoenix6.controls.VelocityVoltage;
 import com.ctre.phoenix6.controls.VoltageOut;
+import com.ctre.phoenix6.hardware.CANrange;
 import com.ctre.phoenix6.hardware.TalonFX;
 import com.ctre.phoenix6.signals.NeutralModeValue;
 
-import edu.wpi.first.wpilibj.DigitalInput;
-
 public class CoralIOTalonFX implements CoralIO {
     public TalonFX rollers = new TalonFX(CoralConstants.rollersID, "rio");
-    public DigitalInput beamBreak = new DigitalInput(9);
+    public CANrange endEffectorSensor = new CANrange(CoralConstants.endEffectorSensorID, "rio");
+    public CANrange funnelSensor = new CANrange(CoralConstants.funnelSensorID, "rio");
 
     private VelocityVoltage velocityControl = new VelocityVoltage(0.0);
     private VoltageOut voltageControl = new VoltageOut(0.0);
@@ -51,7 +52,8 @@ public class CoralIOTalonFX implements CoralIO {
         inputs.appliedVolts = rollers.getMotorVoltage().getValueAsDouble();
         inputs.currentAmps = rollers.getSupplyCurrent().getValueAsDouble();
 
-        inputs.isBeamBroken = !beamBreak.get();
+        inputs.endEffectorDistanceCm = endEffectorSensor.getDistance().getValue().in(Centimeters);
+        inputs.funnelDistanceCm = funnelSensor.getDistance().getValue().in(Centimeters);
     }
 
     @Override

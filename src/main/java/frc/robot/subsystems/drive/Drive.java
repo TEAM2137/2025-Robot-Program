@@ -72,7 +72,7 @@ public class Drive extends SubsystemBase {
     // Auto trajectory following PIDs
     private final PIDController autoXController = new PIDController(10.0, 0.0, 0.0);
     private final PIDController autoYController = new PIDController(10.0, 0.0, 0.0);
-    private final PIDController autoHeadingController = new PIDController(8.0, 0.0, 0.0);
+    private final PIDController autoHeadingController = new PIDController(10.0, 0.0, 0.0);
 
     private final Field2d field = new Field2d();
     private final Sendable swerveDriveSendable = new Sendable() {
@@ -403,8 +403,14 @@ public class Drive extends SubsystemBase {
 
     private static StructPublisher<Pose2d> autoTargetPosePublisher = NetworkTableInstance.getDefault()
             .getStructTopic("Autonomous/AutoTargetPose", Pose2d.struct).publish();
-    private static DoublePublisher autoErrorPublisher = NetworkTableInstance.getDefault()
-            .getDoubleTopic("Autonomous/TargetError").publish();
+    private static DoublePublisher vxAdditionPublisher = NetworkTableInstance.getDefault()
+            .getDoubleTopic("Autonomous/VxAddition").publish();
+    private static DoublePublisher vyAdditionPublisher = NetworkTableInstance.getDefault()
+            .getDoubleTopic("Autonomous/VxAddition").publish();
+    private static DoublePublisher vxErrorPublisher = NetworkTableInstance.getDefault()
+            .getDoubleTopic("Autonomous/VxError").publish();
+    private static DoublePublisher vyErrorPublisher = NetworkTableInstance.getDefault()
+            .getDoubleTopic("Autonomous/VyError").publish();
 
     public void followTrajectory(SwerveSample sample) {
         // Get the current pose of the robot
@@ -412,12 +418,20 @@ public class Drive extends SubsystemBase {
 
         // Publish the autonomous target pose
         autoTargetPosePublisher.accept(sample.getPose());
-        autoErrorPublisher.accept(pose.getTranslation().getDistance(sample.getPose().getTranslation()));
+
+        double vxAddition = autoXController.calculate(pose.getX(), sample.x);
+        double vyAddition = autoYController.calculate(pose.getY(), sample.y);
+
+        vxAdditionPublisher.accept(vxAddition);
+        vyAdditionPublisher.accept(vyAddition);
+
+        vxErrorPublisher.accept(autoXController.getError());
+        vyErrorPublisher.accept(autoYController.getError());
 
         // Generate the next speeds for the robot
         ChassisSpeeds speeds = new ChassisSpeeds(
-            sample.vx + autoXController.calculate(pose.getX(), sample.x),
-            sample.vy + autoYController.calculate(pose.getY(), sample.y),
+            sample.vx + vxAddition,
+            sample.vy + vyAddition,
             sample.omega + autoHeadingController.calculate(pose.getRotation().getRadians(), sample.heading)
         );
 

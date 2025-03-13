@@ -8,7 +8,6 @@ import edu.wpi.first.wpilibj.simulation.DCMotorSim;
 
 public class CoralIOSim implements CoralIO {
     private DCMotorSim sim;
-    private boolean isBeamBroken = false;
 
     public CoralIOSim(){
         this.sim = new DCMotorSim(
@@ -22,12 +21,10 @@ public class CoralIOSim implements CoralIO {
     public void updateInputs(CoralIOInputs inputs) {
         sim.update(0.02);
 
-        // The only solution I could come up with for making sim autos always work
-        isBeamBroken = !isBeamBroken;
-
         inputs.appliedVolts = sim.getInputVoltage();
         inputs.currentAmps = sim.getCurrentDrawAmps();
-        inputs.isBeamBroken = isBeamBroken;
+        inputs.endEffectorDistanceCm = 0.0;
+        inputs.endEffectorDistanceCm = 0.0;
         inputs.velocityRadPerSec = sim.getAngularVelocity().in(RadiansPerSecond);
         inputs.velocityRadPerSec = sim.getAngularVelocity().in(RadiansPerSecond);
     }

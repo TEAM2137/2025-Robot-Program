@@ -2,6 +2,11 @@ package frc.robot.subsystems.coral;
 
 public class CoralConstants {
     public static final int rollersID = 32;
+    public static final int endEffectorSensorID = 0; // TODO tune this
+    public static final int funnelSensorID = 0; // TODO tune this
+
+    // Sensor detection range (cm)
+    public static final double sensorRange = 0; // TODO tune this
 
     // Roller Speeds
     public static final double l1RadPerSec = 171.5;

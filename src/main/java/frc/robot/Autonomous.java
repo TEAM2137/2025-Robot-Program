@@ -111,7 +111,7 @@ public class Autonomous {
 
 
     // Seconds before the end of the path that the elevator should raise
-    private static final double elevatorDelay = 0.55;
+    private static final double elevatorDelay = 0.5;
     // Seconds that the coral rollers should run for when scoring
     private static final double scoreDuration = 0.4;
 

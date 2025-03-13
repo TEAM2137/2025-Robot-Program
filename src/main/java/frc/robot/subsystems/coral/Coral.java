@@ -12,19 +12,23 @@ public class Coral extends SubsystemBase{
     private final CoralIO io;
     private final CoralIOInputsAutoLogged inputs;
 
-    public final Trigger beamBroken;
-    private boolean isBeamBroken;
+    public final Trigger endEffectorSensor;
+    public final Trigger funnelSensor;
+    private boolean isEndEffectorSensorInRange;
+    private boolean isFunnelSensorInRange;
 
     public Coral(CoralIO io){
         this.io = io;
         this.inputs = new CoralIOInputsAutoLogged();
-        this.beamBroken = new Trigger(() -> isBeamBroken);
+        this.endEffectorSensor = new Trigger(() -> isEndEffectorSensorInRange);
+        this.funnelSensor = new Trigger(() -> isFunnelSensorInRange);
     }
 
     @Override
     public void periodic() {
         io.updateInputs(inputs);
-        isBeamBroken = inputs.isBeamBroken;
+        isEndEffectorSensorInRange = inputs.endEffectorDistanceCm < CoralConstants.sensorRange;
+        isFunnelSensorInRange = inputs.funnelDistanceCm < CoralConstants.sensorRange;
         Logger.processInputs("Coral", inputs);
     }
 
@@ -45,18 +49,19 @@ public class Coral extends SubsystemBase{
     }
 
     public Command intakeCommand() {
-        return intakeUntilBrokenCommand()
-            .andThen(intakeWhileBrokenCommand())
+        return intakeUntilFunnelEnter()
+            .andThen(completeIntaking())
             .andThen(setVoltageCommand(0));
     }
 
-    public Command intakeUntilBrokenCommand() {
-        return setVoltageCommand(2).repeatedly().until(beamBroken)
+    public Command intakeUntilFunnelEnter() {
+        return setVoltageCommand(5).repeatedly().until(funnelSensor)
             .finallyDo(() -> io.setRollerVoltage(0));
     }
 
-    public Command intakeWhileBrokenCommand() {
-        return setVoltageCommand(2).repeatedly().onlyWhile(beamBroken)
-            .finallyDo(() -> io.setRollerVoltage(0));
+    public Command completeIntaking() {
+        return setVoltageCommand(5).repeatedly().until(endEffectorSensor)
+            .andThen(setVoltageCommand(2).repeatedly().onlyWhile(endEffectorSensor)
+            .finallyDo(() -> io.setRollerVoltage(0)));
     }
 }

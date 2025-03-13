@@ -11,7 +11,8 @@ public interface CoralIO {
         public double appliedVolts = 0.0;
         public double currentAmps = 0.0;
 
-        public boolean isBeamBroken = false;
+        public double endEffectorDistanceCm = 0.0;
+        public double funnelDistanceCm = 0.0;
     }
 
     public default void updateInputs(CoralIOInputs inputs) {}
