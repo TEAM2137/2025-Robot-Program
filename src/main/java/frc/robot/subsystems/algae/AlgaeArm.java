@@ -41,12 +41,11 @@ public class AlgaeArm extends SubsystemBase {
         return runOnce(() -> io.resetPosition());
     }
 
-    // TODO
-    public Command removeAlgaeCommand(boolean removeUpper) {
-        return runOnce(() -> {});
-    }
-
     public boolean isHoldingAlgae() {
         return io.getTargetPosition() == AlgaeConstants.algae;
+    }
+
+    public Command targetCurrentPosition() {
+        return runOnce(() -> io.setPivotPosition(io.getPivotPosition()));
     }
 }
