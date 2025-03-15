@@ -32,8 +32,8 @@ public class ElevatorConstants {
     public static final double stow = -0.05;
 
     public static final double L1 = 0.06;
-    public static final double L2 = 0.71;
-    public static final double L3 = 1.22;
+    public static final double L2 = 0.72;
+    public static final double L3 = 1.24;
     public static final double L4 = 1.97;
 
     public static final double algaeHigh = ConstantsUtil.getConstant(L3, 0.65);

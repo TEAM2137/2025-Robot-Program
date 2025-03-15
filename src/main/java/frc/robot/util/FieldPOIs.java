@@ -10,7 +10,7 @@ import edu.wpi.first.math.util.Units;
 import edu.wpi.first.networktables.NetworkTableInstance;
 
 public class FieldPOIs {
-    private static final double REEF_VERTICAL_OFFSET_METERS = 1.26;
+    private static final double REEF_VERTICAL_OFFSET_METERS = 1.235;
     private static final double ALGAE_VERTICAL_OFFSET_METERS = 0.14;
     private static final double REEF_HORIZONTAL_OFFSET_METERS = 0.17;
     private static final double END_EFFECTOR_OFFSET = Units.inchesToMeters(-2.3);
