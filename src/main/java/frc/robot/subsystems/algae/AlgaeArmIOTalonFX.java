@@ -86,6 +86,7 @@ public class AlgaeArmIOTalonFX implements AlgaeArmIO {
     public void resetPosition() {
         this.targetPosition = AlgaeConstants.stow;
         pivotMotor.setPosition(0);
+        setPivotPosition(0.0);
     }
 
     @Override

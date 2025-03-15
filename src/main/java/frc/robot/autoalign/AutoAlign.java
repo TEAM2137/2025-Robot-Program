@@ -122,8 +122,10 @@ public class AutoAlign {
             driveToTargetCommand(targetType, robot.drive, angleController).alongWith(Commands.run(() -> {
                 Translation2d robotTranslation = robot.drive.getPose().getTranslation();
                 Translation2d adjustedTranslation = new Translation2d(robotTranslation.getX(), targetType.allowYMovement() ? 0.0 : robotTranslation.getY());
-                if (target.getTranslation().getDistance(adjustedTranslation) < ELEVATOR_RAISE_DISTANCE_METERS)
+                if (target.getTranslation().getDistance(adjustedTranslation) < ELEVATOR_RAISE_DISTANCE_METERS) {
+                    if (targetType != Target.ALGAE) setScheduledElevatorHeight(robot.elevator.getScheduledPosition());
                     robot.elevator.setPosition(AutoAlign.scheduledElevatorHeight);
+                }
             }))
         );
     }

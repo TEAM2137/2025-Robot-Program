@@ -7,11 +7,11 @@ public class AlgaeConstants {
     // PID Constants
     public static final double kP = 5.0; // PID P
     public static final double kD = 0.01; // PID D
-    public static final double targetVelocity = 50.0; // MM Velocity
-    public static final double targetAccel = 50.0; // MM Acceleration
+    public static final double targetVelocity = 60.0; // MM Velocity
+    public static final double targetAccel = 95.0; // MM Acceleration
 
     // Setpoints
-    public static final double deploy = -8.0;
+    public static final double deploy = -15.79;
     public static final double algae = -4.5;
     public static final double stow = 0.0;
 }
