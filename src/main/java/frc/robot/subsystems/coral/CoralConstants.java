@@ -11,7 +11,7 @@ public class CoralConstants {
     // Roller Speeds
     public static final double l1RadPerSec = 171.5;
     public static final double scoreRadPerSec = 226.5;
-    public static final double l4RadPerSec = 268.0;
+    public static final double l4RadPerSec = 258.0;
 
     public static final double slowSpeed = 3.8;
     public static final double l1Speed = 3.0;
