@@ -29,7 +29,7 @@ public class Cage extends SubsystemBase{
         Logger.processInputs("Cage", inputs);
     }
 
-    public Command setPosition(double targetPosition) {
+    public Command setPositionCommand(double targetPosition) {
         return runOnce(() -> io.setPosition(targetPosition));
     }
 

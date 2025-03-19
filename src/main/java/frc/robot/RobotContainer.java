@@ -107,6 +107,7 @@ public class RobotContainer {
     public final Trigger algaeRollers = operatorController.rightBumper();
     public final Trigger slowEject = operatorController.povRight();
     public final Trigger reverseRollers = operatorController.povLeft();
+    public final Trigger climberDeploy = operatorController.povUp();
     public final Trigger elevatorApplyManual = operatorController.back();
 
     /** The container for the robot. Contains subsystems, IO devices, and commands. */
@@ -283,12 +284,12 @@ public class RobotContainer {
 
         // Hold right trigger to enable cage manual controls using the right stick.
         cageManual.whileTrue(cage.setVoltage(() ->
-            MathUtil.applyDeadband(-operatorController.getRightY(), 0.1) * 9));
+            MathUtil.applyDeadband(-operatorController.getRightY(), 0.1) * 12));
         cageManual.onFalse(cage.setVoltage(() -> 0));
 
         // Hold right trigger to enable algae arm manual controls using the left stick.
         cageManual.whileTrue(algae.setPivotVoltage(() ->
-            MathUtil.applyDeadband(-operatorController.getLeftY(), 0.1) * -6));
+            MathUtil.applyDeadband(-operatorController.getLeftY(), 0.1) * -3));
         cageManual.onFalse(algae.targetCurrentPosition());
 
         // Schedule different reef heights. These commands cannot be run while targeting algae
