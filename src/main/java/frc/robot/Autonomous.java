@@ -90,8 +90,9 @@ public class Autonomous {
         sysIdCommandChooser.addOption("Drive SysId (Dynamic Reverse)", drive.sysIdDynamic(SysIdRoutine.Direction.kReverse));
 
         // Testing Autos
-        autoChooser.addOption("4 Coral Left", fourCoral("Upper"));
+        // autoChooser.addOption("4 Coral Left", fourCoral("Upper"));
         autoChooser.addOption("4 Coral Right", fourCoral("Lower"));
+        autoChooser.addOption("4 Coral Right (Reversed)", fourCoral("Reverse Lower"));
         autoChooser.addOption("3 Coral Left", threeCoral("Upper"));
         autoChooser.addOption("3 Coral Right", threeCoral("Lower"));
         autoChooser.addOption("1 Coral Center", oneCoralCenter());
