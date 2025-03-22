@@ -248,9 +248,9 @@ public class RobotContainer {
             .andThen(elevator.setPositionCommand(ElevatorConstants.stow)));
 
         // Driver score sequence (remove algae)
-        score.and(scoreAlgae).onTrue(algae.setPivotPosition(AlgaeConstants.deploy)
+        score.and(scoreAlgae).onTrue(algae.setPivotPosition(AlgaeConstants.deploy).asProxy()
             .andThen(coral.setVoltageCommand(-6)));
-        score.and(scoreAlgae).onFalse(algae.setPivotPosition(AlgaeConstants.stow)
+        score.and(scoreAlgae).onFalse(algae.setPivotPosition(AlgaeConstants.stow).asProxy()
             .andThen(AutoAlign.clearLastTargeted())
             .andThen(coral.setVoltageCommand(0))
             .andThen(Commands.waitSeconds(0.3))
@@ -281,7 +281,6 @@ public class RobotContainer {
             .andThen(algae.setPivotPosition(AlgaeConstants.stow))
             .andThen(coral.completeIntaking())
             .andThen(coral.setVoltageCommand(0)));
-        // targetCoralStation.and(cageManual.negate()).onTrue(algae.setPivotPosition(AlgaeConstants.stow));
         targetCoralStation.onFalse(Commands.runOnce(() -> drive.getCurrentCommand().cancel(), drive));
 
         // Hold left trigger to enable elevator manual controls using the right stick.

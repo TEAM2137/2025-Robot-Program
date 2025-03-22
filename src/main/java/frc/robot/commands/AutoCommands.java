@@ -2,6 +2,7 @@ package frc.robot.commands;
 
 import frc.robot.RobotContainer;
 import frc.robot.subsystems.coral.CoralConstants;
+import frc.robot.subsystems.algae.AlgaeConstants;
 import choreo.auto.AutoTrajectory;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
@@ -16,9 +17,11 @@ public class AutoCommands {
      * @param robot - the robot container instance
      */
     public static void createIntakeSequence(AutoTrajectory base, AutoTrajectory onComplete, RobotContainer robot) {
-        base.done().onTrue(robot.coral.intakeUntilFunnelEnter());
+        base.done().onTrue(robot.algae.setPivotPosition(AlgaeConstants.intake)
+            .andThen(robot.coral.intakeUntilFunnelEnter()));
         base.recentlyDone().and(robot.coral.funnelSensor).onTrue(
-            onComplete.cmd().deadlineFor(robot.coral.completeIntaking()));
+            onComplete.cmd().deadlineFor(robot.algae.setPivotPosition(AlgaeConstants.intake)
+                .andThen(robot.coral.completeIntaking())));
     }
 
     /**
