@@ -248,9 +248,9 @@ public class RobotContainer {
             .andThen(elevator.setPositionCommand(ElevatorConstants.stow)));
 
         // Driver score sequence (remove algae)
-        score.and(scoreAlgae).onTrue(algae.setPivotPosition(AlgaeConstants.deploy).asProxy()
+        score.and(scoreAlgae).onTrue(algae.setPivotPosition(AlgaeConstants.deploy)
             .andThen(coral.setVoltageCommand(-6)));
-        score.and(scoreAlgae).onFalse(algae.setPivotPosition(AlgaeConstants.stow).asProxy()
+        score.and(scoreAlgae).onFalse(algae.setPivotPosition(AlgaeConstants.stow)
             .andThen(AutoAlign.clearLastTargeted())
             .andThen(coral.setVoltageCommand(0))
             .andThen(Commands.waitSeconds(0.3))
@@ -276,9 +276,9 @@ public class RobotContainer {
 
         // Driver coral station auto align
         targetCoralStation.onTrue(DriveCommands.alignToCoralStation(drive, joystickSupplier, slowMode));
-        targetCoralStation.onTrue(algae.setPivotPosition(AlgaeConstants.intake)
+        targetCoralStation.onTrue(algae.setPivotPosition(AlgaeConstants.intake).asProxy()
             .andThen(coral.intakeUntilFunnelEnter())
-            .andThen(algae.setPivotPosition(AlgaeConstants.stow))
+            .andThen(algae.setPivotPosition(AlgaeConstants.stow).asProxy())
             .andThen(coral.completeIntaking())
             .andThen(coral.setVoltageCommand(0)));
         targetCoralStation.onFalse(Commands.runOnce(() -> drive.getCurrentCommand().cancel(), drive));
