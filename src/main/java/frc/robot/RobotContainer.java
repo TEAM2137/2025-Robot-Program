@@ -275,7 +275,8 @@ public class RobotContainer {
 
         // Driver coral station auto align
         targetCoralStation.onTrue(DriveCommands.alignToCoralStation(drive, joystickSupplier, slowMode));
-        targetCoralStation.onTrue(coral.intakeCommand().andThen(algae.setPivotPosition(AlgaeConstants.stow)));
+        targetCoralStation.onTrue(coral.intakeCommand());
+        targetCoralStation.and(cageManual.negate()).onTrue(algae.setPivotPosition(AlgaeConstants.stow));
         targetCoralStation.onFalse(Commands.runOnce(() -> drive.getCurrentCommand().cancel(), drive));
 
         // Hold left trigger to enable elevator manual controls using the right stick.
