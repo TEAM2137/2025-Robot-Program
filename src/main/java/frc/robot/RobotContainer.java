@@ -251,6 +251,7 @@ public class RobotContainer {
         score.and(scoreAlgae).onTrue(algae.setPivotPosition(AlgaeConstants.deploy)
             .andThen(coral.setVoltageCommand(-6)));
         score.and(scoreAlgae).onFalse(algae.setPivotPosition(AlgaeConstants.stow)
+            .andThen(AutoAlign.clearLastTargeted())
             .andThen(coral.setVoltageCommand(0))
             .andThen(Commands.waitSeconds(0.3))
             .andThen(elevator.setPositionCommand(ElevatorConstants.stow)));

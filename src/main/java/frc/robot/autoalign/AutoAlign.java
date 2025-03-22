@@ -314,4 +314,8 @@ public class AutoAlign {
         AutoAlign.scheduledElevatorHeight = elevatorHeight;
         SmartDashboard.putNumber("AA-ElevatorHeight", elevatorHeight);
     }
+
+    public static Command clearLastTargeted() {
+        return Commands.runOnce(() -> AutoAlign.lastTargeted = new Pose2d());
+    }
 }
