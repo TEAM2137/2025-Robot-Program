@@ -227,7 +227,7 @@ public class AutoAlign {
 
             // Limit acceleration
             Translation2d finalVelocity = DriveCommands.limitAccelerationFor(
-                drive.getLinearSpeedsVector(),
+                ChoreoAllianceFlipUtil.shouldFlip() ? new Translation2d().minus(drive.getLinearSpeedsVector()) : drive.getLinearSpeedsVector(),
                 normalized,
                 DRIVE_MAX_ACCELERATION
             );
