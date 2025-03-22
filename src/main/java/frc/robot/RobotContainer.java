@@ -291,7 +291,7 @@ public class RobotContainer {
 
         // Hold right trigger to enable algae arm manual controls using the left stick.
         cageManual.whileTrue(algae.setPivotVoltage(() ->
-            MathUtil.applyDeadband(-operatorController.getLeftY(), 0.1) * -3));
+            MathUtil.applyDeadband(-operatorController.getLeftY(), 0.1) * -2.5));
         cageManual.onFalse(algae.targetCurrentPosition());
 
         // Schedule different reef heights. These commands cannot be run while targeting algae
