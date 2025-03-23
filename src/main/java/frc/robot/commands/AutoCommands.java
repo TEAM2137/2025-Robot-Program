@@ -20,7 +20,7 @@ public class AutoCommands {
         base.done().onTrue(robot.algae.setPivotPosition(AlgaeConstants.intake)
             .andThen(robot.coral.intakeUntilFunnelEnter()));
         base.recentlyDone().and(robot.coral.funnelSensor).onTrue(
-            onComplete.cmd().deadlineFor(robot.algae.setPivotPosition(AlgaeConstants.intake)
+            onComplete.cmd().deadlineFor(robot.algae.setPivotPosition(AlgaeConstants.stow)
                 .andThen(robot.coral.completeIntaking())));
     }
 
