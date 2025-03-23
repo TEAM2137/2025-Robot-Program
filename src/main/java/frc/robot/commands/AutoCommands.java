@@ -10,7 +10,7 @@ import edu.wpi.first.wpilibj2.command.Commands;
 /** A class containing utility command sequences for autonomous */
 public class AutoCommands {
     public static void createIntakeSequence(AutoTrajectory base, RobotContainer robot) {
-        createIntakeSequence(base, Commands.none(), robot);
+        createIntakeSequence(base, (Command) null, robot);
     }
 
     public static void createIntakeSequence(AutoTrajectory base, AutoTrajectory onComplete, RobotContainer robot) {
@@ -27,9 +27,15 @@ public class AutoCommands {
     public static void createIntakeSequence(AutoTrajectory base, Command onComplete, RobotContainer robot) {
         base.done().onTrue(robot.algae.setPivotPosition(AlgaeConstants.intake)
             .andThen(robot.coral.intakeUntilFunnelEnter()));
-        base.recentlyDone().and(robot.coral.funnelSensor).onTrue(
-            onComplete.deadlineFor(robot.algae.setPivotPosition(AlgaeConstants.stow)
-                .andThen(robot.coral.completeIntaking())));
+        if (onComplete != null) {
+            base.recentlyDone().and(robot.coral.funnelSensor).onTrue(
+                onComplete.deadlineFor(robot.algae.setPivotPosition(AlgaeConstants.stow)
+                    .andThen(robot.coral.completeIntaking())));
+        } else {
+            base.recentlyDone().and(robot.coral.funnelSensor).onTrue(
+                robot.algae.setPivotPosition(AlgaeConstants.stow)
+                    .andThen(robot.coral.completeIntaking()));
+        }
     }
 
     /**

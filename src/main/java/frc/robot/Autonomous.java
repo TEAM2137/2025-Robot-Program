@@ -150,8 +150,8 @@ public class Autonomous {
         routine.active().onTrue(toReef1.resetOdometry().andThen(toReef1.cmd()));
 
         // Raise elevator on approach
-        toReef1.atTimeBeforeEnd(elevatorDelay).onTrue(
-            robot.elevator.setPositionCommand(ElevatorConstants.L4));
+        // toReef1.atTimeBeforeEnd(elevatorDelay).onTrue(
+        //     robot.elevator.setPositionCommand(ElevatorConstants.L4));
 
         // Score coral 1, stow elevator, and drive to pickup coral
         AutoCommands.createScoringSequence(scoreDuration, toReef1, toStation2, robot);
@@ -160,8 +160,8 @@ public class Autonomous {
         AutoCommands.createIntakeSequence(toStation2, toReef2, robot);
 
         // Raise elevator on approach
-        toReef2.atTimeBeforeEnd(elevatorDelay).onTrue(
-            robot.elevator.setPositionCommand(ElevatorConstants.L4));
+        // toReef2.atTimeBeforeEnd(elevatorDelay).onTrue(
+        //     robot.elevator.setPositionCommand(ElevatorConstants.L4));
 
         // Score coral 2, stow elevator, and drive to pickup coral
         AutoCommands.createScoringSequence(scoreDuration, toReef2, toStation3, robot);
@@ -170,8 +170,8 @@ public class Autonomous {
         AutoCommands.createIntakeSequence(toStation3, toReef3, robot);
 
         // Raise elevator on approach
-        toReef3.atTimeBeforeEnd(elevatorDelay).onTrue(
-            robot.elevator.setPositionCommand(ElevatorConstants.L4));
+        // toReef3.atTimeBeforeEnd(elevatorDelay).onTrue(
+        //     robot.elevator.setPositionCommand(ElevatorConstants.L4));
 
         // Score coral 3, stow elevator, and drive to pickup coral
         AutoCommands.createScoringSequence(scoreDuration, toReef3, toStation4, robot);
