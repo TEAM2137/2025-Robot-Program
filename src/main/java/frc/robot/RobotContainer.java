@@ -276,9 +276,9 @@ public class RobotContainer {
 
         // Driver coral station auto align
         targetCoralStation.onTrue(DriveCommands.alignToCoralStation(drive, joystickSupplier, slowMode));
-        targetCoralStation.onTrue(algae.setPivotPosition(AlgaeConstants.intake).asProxy()
+        targetCoralStation.onTrue(Commands.runOnce(() -> algae.setPivotPositionRaw(AlgaeConstants.intake), coral)
             .andThen(coral.intakeUntilFunnelEnter())
-            .andThen(algae.setPivotPosition(AlgaeConstants.stow).asProxy())
+            .andThen(Commands.runOnce(() -> algae.setPivotPositionRaw(AlgaeConstants.stow), coral))
             .andThen(coral.completeIntaking())
             .andThen(coral.setVoltageCommand(0)));
         targetCoralStation.onFalse(Commands.runOnce(() -> drive.getCurrentCommand().cancel(), drive));
