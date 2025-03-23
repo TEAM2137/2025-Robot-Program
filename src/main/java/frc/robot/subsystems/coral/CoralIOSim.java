@@ -12,7 +12,7 @@ public class CoralIOSim implements CoralIO {
     public CoralIOSim(){
         this.sim = new DCMotorSim(
             LinearSystemId.createDCMotorSystem(
-                DCMotor.getKrakenX60(1),1.0,3.0),
+                DCMotor.getKrakenX60(1),0.01,3.0),
             DCMotor.getKrakenX60(1)
         );
     }
@@ -23,7 +23,7 @@ public class CoralIOSim implements CoralIO {
 
         inputs.appliedVolts = sim.getInputVoltage();
         inputs.currentAmps = sim.getCurrentDrawAmps();
-        inputs.endEffectorDistanceCm = 0.0;
+        inputs.funnelDistanceCm = 20.0;
         inputs.endEffectorDistanceCm = 0.0;
         inputs.velocityRadPerSec = sim.getAngularVelocity().in(RadiansPerSecond);
         inputs.velocityRadPerSec = sim.getAngularVelocity().in(RadiansPerSecond);
