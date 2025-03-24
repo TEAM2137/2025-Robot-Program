@@ -227,7 +227,7 @@ public class AutoAlign {
 
             // Limit acceleration
             Translation2d finalVelocity = DriveCommands.limitAccelerationFor(
-                drive.getLinearSpeedsVector(),
+                ChoreoAllianceFlipUtil.shouldFlip() ? new Translation2d().minus(drive.getLinearSpeedsVector()) : drive.getLinearSpeedsVector(),
                 normalized,
                 DRIVE_MAX_ACCELERATION
             );
@@ -313,5 +313,9 @@ public class AutoAlign {
     public static void setScheduledElevatorHeight(double elevatorHeight) {
         AutoAlign.scheduledElevatorHeight = elevatorHeight;
         SmartDashboard.putNumber("AA-ElevatorHeight", elevatorHeight);
+    }
+
+    public static Command clearLastTargeted() {
+        return Commands.runOnce(() -> AutoAlign.lastTargeted = new Pose2d());
     }
 }

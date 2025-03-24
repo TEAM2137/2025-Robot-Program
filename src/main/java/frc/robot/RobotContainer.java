@@ -251,6 +251,7 @@ public class RobotContainer {
         score.and(scoreAlgae).onTrue(algae.setPivotPosition(AlgaeConstants.deploy)
             .andThen(coral.setVoltageCommand(-6)));
         score.and(scoreAlgae).onFalse(algae.setPivotPosition(AlgaeConstants.stow)
+            .andThen(AutoAlign.clearLastTargeted())
             .andThen(coral.setVoltageCommand(0))
             .andThen(Commands.waitSeconds(0.3))
             .andThen(elevator.setPositionCommand(ElevatorConstants.stow)));
@@ -275,7 +276,11 @@ public class RobotContainer {
 
         // Driver coral station auto align
         targetCoralStation.onTrue(DriveCommands.alignToCoralStation(drive, joystickSupplier, slowMode));
-        targetCoralStation.onTrue(coral.intakeCommand().andThen(algae.setPivotPosition(AlgaeConstants.stow)));
+        targetCoralStation.onTrue(Commands.runOnce(() -> algae.setPivotPositionRaw(AlgaeConstants.intake), coral)
+            .andThen(coral.intakeUntilFunnelEnter())
+            .andThen(Commands.runOnce(() -> algae.setPivotPositionRaw(AlgaeConstants.stow), coral))
+            .andThen(coral.completeIntaking())
+            .andThen(coral.setVoltageCommand(0)));
         targetCoralStation.onFalse(Commands.runOnce(() -> drive.getCurrentCommand().cancel(), drive));
 
         // Hold left trigger to enable elevator manual controls using the right stick.
@@ -290,7 +295,7 @@ public class RobotContainer {
 
         // Hold right trigger to enable algae arm manual controls using the left stick.
         cageManual.whileTrue(algae.setPivotVoltage(() ->
-            MathUtil.applyDeadband(-operatorController.getLeftY(), 0.1) * -3));
+            MathUtil.applyDeadband(-operatorController.getLeftY(), 0.1) * -2.5));
         cageManual.onFalse(algae.targetCurrentPosition());
 
         // Schedule different reef heights. These commands cannot be run while targeting algae

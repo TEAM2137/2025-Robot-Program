@@ -48,4 +48,8 @@ public class AlgaeArm extends SubsystemBase {
     public Command targetCurrentPosition() {
         return runOnce(() -> io.setPivotPosition(io.getPivotPosition()));
     }
+
+    public void setPivotPositionRaw(double position) {
+        io.setPivotPosition(position);
+    }
 }

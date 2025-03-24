@@ -176,6 +176,9 @@ public class Autonomous {
         // Score coral 3, stow elevator, and drive to pickup coral
         AutoCommands.createScoringSequence(scoreDuration, toReef3, toStation4, robot);
 
+        // Intake coral 4 from coral station
+        AutoCommands.createIntakeSequence(toStation4, robot);
+
         return routine;
     }
 

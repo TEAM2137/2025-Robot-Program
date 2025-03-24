@@ -2,12 +2,21 @@ package frc.robot.commands;
 
 import frc.robot.RobotContainer;
 import frc.robot.subsystems.coral.CoralConstants;
+import frc.robot.subsystems.algae.AlgaeConstants;
 import choreo.auto.AutoTrajectory;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 
 /** A class containing utility command sequences for autonomous */
 public class AutoCommands {
+    public static void createIntakeSequence(AutoTrajectory base, RobotContainer robot) {
+        createIntakeSequence(base, (Command) null, robot);
+    }
+
+    public static void createIntakeSequence(AutoTrajectory base, AutoTrajectory onComplete, RobotContainer robot) {
+        createIntakeSequence(base, onComplete.cmd(), robot);
+    }
+
     /**
      * Creates an intake sequence at the end of a trajectory,
      * running another trajectory after the sequence is complete
@@ -15,10 +24,18 @@ public class AutoCommands {
      * @param onComplete - the trajectory that will be run after intaking
      * @param robot - the robot container instance
      */
-    public static void createIntakeSequence(AutoTrajectory base, AutoTrajectory onComplete, RobotContainer robot) {
-        base.done().onTrue(robot.coral.intakeUntilFunnelEnter());
-        base.recentlyDone().and(robot.coral.funnelSensor).onTrue(
-            onComplete.cmd().deadlineFor(robot.coral.completeIntaking()));
+    public static void createIntakeSequence(AutoTrajectory base, Command onComplete, RobotContainer robot) {
+        base.done().onTrue(robot.algae.setPivotPosition(AlgaeConstants.intake)
+            .andThen(robot.coral.intakeUntilFunnelEnter()));
+        if (onComplete != null) {
+            base.recentlyDone().and(robot.coral.funnelSensor).onTrue(
+                onComplete.deadlineFor(robot.algae.setPivotPosition(AlgaeConstants.stow)
+                    .andThen(robot.coral.completeIntaking())));
+        } else {
+            base.recentlyDone().and(robot.coral.funnelSensor).onTrue(
+                robot.algae.setPivotPosition(AlgaeConstants.stow)
+                    .andThen(robot.coral.completeIntaking()));
+        }
     }
 
     /**
