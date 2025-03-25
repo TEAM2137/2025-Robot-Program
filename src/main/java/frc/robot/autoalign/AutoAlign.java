@@ -4,6 +4,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.function.Supplier;
 
+import org.littletonrobotics.junction.Logger;
+
 import choreo.util.ChoreoAllianceFlipUtil;
 import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.Pair;
@@ -38,7 +40,8 @@ public class AutoAlign {
     public enum Target {
         LEFT_BRANCH,
         RIGHT_BRANCH,
-        ALGAE,
+        ALGAE_ALIGN,
+        ALGAE_GRAB,
         NET(true);
 
         private boolean moveY = false;
@@ -58,23 +61,26 @@ public class AutoAlign {
         // Right reef poles
         Target.RIGHT_BRANCH, FieldPOIs.REEF_BRANCHES_RIGHT,
 
-        // Locations for removing algae
-        Target.ALGAE, FieldPOIs.ALGAE_LOCATIONS,
+        // Locations for lining up to algae
+        Target.ALGAE_ALIGN, FieldPOIs.ALGAE_ALIGN_LOCATIONS,
+
+        // Locations for grabbing algae
+        Target.ALGAE_GRAB, FieldPOIs.ALGAE_GRAB_LOCATIONS,
 
         // X alignment for net scoring
         Target.NET, List.of(FieldPOIs.NET)
     );
 
-    private static Pose2d target; // The currently targeted position (can be null)
-    private static Pose2d lastTargeted = new Pose2d(); // The most recently targeted position (not null)
+    private static Pose2d targetPose; // The currently targeted position (can be null)
+    private static AutoAlign.Target targetType = Target.LEFT_BRANCH; // The most recently targeted target type
     private static double scheduledElevatorHeight = 0.0;
 
-    public static Pose2d getActiveTarget() {
-        return target;
+    public static Pose2d getTargetPose() {
+        return targetPose;
     }
 
-    public static Pose2d getLastTargeted() {
-        return lastTargeted;
+    public static AutoAlign.Target getTargetType() {
+        return targetType;
     }
 
     /**
@@ -116,14 +122,15 @@ public class AutoAlign {
         // Construct command
         return Commands.sequence(
             Commands.runOnce(() -> {
-                target = getFlippedPose(robot.drive, targetType, motionSupplier);
-                lastTargeted = target;
+                Logger.recordOutput("AutoAlign/TargetType", targetType);
+                targetPose = getFlippedPose(robot.drive, targetType, motionSupplier);
+                AutoAlign.targetType = targetType;
             }),
             driveToTargetCommand(targetType, robot.drive, angleController).alongWith(Commands.run(() -> {
                 Translation2d robotTranslation = robot.drive.getPose().getTranslation();
                 Translation2d adjustedTranslation = new Translation2d(robotTranslation.getX(), targetType.allowYMovement() ? 0.0 : robotTranslation.getY());
-                if (target.getTranslation().getDistance(adjustedTranslation) < ELEVATOR_RAISE_DISTANCE_METERS) {
-                    if (targetType != Target.ALGAE) setScheduledElevatorHeight(robot.elevator.getScheduledPosition());
+                if (targetPose.getTranslation().getDistance(adjustedTranslation) < ELEVATOR_RAISE_DISTANCE_METERS) {
+                    if (!targetType.name().contains("ALGAE")) setScheduledElevatorHeight(robot.elevator.getScheduledPosition());
                     robot.elevator.setPosition(AutoAlign.scheduledElevatorHeight);
                 }
             }))
@@ -174,7 +181,7 @@ public class AutoAlign {
             Translation2d adjustedTranslation = new Translation2d(drive.getPose().getX(), targetType.allowYMovement() ? 0.0 : drive.getPose().getY());
             double velocityDecrease = RobotContainer.getInstance().elevator.getExtensionMeters();
             double accelDecrease = velocityDecrease;
-            if (target.getTranslation().getDistance(adjustedTranslation) < ACCEL_LIMIT_DISTANCE_METERS)
+            if (targetPose.getTranslation().getDistance(adjustedTranslation) < ACCEL_LIMIT_DISTANCE_METERS)
                 accelDecrease = RobotContainer.getInstance().elevator.getScheduledPosition();
 
             // Dynamically calculate drive constraints based on elevator height
@@ -190,8 +197,8 @@ public class AutoAlign {
 
             // Calculate vector to target
             Translation2d toTarget = new Translation2d(
-                drive.getPose().getX() - target.getX(),
-                targetType.allowYMovement() ? 0 : drive.getPose().getY() - target.getY()
+                drive.getPose().getX() - targetPose.getX(),
+                targetType.allowYMovement() ? 0 : drive.getPose().getY() - targetPose.getY()
             );
 
             // Calculate the robot's current speed towards the target
@@ -215,11 +222,11 @@ public class AutoAlign {
             SmartDashboard.putNumber("AA-Velocity", state.velocity);
 
             // Calculate angular speed
-            double omega = angleController.calculate(drive.getRotation().getRadians(), target.getRotation().getRadians());
+            double omega = angleController.calculate(drive.getRotation().getRadians(), targetPose.getRotation().getRadians());
             if (Math.abs(angleController.getPositionError()) < DriveCommands.ANGLE_DEADBAND) omega = 0.0;
 
             SmartDashboard.putNumber("AA-CurrentAngle", drive.getRotation().getRadians());
-            SmartDashboard.putNumber("AA-TargetAngle", target.getRotation().getRadians());
+            SmartDashboard.putNumber("AA-TargetAngle", targetPose.getRotation().getRadians());
 
             // Check if it's red alliance
             boolean isFlipped = DriverStation.getAlliance().isPresent()
@@ -245,7 +252,7 @@ public class AutoAlign {
                 : drive.getRotation()
             ));
 
-        }, () -> target = null, drive)
+        }, () -> targetPose = null, drive)
         .beforeStarting(() -> {
             // Reset pid controllers
             angleController.reset(
@@ -312,10 +319,9 @@ public class AutoAlign {
 
     public static void setScheduledElevatorHeight(double elevatorHeight) {
         AutoAlign.scheduledElevatorHeight = elevatorHeight;
-        SmartDashboard.putNumber("AA-ElevatorHeight", elevatorHeight);
     }
 
-    public static Command clearLastTargeted() {
-        return Commands.runOnce(() -> AutoAlign.lastTargeted = new Pose2d());
+    public static Command clearTargetType() {
+        return Commands.runOnce(() -> AutoAlign.targetType = Target.LEFT_BRANCH);
     }
 }

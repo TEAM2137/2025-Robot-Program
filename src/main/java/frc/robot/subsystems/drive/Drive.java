@@ -20,10 +20,6 @@ import edu.wpi.first.math.kinematics.SwerveModulePosition;
 import edu.wpi.first.math.kinematics.SwerveModuleState;
 import edu.wpi.first.math.numbers.N1;
 import edu.wpi.first.math.numbers.N3;
-import edu.wpi.first.networktables.DoublePublisher;
-import edu.wpi.first.networktables.NetworkTableInstance;
-import edu.wpi.first.networktables.StructArrayPublisher;
-import edu.wpi.first.networktables.StructPublisher;
 import edu.wpi.first.util.sendable.Sendable;
 import edu.wpi.first.util.sendable.SendableBuilder;
 import edu.wpi.first.wpilibj.Alert;
@@ -104,17 +100,6 @@ public class Drive extends SubsystemBase {
     };
 
     private SwerveDrivePoseEstimator poseEstimator = new SwerveDrivePoseEstimator(kinematics, rawGyroRotation, lastModulePositions, new Pose2d());
-
-    private static StructPublisher<Pose2d> closestLeftPolePublisher = NetworkTableInstance.getDefault()
-            .getStructTopic("AutoAlign/ClosestLeftPole", Pose2d.struct).publish();
-    private static StructPublisher<Pose2d> closestRightPolePublisher = NetworkTableInstance.getDefault()
-            .getStructTopic("AutoAlign/ClosestRightPole", Pose2d.struct).publish();
-    private static StructArrayPublisher<Translation2d> joystickPublisher = NetworkTableInstance.getDefault()
-            .getStructArrayTopic("AutoAlign/JoystickMotionVector", Translation2d.struct).publish();
-    private static StructArrayPublisher<Translation2d> toLeftReefPublisher = NetworkTableInstance.getDefault()
-            .getStructArrayTopic("AutoAlign/ToLeftReefVector", Translation2d.struct).publish();
-    private static StructArrayPublisher<Translation2d> toRightReefPublisher = NetworkTableInstance.getDefault()
-            .getStructArrayTopic("AutoAlign/ToRightReefVector", Translation2d.struct).publish();
 
     public Drive(GyroIO gyroIO, ModuleIO flModuleIO,ModuleIO frModuleIO, ModuleIO blModuleIO, ModuleIO brModuleIO) {
         this.gyroIO = gyroIO;
@@ -205,16 +190,16 @@ public class Drive extends SubsystemBase {
         Pose2d rightPole = AutoAlign.getFlippedPose(this, Target.RIGHT_BRANCH, RobotContainer.getInstance().joystickMotionSupplier());
         Pose2d offscreenPole = new Pose2d(new Translation2d(100, 100), new Rotation2d());
 
-        boolean isTargetingLeft = RobotContainer.getInstance().targetLeft.getAsBoolean() && AutoAlign.getActiveTarget() != null;
-        boolean isTargetingRight = RobotContainer.getInstance().targetRight.getAsBoolean() && AutoAlign.getActiveTarget() != null;
+        boolean isTargetingLeft = RobotContainer.getInstance().targetLeft.getAsBoolean() && AutoAlign.getTargetPose() != null;
+        boolean isTargetingRight = RobotContainer.getInstance().targetRight.getAsBoolean() && AutoAlign.getTargetPose() != null;
 
-        closestLeftPolePublisher.accept(isTargetingLeft ? AutoAlign.getActiveTarget() : offscreenPole);
-        closestRightPolePublisher.accept(isTargetingRight ? AutoAlign.getActiveTarget() : offscreenPole);
+        Logger.recordOutput("AutoAlign/LeftBranch", isTargetingLeft ? AutoAlign.getTargetPose() : offscreenPole);
+        Logger.recordOutput("AutoAlign/RightBranch", isTargetingRight ? AutoAlign.getTargetPose() : offscreenPole);
 
-        toLeftReefPublisher.accept(createTrajectoryTo(leftPole.getTranslation()));
-        toRightReefPublisher.accept(createTrajectoryTo(rightPole.getTranslation()));
+        Logger.recordOutput("AutoAlign/ToLeftBranch", createTrajectoryTo(leftPole.getTranslation()));
+        Logger.recordOutput("AutoAlign/ToRightBranch", createTrajectoryTo(rightPole.getTranslation()));
 
-        joystickPublisher.accept(createTrajectoryTo(getPose().getTranslation()
+        Logger.recordOutput("AutoAlign/JoystickVector", createTrajectoryTo(getPose().getTranslation()
             .minus(RobotContainer.getInstance().joystickMotionSupplier().get().times(1.5))));
 
         // Post dashboard data through SmartDashboard
@@ -401,32 +386,21 @@ public class Drive extends SubsystemBase {
         };
     }
 
-    private static StructPublisher<Pose2d> autoTargetPosePublisher = NetworkTableInstance.getDefault()
-            .getStructTopic("Autonomous/AutoTargetPose", Pose2d.struct).publish();
-    private static DoublePublisher vxAdditionPublisher = NetworkTableInstance.getDefault()
-            .getDoubleTopic("Autonomous/VxAddition").publish();
-    private static DoublePublisher vyAdditionPublisher = NetworkTableInstance.getDefault()
-            .getDoubleTopic("Autonomous/VxAddition").publish();
-    private static DoublePublisher vxErrorPublisher = NetworkTableInstance.getDefault()
-            .getDoubleTopic("Autonomous/VxError").publish();
-    private static DoublePublisher vyErrorPublisher = NetworkTableInstance.getDefault()
-            .getDoubleTopic("Autonomous/VyError").publish();
-
     public void followTrajectory(SwerveSample sample) {
         // Get the current pose of the robot
         Pose2d pose = getPose();
 
         // Publish the autonomous target pose
-        autoTargetPosePublisher.accept(sample.getPose());
+        Logger.recordOutput("Autonomous/TargetPose", sample.getPose());
 
         double vxAddition = autoXController.calculate(pose.getX(), sample.x);
         double vyAddition = autoYController.calculate(pose.getY(), sample.y);
 
-        vxAdditionPublisher.accept(vxAddition);
-        vyAdditionPublisher.accept(vyAddition);
+        Logger.recordOutput("Autonomous/VxAddition", vxAddition);
+        Logger.recordOutput("Autonomous/VyAddition", vyAddition);
 
-        vxErrorPublisher.accept(autoXController.getError());
-        vyErrorPublisher.accept(autoYController.getError());
+        Logger.recordOutput("Autonomous/VxError", autoXController.getError());
+        Logger.recordOutput("Autonomous/VyError", autoYController.getError());
 
         // Generate the next speeds for the robot
         ChassisSpeeds speeds = new ChassisSpeeds(

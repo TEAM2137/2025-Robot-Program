@@ -42,7 +42,7 @@ public class AlgaeArm extends SubsystemBase {
     }
 
     public boolean isHoldingAlgae() {
-        return io.getTargetPosition() == AlgaeConstants.algae;
+        return io.getTargetPosition() == AlgaeConstants.hold;
     }
 
     public Command targetCurrentPosition() {
