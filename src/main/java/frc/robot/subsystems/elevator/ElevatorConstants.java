@@ -1,7 +1,6 @@
 package frc.robot.subsystems.elevator;
 
 import edu.wpi.first.math.util.Units;
-import frc.robot.util.ConstantsUtil;
 
 public class ElevatorConstants {
     // IDs
@@ -36,8 +35,8 @@ public class ElevatorConstants {
     public static final double L3 = 1.24;
     public static final double L4 = 1.97;
 
-    public static final double algaeHigh = ConstantsUtil.getConstant(L3, 0.65);
-    public static final double algaeLow = ConstantsUtil.getConstant(L2, 0.65);
+    public static final double algaeHigh = 0.76;
+    public static final double algaeLow = 0.2;
 
-    public static final double net = 2.00;
+    public static final double net = 1.00;
 }

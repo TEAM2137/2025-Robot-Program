@@ -28,7 +28,7 @@ public class Coral extends SubsystemBase{
     public void periodic() {
         io.updateInputs(inputs);
         isEndEffectorSensorInRange = inputs.endEffectorDistanceCm < CoralConstants.sensorRange;
-        isFunnelSensorInRange = inputs.funnelDistanceCm < CoralConstants.sensorRange;
+        isFunnelSensorInRange = inputs.funnelDistanceCm < CoralConstants.funnelSensorRange;
         Logger.processInputs("Coral", inputs);
     }
 

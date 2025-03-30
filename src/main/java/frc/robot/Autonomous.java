@@ -113,7 +113,7 @@ public class Autonomous {
 
 
     // Seconds before the end of the path that the elevator should raise
-    private static final double elevatorDelay = 0.4;
+    private static final double elevatorDelay = 0.45;
     // Seconds that the coral rollers should run for when scoring
     private static final double scoreDuration = 0.4;
 
@@ -147,7 +147,7 @@ public class Autonomous {
 
         // When the routine begins, reset odometry and start the first trajectory
         routine.active().onTrue(robot.elevator.resetPositionCommand());
-        routine.active().onTrue(toReef1.resetOdometry().andThen(toReef1.cmd()));
+        routine.active().onTrue(toReef1.cmd());
 
         // Raise elevator on approach
         toReef1.atTimeBeforeEnd(elevatorDelay).onTrue(

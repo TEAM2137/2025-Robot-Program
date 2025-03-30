@@ -3,19 +3,27 @@ package frc.robot.subsystems.algae;
 import static edu.wpi.first.units.Units.Hertz;
 
 import com.ctre.phoenix6.BaseStatusSignal;
+import com.ctre.phoenix6.configs.CANcoderConfiguration;
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
 import com.ctre.phoenix6.controls.MotionMagicVoltage;
 import com.ctre.phoenix6.controls.VoltageOut;
+import com.ctre.phoenix6.hardware.CANcoder;
 import com.ctre.phoenix6.hardware.TalonFX;
+import com.ctre.phoenix6.signals.FeedbackSensorSourceValue;
 import com.ctre.phoenix6.signals.InvertedValue;
 import com.ctre.phoenix6.signals.NeutralModeValue;
 
 public class AlgaeArmIOTalonFX implements AlgaeArmIO {
     public TalonFX pivotMotor = new TalonFX(AlgaeConstants.deviceID, "rio");
+    public CANcoder encoder = new CANcoder(AlgaeConstants.encoderID, "rio");
 
     private double targetPosition;
 
     public AlgaeArmIOTalonFX() {
+        var encoderConfig = new CANcoderConfiguration();
+        encoderConfig.MagnetSensor.MagnetOffset = AlgaeConstants.encoderOffset;
+        encoder.getConfigurator().apply(encoderConfig);
+
         var config = new TalonFXConfiguration();
 
         // PID and FF settings
@@ -29,6 +37,8 @@ public class AlgaeArmIOTalonFX implements AlgaeArmIO {
 
         // Motor feedback settings
         var feedbackConfigs = config.Feedback;
+        feedbackConfigs.FeedbackSensorSource = FeedbackSensorSourceValue.RemoteCANcoder;
+        feedbackConfigs.FeedbackRemoteSensorID = AlgaeConstants.encoderID;
         feedbackConfigs.RotorToSensorRatio = AlgaeConstants.gearing;
 
         // Current limit settings
@@ -38,7 +48,7 @@ public class AlgaeArmIOTalonFX implements AlgaeArmIO {
 
         // Motor output settings
         var motorOutputConfig = config.MotorOutput;
-        motorOutputConfig.Inverted = InvertedValue.Clockwise_Positive;
+        motorOutputConfig.Inverted = InvertedValue.CounterClockwise_Positive;
         motorOutputConfig.NeutralMode = NeutralModeValue.Brake;
 
         // Apply configurations
