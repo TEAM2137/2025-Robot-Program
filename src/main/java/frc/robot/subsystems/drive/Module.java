@@ -117,4 +117,8 @@ public class Module {
     public double getFFCharacterizationVelocity() {
         return Units.radiansToRotations(inputs.driveVelocityRadPerSec);
     }
+
+    public void setCoastMode(boolean coast) {
+        io.setCoastMode(coast);
+    }
 }

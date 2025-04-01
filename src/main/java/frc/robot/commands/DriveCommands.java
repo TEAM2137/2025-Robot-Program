@@ -33,12 +33,12 @@ import java.util.function.Supplier;
 import choreo.util.ChoreoAllianceFlipUtil;
 
 public class DriveCommands {
-    private static final double DEADBAND = 0.1;
+    public static final double DEADBAND = 0.1;
 
-    private static final double ANGLE_KP = 4.5;
-    private static final double ANGLE_KD = 0.2;
-    private static final double ANGLE_MAX_VELOCITY = 5.5;
-    private static final double ANGLE_MAX_ACCELERATION = 45.0;
+    public static final double ANGLE_KP = 4.5;
+    public static final double ANGLE_KD = 0.2;
+    public static final double ANGLE_MAX_VELOCITY = 5.5;
+    public static final double ANGLE_MAX_ACCELERATION = 45.0;
     public static final double ANGLE_DEADBAND = 0.0045;
 
     private static final double FF_START_DELAY = 2.0; // Secs

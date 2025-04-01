@@ -215,7 +215,9 @@ public class AutoAlign {
 
             // Create a velocity vector based on the drive state's velocity
             Translation2d normalized = new Translation2d(state.velocity, toTarget.getAngle());
-            if (targetType.allowYMovement()) normalized = new Translation2d(normalized.getX(), 0.0);
+            if (targetType.allowYMovement()) normalized = new Translation2d(normalized.getX(),
+                MathUtil.applyDeadband(RobotContainer.getInstance().joystickMotionSupplier().get().getY(), DriveCommands.DEADBAND) * DRIVE_MAX_VELOCITY
+                    * (ChoreoAllianceFlipUtil.shouldFlip() ? 1 : -1));
 
             // Debug info
             SmartDashboard.putNumber("AA-Position", state.position);

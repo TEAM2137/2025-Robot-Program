@@ -412,4 +412,10 @@ public class Drive extends SubsystemBase {
         // Apply the generated speeds
         runVelocity(ChassisSpeeds.fromFieldRelativeSpeeds(speeds, getRotation()));
     }
+
+    public Command setCoastMode(boolean coast) {
+        return runOnce(() -> {
+            for (Module module : modules) module.setCoastMode(coast);
+        });
+    }
 }

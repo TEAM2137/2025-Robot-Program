@@ -13,7 +13,7 @@ public class FieldPOIs {
     private static final double REEF_VERTICAL_OFFSET_METERS = 1.235;
     private static final double ALGAE_ALIGN_VERTICAL_OFFSET_METERS = 0.5;
     private static final double ALGAE_GRAB_VERTICAL_OFFSET_METERS = 0.1;
-    private static final double ALGAE_HORIZONTAL_OFFSET_METERS = 0.04;
+    private static final double ALGAE_HORIZONTAL_OFFSET_METERS = 0.0;//0.04;
     private static final double REEF_HORIZONTAL_OFFSET_METERS = 0.17;
     private static final double END_EFFECTOR_OFFSET = Units.inchesToMeters(-2.3);
 
@@ -28,7 +28,7 @@ public class FieldPOIs {
     public static final List<Pose2d> ALGAE_ALIGN_LOCATIONS = filterEach(4, 2, REEF_LOCATIONS);
     public static final List<Pose2d> ALGAE_GRAB_LOCATIONS = filterEach(4, 3, REEF_LOCATIONS);
 
-    public static final Pose2d NET = new Pose2d(new Translation2d(7.55, 0.0), new Rotation2d(0.0));
+    public static final Pose2d NET = new Pose2d(new Translation2d(7.28, 0.0), new Rotation2d(0.0));
 
     public static final Pose2d CORAL_STATION_TOP = new Pose2d(new Translation2d(1.0, 7.107), new Rotation2d(-0.939));
     public static final Pose2d CORAL_STATION_BOTTOM = new Pose2d(new Translation2d(1.0, 0.918), new Rotation2d(0.939));

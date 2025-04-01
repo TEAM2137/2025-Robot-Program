@@ -214,7 +214,7 @@ public class RobotContainer {
         Trigger shouldScoreNet = new Trigger(() -> AutoAlign.getTargetType().name().contains("NET"));
         Trigger shouldScoreL1 = new Trigger(() -> elevator.getScheduledPosition() == ElevatorConstants.L1);
         Trigger scoreNet = score.and(shouldScoreNet);
-        Trigger grabAlgae = score.and(shouldGrabAlgae).and(shouldScoreNet.negate());
+        Trigger grabAlgae = score.and(targetAlgae.negate()).and(shouldGrabAlgae).and(shouldScoreNet.negate());
         Trigger scoreL1 = score.and(shouldGrabAlgae.negate()).and(shouldScoreNet.negate()).and(shouldScoreL1);
         Trigger scoreCoral = score.and(shouldGrabAlgae.negate()).and(shouldScoreNet.negate()).and(shouldScoreL1.negate());
         Trigger didGrabAlgae = new Trigger(() -> AutoAlign.getTargetType() == Target.ALGAE_GRAB);
@@ -245,12 +245,13 @@ public class RobotContainer {
             elevator.getTargetPosition() < ElevatorConstants.L4
                 ? CoralConstants.scoreRadPerSec : CoralConstants.l4RadPerSec));
         scoreCoral.onFalse(coral.setVoltageCommand(0)
+            .andThen(algae.setPivotPosition(AlgaeConstants.stow))
             .andThen(elevator.setPositionCommand(ElevatorConstants.stow)));
 
         // Drive score sequence (L1)
         scoreL1.onTrue(coral.setVelocityCommand(CoralConstants.l1RadPerSec)
             .andThen(elevator.setPositionCommand(ElevatorConstants.L2)));
-            scoreL1.onFalse(coral.setVoltageCommand(0)
+        scoreL1.onFalse(coral.setVoltageCommand(0)
             .andThen(elevator.setPositionCommand(ElevatorConstants.stow)));
 
         scoreNet.onTrue(elevator.setPositionCommand(ElevatorConstants.net)
@@ -258,8 +259,9 @@ public class RobotContainer {
             .andThen(Commands.waitSeconds(0.25))
             .andThen(algae.setPivotPosition(AlgaeConstants.grab))
             .andThen(Commands.waitSeconds(0.1))
-            .andThen(coral.setVoltageCommand(9)));
-        scoreNet.onFalse(algae.setPivotPosition(AlgaeConstants.stow)
+            .andThen(coral.setVoltageCommand(4.5))
+            .andThen(Commands.waitSeconds(0.5))
+            .andThen(algae.setPivotPosition(AlgaeConstants.stow))
             .andThen(coral.setVoltageCommand(0))
             .andThen(Commands.waitSeconds(0.2))
             .andThen(elevator.setPositionCommand(ElevatorConstants.stow)));
@@ -269,7 +271,7 @@ public class RobotContainer {
         grabAlgae.onTrue(algae.setPivotPosition(AlgaeConstants.grab)
             .andThen(coral.setVelocityCommand(-100)));
         grabAlgae.onFalse(algae.setPivotPosition(AlgaeConstants.hold)
-            .andThen(coral.setVelocityCommand(-80)));
+            .andThen(coral.setVelocityCommand(-90)));
         leaveReefZone.and(didGrabAlgae).and(score.negate()).onTrue(AutoAlign.clearTargetType()
             .andThen(elevator.setPositionCommand(ElevatorConstants.stow))
             .andThen(Commands.waitSeconds(0.5))
@@ -285,7 +287,7 @@ public class RobotContainer {
             .beforeStarting(() -> AutoAlign.setScheduledElevatorHeight(elevator.getScheduledPosition())));
 
         // Driver algae auto align
-        targetAlgae.onTrue(algae.setPivotPosition(AlgaeConstants.grab));
+        targetAlgae.onTrue(Commands.waitSeconds(0.25).andThen(algae.setPivotPosition(AlgaeConstants.grab)));
         targetAlgae.whileTrue(AutoAlign.autoAlignTo(Target.ALGAE_ALIGN, this, joystickSupplier)
             .beforeStarting(() -> {
                 // Schedule the proper elevator height
@@ -306,7 +308,6 @@ public class RobotContainer {
                 .andThen(coral.completeIntaking())
                 .andThen(coral.setVoltageCommand(0))
         ));
-        // targetCoralStation.onFalse(Commands.runOnce(() -> drive.getCurrentCommand().cancel(), drive));
 
         // Hold left trigger to enable elevator manual controls using the right stick.
         elevatorManual.whileTrue(elevator.setVoltage(() ->
@@ -320,7 +321,7 @@ public class RobotContainer {
 
         // Hold right trigger to enable algae arm manual controls using the left stick.
         cageManual.whileTrue(algae.setPivotVoltage(() ->
-            MathUtil.applyDeadband(-operatorController.getLeftY(), 0.1) * -2.5));
+            MathUtil.applyDeadband(-operatorController.getLeftY(), 0.1) * 2));
         cageManual.onFalse(algae.targetCurrentPosition());
 
         // Schedule different reef heights. These commands cannot be run while targeting algae
