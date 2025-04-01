@@ -200,17 +200,29 @@ public class RobotContainer {
 
         visualizer = new RobotVisualizer(elevator::getExtensionMeters, () -> Rotation2d.fromDegrees(45));
 
-        // Setup autonomous features
-        autonomous = new Autonomous(this);
-
-        // Configure the button bindings
-        configureButtonBindings();
-
         // Setup webcam streaming
         CameraServer.startAutomaticCapture();
 
         /* Create global commands.
          * These are consumers that bind commands to an unknown trigger. */
+
+        algaeAlignConsumer = trigger -> {
+            trigger.onTrue(Commands.waitSeconds(0.25).andThen(algae.setPivotPosition(AlgaeConstants.grab)));
+            trigger.whileTrue(AutoAlign.autoAlignTo(Target.ALGAE_ALIGN, this, joystickSupplier)
+                .beforeStarting(() -> {
+                    // Schedule the proper elevator height
+                    int poseId = AutoAlign.getNewTargetPoseId(drive, Target.ALGAE_ALIGN, joystickSupplier);
+                    AutoAlign.setScheduledElevatorHeight(poseId % 2 == 0 ? ElevatorConstants.algaeHigh : ElevatorConstants.algaeLow);
+                }));
+        };
+
+        algaeGrabConsumer = trigger -> {
+            trigger.whileTrue(AutoAlign.autoAlignTo(Target.ALGAE_GRAB, this, joystickSupplier));
+            trigger.onTrue(algae.setPivotPosition(AlgaeConstants.grab)
+                .andThen(coral.setVelocityCommand(CoralConstants.algaeGrabRadPerSec)));
+            trigger.onFalse(algae.setPivotPosition(AlgaeConstants.hold)
+                .andThen(coral.setVelocityCommand(CoralConstants.algaeGrabRadPerSec * 0.9)));
+        };
 
         netScoreConsumer = trigger -> {
             trigger.onTrue(new SequentialCommandGroup(
@@ -228,23 +240,11 @@ public class RobotContainer {
             ));
         };
 
-        algaeAlignConsumer = trigger -> {
-            targetAlgae.onTrue(Commands.waitSeconds(0.25).andThen(algae.setPivotPosition(AlgaeConstants.grab)));
-            targetAlgae.whileTrue(AutoAlign.autoAlignTo(Target.ALGAE_ALIGN, this, joystickSupplier)
-                .beforeStarting(() -> {
-                    // Schedule the proper elevator height
-                    int poseId = AutoAlign.getNewTargetPoseId(drive, Target.ALGAE_ALIGN, joystickSupplier);
-                    AutoAlign.setScheduledElevatorHeight(poseId % 2 == 0 ? ElevatorConstants.algaeHigh : ElevatorConstants.algaeLow);
-                }));
-        };
+        // Setup autonomous features
+        autonomous = new Autonomous(this);
 
-        algaeGrabConsumer = trigger -> {
-            trigger.whileTrue(AutoAlign.autoAlignTo(Target.ALGAE_GRAB, this, joystickSupplier));
-            trigger.onTrue(algae.setPivotPosition(AlgaeConstants.grab)
-                .andThen(coral.setVelocityCommand(CoralConstants.algaeGrabRadPerSec)));
-            trigger.onFalse(algae.setPivotPosition(AlgaeConstants.hold)
-                .andThen(coral.setVelocityCommand(CoralConstants.algaeGrabRadPerSec * 0.9)));
-        };
+        // Configure the button bindings
+        configureButtonBindings();
     }
 
     /**
@@ -343,7 +343,7 @@ public class RobotContainer {
         scoreProcessor.onFalse(coral.setVoltageCommand(0)
             .andThen(Commands.waitSeconds(0.5))
             .andThen(algae.setPivotPosition(AlgaeConstants.stow)));
-        
+
         // Driver coral station auto align
         targetCoralStation.whileTrue(DriveCommands.alignToCoralStation(drive, joystickSupplier, slowMode));
         targetCoralStation.onTrue(new ScheduleCommand(

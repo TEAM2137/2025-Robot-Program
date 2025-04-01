@@ -16,7 +16,9 @@ import edu.wpi.first.networktables.NetworkTableInstance;
 import edu.wpi.first.networktables.StructArrayPublisher;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
+import edu.wpi.first.wpilibj2.command.SequentialCommandGroup;
 import edu.wpi.first.wpilibj2.command.button.RobotModeTriggers;
+import edu.wpi.first.wpilibj2.command.button.Trigger;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
 import frc.robot.autoalign.AutoAlign;
 import frc.robot.commands.AutoCommands;
@@ -97,7 +99,7 @@ public class Autonomous {
         autoChooser.addOption("4 Coral Right (Reversed)", fourCoral("Reverse Lower"));
         autoChooser.addOption("3 Coral Left", threeCoral("Upper"));
         autoChooser.addOption("3 Coral Right", threeCoral("Lower"));
-        autoChooser.addOption("1 Coral Center", oneCoralCenter());
+        autoChooser.addOption("Center Auto", centerAuto());
     }
 
     public AutoRoutine driveStraight() {
@@ -119,18 +121,47 @@ public class Autonomous {
     // Seconds that the coral rollers should run for when scoring
     private static final double scoreDuration = 0.4;
 
-    public AutoRoutine oneCoralCenter() {
-        String pathName = "1 Coral Center";
+    private boolean targetAlgae = false;
+    private boolean grabAlgae = false;
+    private boolean scoreNet = false;
+
+    private Trigger targetAlgaeTrigger = new Trigger(() -> targetAlgae).and(RobotModeTriggers.autonomous());
+    private Trigger grabAlgaeTrigger = new Trigger(() -> grabAlgae).and(RobotModeTriggers.autonomous());
+    private Trigger scoreNetTrigger = new Trigger(() -> scoreNet).and(RobotModeTriggers.autonomous());
+
+    public AutoRoutine centerAuto() {
+        String pathName = "Center Coral Algae";
         AutoRoutine routine = factory.newRoutine(pathName);
-        AutoTrajectory trajectory = routine.trajectory(pathName);
+
+        List<AutoTrajectory> splits = loadSplits(routine, pathName, 3);
+        AutoTrajectory toReef1 = splits.get(0);
+        AutoTrajectory toNet1 = splits.get(2);
+
+        robot.algaeAlignConsumer.accept(targetAlgaeTrigger);
+        robot.algaeGrabConsumer.accept(grabAlgaeTrigger);
+        robot.netScoreConsumer.accept(scoreNetTrigger);
 
         routine.active().onTrue(robot.elevator.resetPositionCommand());
-        routine.active().onTrue(trajectory.resetOdometry().andThen(trajectory.cmd()));
+        routine.active().onTrue(toReef1.resetOdometry().andThen(toReef1.cmd()));
 
-        trajectory.atTimeBeforeEnd(elevatorDelay).onTrue(
+        toReef1.atTimeBeforeEnd(elevatorDelay).onTrue(
             robot.elevator.setPositionCommand(ElevatorConstants.L4));
 
-        AutoCommands.createScoringSequence(scoreDuration, trajectory, robot);
+        AutoCommands.createPreAlgaeScoringSequence(scoreDuration, toReef1,
+            new SequentialCommandGroup(
+                Commands.runOnce(() -> targetAlgae = true),
+                Commands.waitSeconds(1.0),
+                Commands.runOnce(() -> targetAlgae = false),
+                Commands.runOnce(() -> grabAlgae = true),
+                Commands.waitSeconds(0.6),
+                Commands.runOnce(() -> grabAlgae = false),
+                toNet1.cmd().asProxy()
+            ), robot);
+
+        toNet1.done().onTrue(Commands.runOnce(() -> scoreNet = true)
+            .andThen(Commands.waitSeconds(2.0))
+            .andThen(Commands.runOnce(() -> scoreNet = false)));
+
         return routine;
     }
 

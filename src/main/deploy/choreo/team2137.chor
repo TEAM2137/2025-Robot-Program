@@ -3,7 +3,15 @@
  "version":1,
  "type":"Swerve",
  "variables":{
-  "expressions":{},
+  "expressions":{
+   "netX":{
+    "dimension":"Length",
+    "var":{
+     "exp":"7.3 m",
+     "val":7.3
+    }
+   }
+  },
   "poses":{
    "coralBottom":{
     "x":{

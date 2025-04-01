@@ -75,9 +75,17 @@ public class AutoCommands {
         base.doneDelayed(0.48).onTrue(Commands.sequence(
             robot.coral.setVelocityCommand(CoralConstants.l4RadPerSec).repeatedly().withTimeout(duration)
             .andThen(robot.coral.setVoltageCommand(0))
-            .andThen(robot.elevator.stowCommand()
+            .andThen(robot.elevator.stowCommand())
             .andThen(Commands.waitSeconds(0.5))
-            .andThen(robot.coral.intakeUntilFunnelEnter()))
+            .andThen(robot.coral.intakeUntilFunnelEnter())
+        ));
+        base.doneDelayed(0.52 + duration).onTrue(onComplete);
+    }
+
+    public static void createPreAlgaeScoringSequence(double duration, AutoTrajectory base, Command onComplete, RobotContainer robot) {
+        base.doneDelayed(0.48).onTrue(Commands.sequence(
+            robot.coral.setVelocityCommand(CoralConstants.l4RadPerSec).repeatedly().withTimeout(duration)
+            .andThen(robot.coral.setVoltageCommand(0))
         ));
         base.doneDelayed(0.52 + duration).onTrue(onComplete);
     }
