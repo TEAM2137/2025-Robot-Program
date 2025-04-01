@@ -73,7 +73,7 @@ public class AutoCommands {
      */
     public static void createScoringSequence(double duration, AutoTrajectory base, Command onComplete, RobotContainer robot) {
         base.doneDelayed(0.48).onTrue(Commands.sequence(
-            robot.coral.setVoltageCommand(CoralConstants.l4Speed).repeatedly().withTimeout(duration)
+            robot.coral.setVelocityCommand(CoralConstants.l4RadPerSec).repeatedly().withTimeout(duration)
             .andThen(robot.coral.setVoltageCommand(0))
             .andThen(robot.elevator.stowCommand()
             .andThen(Commands.waitSeconds(0.5))

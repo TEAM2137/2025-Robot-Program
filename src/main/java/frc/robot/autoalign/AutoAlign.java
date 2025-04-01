@@ -42,6 +42,7 @@ public class AutoAlign {
         RIGHT_BRANCH,
         ALGAE_ALIGN,
         ALGAE_GRAB,
+        PROCESSOR,
         NET(true);
 
         private boolean moveY = false;
@@ -68,7 +69,10 @@ public class AutoAlign {
         Target.ALGAE_GRAB, FieldPOIs.ALGAE_GRAB_LOCATIONS,
 
         // X alignment for net scoring
-        Target.NET, List.of(FieldPOIs.NET)
+        Target.NET, List.of(FieldPOIs.NET),
+
+        // Location for processor align (flipped by field half)
+        Target.PROCESSOR, List.of(FieldPOIs.PROCESSOR)
     );
 
     private static Pose2d targetPose; // The currently targeted position (can be null)

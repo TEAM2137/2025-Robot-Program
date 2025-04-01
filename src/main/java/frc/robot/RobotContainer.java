@@ -2,6 +2,7 @@ package frc.robot;
 
 
 import java.util.function.BooleanSupplier;
+import java.util.function.Consumer;
 import java.util.function.Supplier;
 
 import choreo.util.ChoreoAllianceFlipUtil;
@@ -15,6 +16,7 @@ import edu.wpi.first.wpilibj.XboxController;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.ScheduleCommand;
+import edu.wpi.first.wpilibj2.command.SequentialCommandGroup;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
 import frc.robot.commands.DriveCommands;
@@ -69,17 +71,21 @@ public class RobotContainer {
     // Visuals
     public final RobotVisualizer visualizer;
 
-    // Controller
+    // Controllers
     private final CommandXboxController driverController = new CommandXboxController(0);
     private final CommandXboxController operatorController = new CommandXboxController(1);
-    private final Supplier<Translation2d> joystickSupplier = () -> new Translation2d(
-        driverController.getLeftY(), driverController.getLeftX());
+    private final Supplier<Translation2d> joystickSupplier = () -> new Translation2d(driverController.getLeftY(), driverController.getLeftX());
+
+    /* Global Commands */
+    public final Consumer<Trigger> algaeAlignConsumer;
+    public final Consumer<Trigger> algaeGrabConsumer;
+    public final Consumer<Trigger> netScoreConsumer;
 
     /* Controller trigger bindings */
 
     // Utilities
     public final Trigger stopAll = driverController.y();
-    public final Trigger resetGyro = driverController.start();
+    public final Trigger resetGyro = driverController.back();
     public final Trigger resetElevator = operatorController.start();
     public final Trigger resetCage = operatorController.rightStick();
     public final Trigger resetAlgae = operatorController.leftStick();
@@ -89,9 +95,10 @@ public class RobotContainer {
     public final Trigger targetLeft = driverController.leftBumper();
     public final Trigger targetAlgae = driverController.b();
     public final Trigger targetNet = driverController.x();
+    public final Trigger targetProcessor = driverController.start();
     public final Trigger targetCoralStation = driverController.a();
 
-    // Run coral rollers to score and stow elevator
+    // Multi-purpose "score" button
     public final Trigger score = driverController.rightTrigger(0.25);
 
     // Elevator setpoints
@@ -104,10 +111,13 @@ public class RobotContainer {
     // Manual subsystem controls
     public final Trigger elevatorManual = operatorController.leftTrigger(0.35);
     public final Trigger cageManual = operatorController.rightTrigger(0.35);
+
+    // Operator utilities
     public final Trigger algaeRollers = operatorController.rightBumper();
     public final Trigger slowEject = operatorController.povRight();
     public final Trigger reverseRollers = operatorController.povLeft();
     public final Trigger climberDeploy = operatorController.povUp();
+    public final Trigger groundIntake = operatorController.povDown();
     public final Trigger elevatorApplyManual = operatorController.back();
 
     /** The container for the robot. Contains subsystems, IO devices, and commands. */
@@ -198,6 +208,43 @@ public class RobotContainer {
 
         // Setup webcam streaming
         CameraServer.startAutomaticCapture();
+
+        /* Create global commands.
+         * These are consumers that bind commands to an unknown trigger. */
+
+        netScoreConsumer = trigger -> {
+            trigger.onTrue(new SequentialCommandGroup(
+                elevator.setPositionCommand(ElevatorConstants.net),
+                coral.setVelocityCommand(-90),
+                Commands.waitSeconds(0.25),
+                algae.setPivotPosition(AlgaeConstants.grab),
+                Commands.waitSeconds(0.1),
+                coral.setVoltageCommand(4.5),
+                Commands.waitSeconds(0.5),
+                algae.setPivotPosition(AlgaeConstants.stow),
+                coral.setVoltageCommand(0),
+                Commands.waitSeconds(0.2),
+                elevator.setPositionCommand(ElevatorConstants.stow)
+            ));
+        };
+
+        algaeAlignConsumer = trigger -> {
+            targetAlgae.onTrue(Commands.waitSeconds(0.25).andThen(algae.setPivotPosition(AlgaeConstants.grab)));
+            targetAlgae.whileTrue(AutoAlign.autoAlignTo(Target.ALGAE_ALIGN, this, joystickSupplier)
+                .beforeStarting(() -> {
+                    // Schedule the proper elevator height
+                    int poseId = AutoAlign.getNewTargetPoseId(drive, Target.ALGAE_ALIGN, joystickSupplier);
+                    AutoAlign.setScheduledElevatorHeight(poseId % 2 == 0 ? ElevatorConstants.algaeHigh : ElevatorConstants.algaeLow);
+                }));
+        };
+
+        algaeGrabConsumer = trigger -> {
+            trigger.whileTrue(AutoAlign.autoAlignTo(Target.ALGAE_GRAB, this, joystickSupplier));
+            trigger.onTrue(algae.setPivotPosition(AlgaeConstants.grab)
+                .andThen(coral.setVelocityCommand(CoralConstants.algaeGrabRadPerSec)));
+            trigger.onFalse(algae.setPivotPosition(AlgaeConstants.hold)
+                .andThen(coral.setVelocityCommand(CoralConstants.algaeGrabRadPerSec * 0.9)));
+        };
     }
 
     /**
@@ -212,14 +259,18 @@ public class RobotContainer {
         // Scoring and utility triggers
         Trigger shouldGrabAlgae = new Trigger(() -> AutoAlign.getTargetType().name().contains("ALGAE"));
         Trigger shouldScoreNet = new Trigger(() -> AutoAlign.getTargetType().name().contains("NET"));
+        Trigger shouldScoreProcessor = new Trigger(() -> AutoAlign.getTargetType().name().contains("PROCESSOR"));
         Trigger shouldScoreL1 = new Trigger(() -> elevator.getScheduledPosition() == ElevatorConstants.L1);
         Trigger scoreNet = score.and(shouldScoreNet);
-        Trigger grabAlgae = score.and(targetAlgae.negate()).and(shouldGrabAlgae).and(shouldScoreNet.negate());
-        Trigger scoreL1 = score.and(shouldGrabAlgae.negate()).and(shouldScoreNet.negate()).and(shouldScoreL1);
-        Trigger scoreCoral = score.and(shouldGrabAlgae.negate()).and(shouldScoreNet.negate()).and(shouldScoreL1.negate());
+        Trigger scoreProcessor = score.and(shouldScoreProcessor).and(shouldScoreNet.negate());
+        Trigger grabAlgae = score.and(shouldGrabAlgae).and(shouldScoreProcessor.negate()).and(shouldScoreNet.negate()).and(targetAlgae.negate());
+        Trigger scoreL1 = score.and(shouldGrabAlgae.negate()).and(shouldScoreProcessor.negate()).and(shouldScoreNet.negate()).and(shouldScoreL1);
+        Trigger scoreCoral = score.and(shouldGrabAlgae.negate()).and(shouldScoreProcessor.negate()).and(shouldScoreNet.negate()).and(shouldScoreL1.negate());
         Trigger didGrabAlgae = new Trigger(() -> AutoAlign.getTargetType() == Target.ALGAE_GRAB);
         Trigger leaveReefZone = new Trigger(() -> drive.getPose().getTranslation().getDistance(
             AutoAlign.flipIfRed(FieldPOIs.REEF_CENTER).getTranslation()) > FieldPOIs.REEF_ZONE_DISTANCE);
+        Trigger approachProcessor = new Trigger(() -> drive.getPose().getTranslation().getDistance(
+            AutoAlign.flipIfRed(FieldPOIs.PROCESSOR).getTranslation()) < 1.0);
 
         // Default command, normal field-relative drive
         drive.setDefaultCommand(DriveCommands.joystickDrive(drive,
@@ -254,29 +305,6 @@ public class RobotContainer {
         scoreL1.onFalse(coral.setVoltageCommand(0)
             .andThen(elevator.setPositionCommand(ElevatorConstants.stow)));
 
-        scoreNet.onTrue(elevator.setPositionCommand(ElevatorConstants.net)
-            .andThen(coral.setVelocityCommand(-90))
-            .andThen(Commands.waitSeconds(0.25))
-            .andThen(algae.setPivotPosition(AlgaeConstants.grab))
-            .andThen(Commands.waitSeconds(0.1))
-            .andThen(coral.setVoltageCommand(4.5))
-            .andThen(Commands.waitSeconds(0.5))
-            .andThen(algae.setPivotPosition(AlgaeConstants.stow))
-            .andThen(coral.setVoltageCommand(0))
-            .andThen(Commands.waitSeconds(0.2))
-            .andThen(elevator.setPositionCommand(ElevatorConstants.stow)));
-
-        // Driver score sequence (grab algae)
-        grabAlgae.whileTrue(AutoAlign.autoAlignTo(Target.ALGAE_GRAB, this, joystickSupplier));
-        grabAlgae.onTrue(algae.setPivotPosition(AlgaeConstants.grab)
-            .andThen(coral.setVelocityCommand(-100)));
-        grabAlgae.onFalse(algae.setPivotPosition(AlgaeConstants.hold)
-            .andThen(coral.setVelocityCommand(-90)));
-        leaveReefZone.and(didGrabAlgae).and(score.negate()).onTrue(AutoAlign.clearTargetType()
-            .andThen(elevator.setPositionCommand(ElevatorConstants.stow))
-            .andThen(Commands.waitSeconds(0.5))
-            .andThen(coral.setVoltageCommand(-1.5)));
-
         driverController.povDown().onTrue(coral.setVoltageCommand(-12));
         driverController.povDown().onFalse(coral.setVoltageCommand(0));
 
@@ -287,18 +315,35 @@ public class RobotContainer {
             .beforeStarting(() -> AutoAlign.setScheduledElevatorHeight(elevator.getScheduledPosition())));
 
         // Driver algae auto align
-        targetAlgae.onTrue(Commands.waitSeconds(0.25).andThen(algae.setPivotPosition(AlgaeConstants.grab)));
-        targetAlgae.whileTrue(AutoAlign.autoAlignTo(Target.ALGAE_ALIGN, this, joystickSupplier)
-            .beforeStarting(() -> {
-                // Schedule the proper elevator height
-                int poseId = AutoAlign.getNewTargetPoseId(drive, Target.ALGAE_ALIGN, joystickSupplier);
-                AutoAlign.setScheduledElevatorHeight(poseId % 2 == 0 ? ElevatorConstants.algaeHigh : ElevatorConstants.algaeLow);
-            }));
+        algaeAlignConsumer.accept(targetAlgae);
+
+        // Driver score sequence (grab algae)
+        algaeGrabConsumer.accept(grabAlgae);
+
+        // Stow after grabbing algae and leaving reef zone
+        leaveReefZone.and(didGrabAlgae).and(score.negate()).onTrue(AutoAlign.clearTargetType()
+            .andThen(elevator.setPositionCommand(ElevatorConstants.stow))
+            .andThen(Commands.waitSeconds(0.5))
+            .andThen(coral.setVoltageCommand(-1.5)));
 
         // Driver net auto align
         targetNet.whileTrue(AutoAlign.autoAlignTo(Target.NET, this, joystickSupplier)
             .beforeStarting(() -> AutoAlign.setScheduledElevatorHeight(ElevatorConstants.stow)));
 
+        // Driver score sequence (net)
+        netScoreConsumer.accept(scoreNet);
+
+        // Driver processor auto align
+        targetProcessor.whileTrue(AutoAlign.autoAlignTo(Target.PROCESSOR, this, joystickSupplier)
+            .beforeStarting(() -> AutoAlign.setScheduledElevatorHeight(ElevatorConstants.stow)));
+        targetProcessor.and(approachProcessor).onTrue(algae.setPivotPosition(AlgaeConstants.processor));
+
+        // Driver score sequence (processor)
+        scoreProcessor.onTrue(coral.setVelocityCommand(100));
+        scoreProcessor.onFalse(coral.setVoltageCommand(0)
+            .andThen(Commands.waitSeconds(0.5))
+            .andThen(algae.setPivotPosition(AlgaeConstants.stow)));
+        
         // Driver coral station auto align
         targetCoralStation.whileTrue(DriveCommands.alignToCoralStation(drive, joystickSupplier, slowMode));
         targetCoralStation.onTrue(new ScheduleCommand(
@@ -308,6 +353,13 @@ public class RobotContainer {
                 .andThen(coral.completeIntaking())
                 .andThen(coral.setVoltageCommand(0))
         ));
+
+        // Ground intake
+        groundIntake.onTrue(algae.setPivotPosition(AlgaeConstants.groundIntake)
+            .andThen(coral.setVelocityCommand(CoralConstants.algaeGrabRadPerSec)));
+        groundIntake.onFalse(algae.setPivotPosition(AlgaeConstants.hold)
+            .andThen(Commands.waitSeconds(0.5))
+            .andThen(coral.setVoltageCommand(CoralConstants.algaeHoldVoltage)));
 
         // Hold left trigger to enable elevator manual controls using the right stick.
         elevatorManual.whileTrue(elevator.setVoltage(() ->
