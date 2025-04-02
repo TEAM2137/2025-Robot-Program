@@ -23,6 +23,7 @@ import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
 import frc.robot.autoalign.AutoAlign;
 import frc.robot.commands.AutoCommands;
 import frc.robot.commands.DriveCommands;
+import frc.robot.subsystems.coral.CoralConstants;
 import frc.robot.subsystems.drive.Drive;
 import frc.robot.subsystems.elevator.ElevatorConstants;
 
@@ -155,35 +156,39 @@ public class Autonomous {
 
         backUp.done().onTrue(new SequentialCommandGroup(
             Commands.runOnce(() -> targetAlgae = true),
-            Commands.waitSeconds(0.8),
+            Commands.waitSeconds(0.5),
             Commands.runOnce(() -> targetAlgae = false),
             Commands.runOnce(() -> grabAlgae = true),
-            Commands.waitSeconds(1.0),
+            Commands.waitSeconds(0.7),
             Commands.runOnce(() -> grabAlgae = false),
             toNet1.cmd().asProxy()
         ));
 
-        toNet1.atTime(0.4).onTrue(robot.elevator.setPositionCommand(ElevatorConstants.stow));
+        toNet1.atTime(0.7).onTrue(robot.elevator.setPositionCommand(ElevatorConstants.stow)
+            .andThen(Commands.waitSeconds(0.5))
+            .andThen(robot.coral.setVoltageCommand(CoralConstants.algaeHoldVoltage)));
 
         toNet1.done().onTrue(Commands.runOnce(() -> scoreNet = true)
-            .andThen(Commands.waitSeconds(2.0))
+            .andThen(Commands.waitSeconds(1.0))
             .andThen(Commands.runOnce(() -> scoreNet = false))
             .andThen(toReef2.cmd().asProxy()));
 
         toReef2.atTimeBeforeEnd(0.4).onTrue(new SequentialCommandGroup(
             Commands.runOnce(() -> targetAlgae = true),
-            Commands.waitSeconds(0.8),
+            Commands.waitSeconds(0.5),
             Commands.runOnce(() -> targetAlgae = false),
             Commands.runOnce(() -> grabAlgae = true),
-            Commands.waitSeconds(1.0),
+            Commands.waitSeconds(0.7),
             Commands.runOnce(() -> grabAlgae = false),
             toNet2.cmd().asProxy()
         ));
 
-        toNet2.atTime(0.4).onTrue(robot.elevator.setPositionCommand(ElevatorConstants.stow));
+        toNet2.atTime(0.7).onTrue(robot.elevator.setPositionCommand(ElevatorConstants.stow)
+            .andThen(Commands.waitSeconds(0.5))
+            .andThen(robot.coral.setVoltageCommand(CoralConstants.algaeHoldVoltage)));
 
         toNet2.done().onTrue(Commands.runOnce(() -> scoreNet = true)
-            .andThen(Commands.waitSeconds(2.0))
+            .andThen(Commands.waitSeconds(1.0))
             .andThen(Commands.runOnce(() -> scoreNet = false))
             .andThen(offLine.cmd().asProxy()));
 

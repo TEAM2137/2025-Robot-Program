@@ -26,7 +26,7 @@ public class AutoCommands {
      * @param robot - the robot container instance
      */
     public static void createIntakeSequence(AutoTrajectory base, Command onComplete, RobotContainer robot) {
-        base.done().onTrue(robot.algae.setPivotPosition(AlgaeConstants.intake)
+        base.atTimeBeforeEnd(0.4).onTrue(robot.algae.setPivotPosition(AlgaeConstants.intake)
             .andThen(robot.coral.intakeUntilFunnelEnter()));
         if (onComplete != null) {
             base.recentlyDone().and(robot.coral.funnelSensor).onTrue(

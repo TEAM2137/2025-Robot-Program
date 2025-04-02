@@ -232,7 +232,7 @@ public class RobotContainer {
                 algae.setPivotPosition(AlgaeConstants.grab),
                 Commands.waitSeconds(0.1),
                 coral.setVoltageCommand(5.5),
-                Commands.waitSeconds(0.5),
+                Commands.waitSeconds(0.4),
                 algae.setPivotPosition(AlgaeConstants.stow),
                 coral.setVoltageCommand(0),
                 Commands.waitSeconds(0.2),
@@ -403,6 +403,9 @@ public class RobotContainer {
 
         reverseRollers.onTrue(coral.setVoltageCommand(-4));
         reverseRollers.onFalse(coral.setVoltageCommand(0.0));
+
+        // Move algae arm for climb
+        operatorController.leftStick().onTrue(algae.setPivotPosition(0.3));
     }
 
     /**
