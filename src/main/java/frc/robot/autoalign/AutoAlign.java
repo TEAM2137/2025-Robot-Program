@@ -330,4 +330,8 @@ public class AutoAlign {
     public static Command clearTargetType() {
         return Commands.runOnce(() -> AutoAlign.targetType = Target.LEFT_BRANCH);
     }
+
+    public static Command setTargetType(Target target) {
+        return Commands.runOnce(() -> AutoAlign.targetType = target);
+    }
 }

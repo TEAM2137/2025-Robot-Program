@@ -133,9 +133,13 @@ public class Autonomous {
         String pathName = "Center Coral Algae";
         AutoRoutine routine = factory.newRoutine(pathName);
 
-        List<AutoTrajectory> splits = loadSplits(routine, pathName, 3);
+        List<AutoTrajectory> splits = loadSplits(routine, pathName, 8);
         AutoTrajectory toReef1 = splits.get(0);
-        AutoTrajectory toNet1 = splits.get(2);
+        AutoTrajectory backUp = splits.get(1);
+        AutoTrajectory toNet1 = splits.get(3);
+        AutoTrajectory toReef2 = splits.get(4);
+        AutoTrajectory toNet2 = splits.get(6);
+        AutoTrajectory offLine = splits.get(7);
 
         robot.algaeAlignConsumer.accept(targetAlgaeTrigger);
         robot.algaeGrabConsumer.accept(grabAlgaeTrigger);
@@ -147,20 +151,41 @@ public class Autonomous {
         toReef1.atTimeBeforeEnd(elevatorDelay).onTrue(
             robot.elevator.setPositionCommand(ElevatorConstants.L4));
 
-        AutoCommands.createPreAlgaeScoringSequence(scoreDuration, toReef1,
-            new SequentialCommandGroup(
-                Commands.runOnce(() -> targetAlgae = true),
-                Commands.waitSeconds(1.0),
-                Commands.runOnce(() -> targetAlgae = false),
-                Commands.runOnce(() -> grabAlgae = true),
-                Commands.waitSeconds(0.6),
-                Commands.runOnce(() -> grabAlgae = false),
-                toNet1.cmd().asProxy()
-            ), robot);
+        AutoCommands.createScoringSequence(scoreDuration, toReef1, backUp, robot);
+
+        backUp.done().onTrue(new SequentialCommandGroup(
+            Commands.runOnce(() -> targetAlgae = true),
+            Commands.waitSeconds(0.8),
+            Commands.runOnce(() -> targetAlgae = false),
+            Commands.runOnce(() -> grabAlgae = true),
+            Commands.waitSeconds(1.0),
+            Commands.runOnce(() -> grabAlgae = false),
+            toNet1.cmd().asProxy()
+        ));
+
+        toNet1.atTime(0.4).onTrue(robot.elevator.setPositionCommand(ElevatorConstants.stow));
 
         toNet1.done().onTrue(Commands.runOnce(() -> scoreNet = true)
             .andThen(Commands.waitSeconds(2.0))
-            .andThen(Commands.runOnce(() -> scoreNet = false)));
+            .andThen(Commands.runOnce(() -> scoreNet = false))
+            .andThen(toReef2.cmd().asProxy()));
+
+        toReef2.atTimeBeforeEnd(0.4).onTrue(new SequentialCommandGroup(
+            Commands.runOnce(() -> targetAlgae = true),
+            Commands.waitSeconds(0.8),
+            Commands.runOnce(() -> targetAlgae = false),
+            Commands.runOnce(() -> grabAlgae = true),
+            Commands.waitSeconds(1.0),
+            Commands.runOnce(() -> grabAlgae = false),
+            toNet2.cmd().asProxy()
+        ));
+
+        toNet2.atTime(0.4).onTrue(robot.elevator.setPositionCommand(ElevatorConstants.stow));
+
+        toNet2.done().onTrue(Commands.runOnce(() -> scoreNet = true)
+            .andThen(Commands.waitSeconds(2.0))
+            .andThen(Commands.runOnce(() -> scoreNet = false))
+            .andThen(offLine.cmd().asProxy()));
 
         return routine;
     }

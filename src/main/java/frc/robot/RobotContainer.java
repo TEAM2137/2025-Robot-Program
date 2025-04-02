@@ -231,7 +231,7 @@ public class RobotContainer {
                 Commands.waitSeconds(0.25),
                 algae.setPivotPosition(AlgaeConstants.grab),
                 Commands.waitSeconds(0.1),
-                coral.setVoltageCommand(4.5),
+                coral.setVoltageCommand(5.5),
                 Commands.waitSeconds(0.5),
                 algae.setPivotPosition(AlgaeConstants.stow),
                 coral.setVoltageCommand(0),
@@ -269,8 +269,6 @@ public class RobotContainer {
         Trigger didGrabAlgae = new Trigger(() -> AutoAlign.getTargetType() == Target.ALGAE_GRAB);
         Trigger leaveReefZone = new Trigger(() -> drive.getPose().getTranslation().getDistance(
             AutoAlign.flipIfRed(FieldPOIs.REEF_CENTER).getTranslation()) > FieldPOIs.REEF_ZONE_DISTANCE);
-        Trigger approachProcessor = new Trigger(() -> drive.getPose().getTranslation().getDistance(
-            AutoAlign.flipIfRed(FieldPOIs.PROCESSOR).getTranslation()) < 1.0);
 
         // Default command, normal field-relative drive
         drive.setDefaultCommand(DriveCommands.joystickDrive(drive,
@@ -334,15 +332,16 @@ public class RobotContainer {
         netScoreConsumer.accept(scoreNet);
 
         // Driver processor auto align
-        targetProcessor.whileTrue(AutoAlign.autoAlignTo(Target.PROCESSOR, this, joystickSupplier)
-            .beforeStarting(() -> AutoAlign.setScheduledElevatorHeight(ElevatorConstants.stow)));
-        targetProcessor.and(approachProcessor).onTrue(algae.setPivotPosition(AlgaeConstants.processor));
+        targetProcessor.onTrue(AutoAlign.setTargetType(AutoAlign.Target.PROCESSOR)
+            .andThen(coral.setVelocityCommand(CoralConstants.algaeGrabRadPerSec))
+            .andThen(algae.setPivotPosition(AlgaeConstants.processor))
+            .andThen(Commands.waitSeconds(0.5))
+            .andThen(coral.setVoltageCommand(CoralConstants.algaeHoldVoltage)));
 
         // Driver score sequence (processor)
-        scoreProcessor.onTrue(coral.setVelocityCommand(100));
-        scoreProcessor.onFalse(coral.setVoltageCommand(0)
+        scoreProcessor.onTrue(coral.setVelocityCommand(100)
             .andThen(Commands.waitSeconds(0.5))
-            .andThen(algae.setPivotPosition(AlgaeConstants.stow)));
+            .andThen(coral.setVoltageCommand(0)));
 
         // Driver coral station auto align
         targetCoralStation.whileTrue(DriveCommands.alignToCoralStation(drive, joystickSupplier, slowMode));
@@ -384,6 +383,7 @@ public class RobotContainer {
 
         // Stow the elevator manually
         stowManual.onTrue(elevator.setPositionCommand(ElevatorConstants.stow)
+            .andThen(coral.setVoltageCommand(0))
             .andThen(algae.setPivotPosition(AlgaeConstants.stow)));
 
         // Reset the elevator encoder position

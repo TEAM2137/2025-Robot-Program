@@ -2,6 +2,7 @@ package frc.robot.commands;
 
 import frc.robot.RobotContainer;
 import frc.robot.subsystems.coral.CoralConstants;
+import frc.robot.subsystems.elevator.ElevatorConstants;
 import frc.robot.subsystems.algae.AlgaeConstants;
 import choreo.auto.AutoTrajectory;
 import edu.wpi.first.wpilibj2.command.Command;
@@ -75,7 +76,7 @@ public class AutoCommands {
         base.doneDelayed(0.48).onTrue(Commands.sequence(
             robot.coral.setVelocityCommand(CoralConstants.l4RadPerSec).repeatedly().withTimeout(duration)
             .andThen(robot.coral.setVoltageCommand(0))
-            .andThen(robot.elevator.stowCommand())
+            .andThen(robot.elevator.setPositionCommand(ElevatorConstants.stow))
             .andThen(Commands.waitSeconds(0.5))
             .andThen(robot.coral.intakeUntilFunnelEnter())
         ));
