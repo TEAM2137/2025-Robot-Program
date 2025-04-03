@@ -231,7 +231,7 @@ public class RobotContainer {
                 Commands.waitSeconds(0.25),
                 algae.setPivotPosition(AlgaeConstants.grab),
                 Commands.waitSeconds(0.1),
-                coral.setVoltageCommand(5.5),
+                coral.setVoltageCommand(8),
                 Commands.waitSeconds(0.4),
                 algae.setPivotPosition(AlgaeConstants.stow),
                 coral.setVoltageCommand(0),
