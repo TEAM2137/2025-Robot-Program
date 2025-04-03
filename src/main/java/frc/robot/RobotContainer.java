@@ -221,7 +221,7 @@ public class RobotContainer {
             trigger.onTrue(algae.setPivotPosition(AlgaeConstants.grab)
                 .andThen(coral.setVelocityCommand(CoralConstants.algaeGrabRadPerSec)));
             trigger.onFalse(algae.setPivotPosition(AlgaeConstants.hold)
-                .andThen(coral.setVelocityCommand(CoralConstants.algaeGrabRadPerSec * 0.9)));
+                .andThen(coral.setVelocityCommand(CoralConstants.algaeGrabRadPerSec)));
         };
 
         netScoreConsumer = trigger -> {
