@@ -299,6 +299,7 @@ public class RobotContainer {
 
         // Drive score sequence (L1)
         scoreL1.onTrue(coral.setVelocityCommand(CoralConstants.l1RadPerSec)
+            .andThen(Commands.waitSeconds(0.1))
             .andThen(elevator.setPositionCommand(ElevatorConstants.L2)));
         scoreL1.onFalse(coral.setVoltageCommand(0)
             .andThen(elevator.setPositionCommand(ElevatorConstants.stow)));
