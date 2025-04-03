@@ -28,7 +28,7 @@ public class FieldPOIs {
     public static final List<Pose2d> ALGAE_ALIGN_LOCATIONS = filterEach(4, 2, REEF_LOCATIONS);
     public static final List<Pose2d> ALGAE_GRAB_LOCATIONS = filterEach(4, 3, REEF_LOCATIONS);
 
-    public static final Pose2d NET = new Pose2d(new Translation2d(7.23, 0.0), new Rotation2d());
+    public static final Pose2d NET = new Pose2d(new Translation2d(7.18, 0.0), new Rotation2d());
     public static final Pose2d PROCESSOR = new Pose2d(new Translation2d(6.34, 1.1), Rotation2d.fromDegrees(-90.0));
 
     public static final Pose2d CORAL_STATION_TOP = new Pose2d(new Translation2d(1.0, 7.107), new Rotation2d(-0.939));
