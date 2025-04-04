@@ -71,8 +71,8 @@ public class Autonomous {
 
         // Assign auto commands to autonomous trigger
         RobotModeTriggers.autonomous().whileTrue(getSelectedAuto());
-        RobotModeTriggers.autonomous().onFalse(drive.setCoastMode(true));
-        // RobotModeTriggers.disabled().onFalse(drive.setCoastMode(false)); // Not necessary because of CoastOut
+        RobotModeTriggers.autonomous().onFalse(drive.setCoastMode(true)
+            .andThen(robot.coral.setVoltageCommand(0)));
     }
 
     /** @return A command to schedule the auto selected on the chooser */
