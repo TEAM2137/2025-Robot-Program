@@ -55,8 +55,7 @@ public class Coral extends SubsystemBase{
     }
 
     public Command intakeUntilFunnelEnter() {
-        return setVoltageCommand(5).repeatedly().until(funnelSensor.or(endEffectorSensor))
-            .finallyDo(() -> io.setRollerVoltage(0));
+        return setVoltageCommand(5).repeatedly().until(funnelSensor.or(endEffectorSensor));
     }
 
     public Command completeIntaking() {
