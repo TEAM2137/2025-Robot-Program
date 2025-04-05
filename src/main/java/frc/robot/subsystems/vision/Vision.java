@@ -36,7 +36,7 @@ public class Vision extends SubsystemBase {
         // Initialize disconnected alerts
         this.disconnectedAlerts = new Alert[io.length];
         for (int i = 0; i < inputs.length; i++) {
-            String addition = i == 0 ? " (left, 0)" : (i == 1 ? " (right, 20)" : "");
+            String addition = i == 0 ? " (left, 0 deg)" : (i == 1 ? " (right, 20 deg)" : "");
             disconnectedAlerts[i] = new Alert("Vision camera " + Integer.toString(i) + addition + " is disconnected.", AlertType.kWarning);
         }
     }
