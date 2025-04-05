@@ -13,6 +13,9 @@ public interface CoralIO {
 
         public double endEffectorDistanceCm = 0.0;
         public double funnelDistanceCm = 0.0;
+
+        public boolean funnelConnected = false;
+        public boolean endEffectorConnected = false;
     }
 
     public default void updateInputs(CoralIOInputs inputs) {}
