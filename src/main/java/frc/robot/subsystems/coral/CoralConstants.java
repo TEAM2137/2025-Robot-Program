@@ -12,7 +12,7 @@ public class CoralConstants {
     // Roller Speeds
     public static final double l1RadPerSec = 171.5;
     public static final double scoreRadPerSec = 226.5;
-    public static final double l4RadPerSec = 248.0;
+    public static final double l4RadPerSec = 235.0;
 
     public static final double algaeGrabRadPerSec = -100;
     public static final double algaeHoldVoltage = -1.5;
