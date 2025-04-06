@@ -31,8 +31,8 @@ public class FieldPOIs {
     public static final Pose2d NET = new Pose2d(new Translation2d(7.16, 0.0), new Rotation2d());
     public static final Pose2d PROCESSOR = new Pose2d(new Translation2d(6.34, 1.1), Rotation2d.fromDegrees(-90.0));
 
-    public static final Pose2d CORAL_STATION_TOP = new Pose2d(new Translation2d(1.0, 7.107), new Rotation2d(-0.939));
-    public static final Pose2d CORAL_STATION_BOTTOM = new Pose2d(new Translation2d(1.0, 0.918), new Rotation2d(0.939));
+    public static final Pose2d CORAL_STATION_TOP = new Pose2d(new Translation2d(1.5, 7.25), new Rotation2d(-0.939));
+    public static final Pose2d CORAL_STATION_BOTTOM = new Pose2d(new Translation2d(1.5, 0.75), new Rotation2d(0.939));
 
     static {
         // Publish values to NT

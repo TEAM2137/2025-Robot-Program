@@ -58,12 +58,6 @@ public class Coral extends SubsystemBase{
         return runOnce(() -> io.setRollerVelocity(velocityRadPerSec.getAsDouble()));
     }
 
-    public Command intakeCommand() {
-        return intakeUntilFunnelEnter()
-            .andThen(completeIntaking())
-            .andThen(setVoltageCommand(0));
-    }
-
     public Command intakeUntilFunnelEnter() {
         return setVoltageCommand(5).repeatedly().until(funnelSensor.or(endEffectorSensor));
     }

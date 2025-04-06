@@ -133,17 +133,22 @@ public class AutoAlign {
                 targetPose = getFlippedPose(robot.drive, targetType, motionSupplier);
                 AutoAlign.targetType = targetType;
             }),
-            driveToTargetWithElevator(robot)
+            driveToTargetWithElevatorCommand(robot)
         );
     }
 
-    public static Command driveToTargetWithElevator(RobotContainer robot) {
+    public static Command driveToTargetCommand(RobotContainer robot) {
         // Create PID controller
         ProfiledPIDController angleController = DriveCommands.getAngleController();
         angleController.enableContinuousInput(-Math.PI, Math.PI);
 
         // Construct command
-        return driveToTargetCommand(targetType, robot.drive, angleController).alongWith(Commands.run(() -> {
+        return driveToTargetCommand(targetType, robot.drive, angleController);
+    }
+
+    public static Command driveToTargetWithElevatorCommand(RobotContainer robot) {
+        // Construct command
+        return driveToTargetCommand(robot).alongWith(Commands.run(() -> {
             Translation2d robotTranslation = robot.drive.getPose().getTranslation();
             Translation2d adjustedTranslation = new Translation2d(robotTranslation.getX(), targetType.allowYMovement() ? 0.0 : robotTranslation.getY());
             if (targetPose != null && targetPose.getTranslation().getDistance(adjustedTranslation) < ELEVATOR_RAISE_DISTANCE_METERS) {

@@ -272,21 +272,21 @@ public class Autonomous {
             scoreDuration, Target.LEFT_BRANCH, toReef1, toStation2.cmd(), robot));
 
         // Intake coral 2 from coral station, then drive to reef
-        AutoCommands.createIntakeSequence(toStation2, toReef2, robot);
+        AutoCommands.createIntakeSequenceAutoAlign(toStation2, toReef2.cmd(), robot);
 
         // Score coral 2 and drive to pickup coral
         toReef2.atTimeBeforeEnd(alignDelay).onTrue(AutoCommands.scoreWithAutoAlign(
             scoreDuration, Target.RIGHT_BRANCH, toReef2, toStation3.cmd(), robot));
 
         // Intake coral 3 from coral station, then drive to reef
-        AutoCommands.createIntakeSequence(toStation3, toReef3, robot);
+        AutoCommands.createIntakeSequenceAutoAlign(toStation3, toReef3.cmd(), robot);
 
         // Score coral 3 and drive to pickup coral
         toReef3.atTimeBeforeEnd(alignDelay).onTrue(AutoCommands.scoreWithAutoAlign(
             scoreDuration, Target.LEFT_BRANCH, toReef3, toStation4.cmd(), robot));
 
         // Intake coral 4 from coral station, then drive to reef
-        AutoCommands.createIntakeSequence(toStation4, toReef4, robot);
+        AutoCommands.createIntakeSequenceAutoAlign(toStation4, toReef4.cmd(), robot);
 
         // Score coral 4
         toReef4.atTimeBeforeEnd(alignDelay).onTrue(AutoCommands.scoreWithAutoAlign(

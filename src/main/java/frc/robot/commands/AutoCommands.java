@@ -5,8 +5,10 @@ import frc.robot.autoalign.AutoAlign;
 import frc.robot.autoalign.AutoAlign.Target;
 import frc.robot.subsystems.coral.CoralConstants;
 import frc.robot.subsystems.elevator.ElevatorConstants;
+import frc.robot.util.FieldPOIs;
 import frc.robot.subsystems.algae.AlgaeConstants;
 import choreo.auto.AutoTrajectory;
+import choreo.util.ChoreoAllianceFlipUtil;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
@@ -43,6 +45,22 @@ public class AutoCommands {
                     robot.algae.setPivotPosition(AlgaeConstants.stow)
                     .andThen(robot.coral.completeIntaking())));
         }
+    }
+
+    public static void createIntakeSequenceAutoAlign(AutoTrajectory base, Command onComplete, RobotContainer robot) {
+        base.atTimeBeforeEnd(0.6).onTrue(new SequentialCommandGroup(
+            robot.algae.setPivotPosition(AlgaeConstants.intake),
+            robot.coral.intakeUntilFunnelEnter().andThen(Commands.waitSeconds(0.25)).deadlineFor(
+                AutoAlign.driveToTargetCommand(robot).beforeStarting(() -> AutoAlign.setTargetPose(
+                    (robot.drive.getPose().getY() < 8.19912 / 2.0 == !ChoreoAllianceFlipUtil.shouldFlip())
+                        ? AutoAlign.flipIfRed(FieldPOIs.CORAL_STATION_BOTTOM)
+                        : AutoAlign.flipIfRed(FieldPOIs.CORAL_STATION_TOP)
+                ))
+            ),
+            (onComplete != null)
+                ? onComplete.asProxy().deadlineFor(robot.algae.setPivotPosition(AlgaeConstants.stow).andThen(robot.coral.completeIntaking()))
+                : robot.algae.setPivotPosition(AlgaeConstants.stow).andThen(robot.coral.completeIntaking())
+        ));
     }
 
     /**
@@ -101,7 +119,7 @@ public class AutoCommands {
                 Commands.waitSeconds(0.5),
                 robot.coral.setVelocityCommand(CoralConstants.l4RadPerSec).repeatedly().withTimeout(duration)
             ).deadlineFor(
-                AutoAlign.driveToTargetWithElevator(robot).beforeStarting(() -> {
+                AutoAlign.driveToTargetWithElevatorCommand(robot).beforeStarting(() -> {
                     AutoAlign.setTargetPose(AutoAlign.fromPoseId(
                         AutoAlign.getNearestPose(base.getFinalPose().orElseThrow(), new Translation2d(),
                             AutoAlign.getPosesFor(targetType), targetType), targetType
