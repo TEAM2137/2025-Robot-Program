@@ -92,7 +92,7 @@ public class AutoAlign {
      */
     public static int mapToPoseId(Target targetType, Drive drive, Translation2d motionVector) {
         List<Pose2d> poseData = targetToPoseData.get(targetType);
-        return getNearestPose(drive.getPose(), motionVector, poseData);
+        return getNearestPose(drive.getPose(), motionVector, poseData, targetType);
     }
 
     /**
@@ -100,7 +100,7 @@ public class AutoAlign {
      */
     public static Pose2d mapToPose(Target targetType, Drive drive, Translation2d motionVector) {
         List<Pose2d> poseData = targetToPoseData.get(targetType);
-        return poseData.get(getNearestPose(drive.getPose(), motionVector, poseData));
+        return poseData.get(getNearestPose(drive.getPose(), motionVector, poseData, targetType));
     }
 
     /**
@@ -271,17 +271,22 @@ public class AutoAlign {
     /**
      * Loops through the poses and weighs them all, returning the ID of the highest weighted pose
      */
-    public static int getNearestPose(Pose2d pose, Translation2d motionVector, List<Pose2d> locations) {
+    public static int getNearestPose(Pose2d pose, Translation2d motionVector, List<Pose2d> locations, Target targetType) {
         Pair<Integer, Double> bestResult = new Pair<>(0, 1000.0);
 
         for (int i = 0; i < locations.size(); i++) {
             // Calculate the distance from the robot to the current reef pole
-            Pose2d poleLocation = AutoAlign.flipIfRed(locations.get(i));
-            double dst = pose.getTranslation().getDistance(poleLocation.getTranslation());
+            Pose2d targetPose = AutoAlign.flipIfRed(locations.get(i));
+            double dst = pose.getTranslation().getDistance(targetPose.getTranslation());
+
+            if (targetType.name().contains("BRANCH")) {
+                int targetFace = getReefFace(targetPose);
+                if (targetFace != getReefFace(pose)) continue;
+            }
 
             // Calculate the additional weighting based on joystick angle
             double addition = AutoAlign.calculateBestPoseAddition(
-                poleLocation.minus(pose).getTranslation(), motionVector);
+                targetPose.minus(pose).getTranslation(), motionVector);
 
             // Apply addition and assign new best result if applicable
             double weight = dst + addition * JOYSTICK_ADDITION_SCALAR;
@@ -289,6 +294,20 @@ public class AutoAlign {
         }
 
         return bestResult.getFirst();
+    }
+
+    public static int getReefFace(Pose2d pose) {
+        Translation2d center = flipIfRed(FieldPOIs.REEF_CENTER).getTranslation();
+        Translation2d robot = pose.getTranslation();
+
+        // Calculate the angle between the reef and the robot
+        Rotation2d angle = Rotation2d.fromRadians(Math.atan2(center.getY() - robot.getY(), center.getX() - robot.getX()));
+        double rads = angle.getRadians() + Math.PI + (Math.PI / 6);
+
+        // Divide the angle by π/3 to find the reef face
+        int face = ((int) (rads / (Math.PI / 3))) % 6;
+        Logger.recordOutput("AutoAlign/ReefFace", face);
+        return face;
     }
 
     /**
