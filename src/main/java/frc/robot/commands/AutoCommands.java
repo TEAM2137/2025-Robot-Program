@@ -1,12 +1,16 @@
 package frc.robot.commands;
 
 import frc.robot.RobotContainer;
+import frc.robot.autoalign.AutoAlign;
+import frc.robot.autoalign.AutoAlign.Target;
 import frc.robot.subsystems.coral.CoralConstants;
 import frc.robot.subsystems.elevator.ElevatorConstants;
 import frc.robot.subsystems.algae.AlgaeConstants;
 import choreo.auto.AutoTrajectory;
+import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
+import edu.wpi.first.wpilibj2.command.SequentialCommandGroup;
 
 /** A class containing utility command sequences for autonomous */
 public class AutoCommands {
@@ -89,5 +93,26 @@ public class AutoCommands {
             .andThen(robot.coral.setVoltageCommand(0))
         ));
         base.doneDelayed(0.52 + duration).onTrue(onComplete);
+    }
+
+    public static Command scoreWithAutoAlign(double duration, Target targetType, AutoTrajectory base, Command onComplete, RobotContainer robot) {
+        return new SequentialCommandGroup(
+            new SequentialCommandGroup(
+                Commands.waitSeconds(0.5),
+                robot.coral.setVelocityCommand(CoralConstants.l4RadPerSec).repeatedly().withTimeout(duration)
+            ).deadlineFor(
+                AutoAlign.driveToTargetWithElevator(robot).beforeStarting(() -> {
+                    AutoAlign.setTargetPose(AutoAlign.fromPoseId(
+                        AutoAlign.getNearestPose(base.getFinalPose().orElseThrow(), new Translation2d(),
+                            AutoAlign.getPosesFor(targetType), targetType), targetType
+                    ));
+                })
+            ),
+            new SequentialCommandGroup(
+                robot.coral.setVoltageCommand(0),
+                robot.elevator.setPositionCommand(ElevatorConstants.stow),
+                onComplete.asProxy()
+            )
+        );
     }
 }

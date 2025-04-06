@@ -35,6 +35,7 @@ public class ElevatorIOSim implements ElevatorIO {
 
         inputs.scheduledTargetPosition = scheduledPosition;
         inputs.elevatorPositionMeters = sim.getPositionMeters();
+        inputs.targetPositionMeters = pid.getSetpoint();
         inputs.velocityMetersPerSecond = sim.getVelocityMetersPerSecond();
         inputs.leaderOutputVolts = appliedVolts;
         inputs.leaderCurrentAmps = sim.getCurrentDrawAmps();
@@ -58,6 +59,7 @@ public class ElevatorIOSim implements ElevatorIO {
     @Override
     public void resetPosition() {
         // sim.setState(0.26035, 0);
+        setTargetPosition(0.0);
         sim.setState(0, 0);
     }
 

@@ -23,8 +23,8 @@ public class CoralIOSim implements CoralIO {
 
         inputs.appliedVolts = sim.getInputVoltage();
         inputs.currentAmps = sim.getCurrentDrawAmps();
-        inputs.funnelDistanceCm = 20.0;
-        inputs.endEffectorDistanceCm = 0.0;
+        inputs.funnelDistanceCm = inputs.funnelDistanceCm == 50.0 ? 0.0 : 50.0;
+        inputs.endEffectorDistanceCm = inputs.funnelDistanceCm;
         inputs.velocityRadPerSec = sim.getAngularVelocity().in(RadiansPerSecond);
         inputs.velocityRadPerSec = sim.getAngularVelocity().in(RadiansPerSecond);
     }

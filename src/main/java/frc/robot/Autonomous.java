@@ -21,6 +21,7 @@ import edu.wpi.first.wpilibj2.command.button.RobotModeTriggers;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
 import frc.robot.autoalign.AutoAlign;
+import frc.robot.autoalign.AutoAlign.Target;
 import frc.robot.commands.AutoCommands;
 import frc.robot.commands.DriveCommands;
 import frc.robot.subsystems.coral.CoralConstants;
@@ -259,46 +260,37 @@ public class Autonomous {
         AutoTrajectory toStation4 = splits.get(5);
         AutoTrajectory toReef4 = splits.get(6);
 
+        double alignDelay = 0.6;
+
         // When the routine begins, reset odometry and start the first trajectory
-        routine.active().onTrue(robot.elevator.resetPositionCommand());
+        routine.active().onTrue(robot.elevator.resetPositionCommand()
+            .andThen(robot.elevator.schedulePositionCommand(ElevatorConstants.L4)));
         routine.active().onTrue(toReef1.resetOdometry().andThen(toReef1.cmd()));
 
-        // Raise elevator on approach
-        toReef1.atTimeBeforeEnd(elevatorDelay).onTrue(
-            robot.elevator.setPositionCommand(ElevatorConstants.L4));
-
-        // Score coral 1, stow elevator, and drive to pickup coral
-        AutoCommands.createScoringSequence(scoreDuration, toReef1, toStation2, robot);
+        // Score coral 1 and drive to pickup coral
+        toReef1.atTimeBeforeEnd(alignDelay).onTrue(AutoCommands.scoreWithAutoAlign(
+            scoreDuration, Target.LEFT_BRANCH, toReef1, toStation2.cmd(), robot));
 
         // Intake coral 2 from coral station, then drive to reef
         AutoCommands.createIntakeSequence(toStation2, toReef2, robot);
 
-        // Raise elevator on approach
-        toReef2.atTimeBeforeEnd(elevatorDelay).onTrue(
-            robot.elevator.setPositionCommand(ElevatorConstants.L4));
-
-        // Score coral 2, stow elevator, and drive to pickup coral
-        AutoCommands.createScoringSequence(scoreDuration, toReef2, toStation3, robot);
+        // Score coral 2 and drive to pickup coral
+        toReef2.atTimeBeforeEnd(alignDelay).onTrue(AutoCommands.scoreWithAutoAlign(
+            scoreDuration, Target.RIGHT_BRANCH, toReef2, toStation3.cmd(), robot));
 
         // Intake coral 3 from coral station, then drive to reef
         AutoCommands.createIntakeSequence(toStation3, toReef3, robot);
 
-        // Raise elevator on approach
-        toReef3.atTimeBeforeEnd(elevatorDelay).onTrue(
-            robot.elevator.setPositionCommand(ElevatorConstants.L4));
-
-        // Score coral 3, stow elevator, and drive to pickup coral
-        AutoCommands.createScoringSequence(scoreDuration, toReef3, toStation4, robot);
+        // Score coral 3 and drive to pickup coral
+        toReef3.atTimeBeforeEnd(alignDelay).onTrue(AutoCommands.scoreWithAutoAlign(
+            scoreDuration, Target.LEFT_BRANCH, toReef3, toStation4.cmd(), robot));
 
         // Intake coral 4 from coral station, then drive to reef
         AutoCommands.createIntakeSequence(toStation4, toReef4, robot);
 
-        // Raise elevator on approach
-        toReef4.atTimeBeforeEnd(elevatorDelay).onTrue(
-            robot.elevator.setPositionCommand(ElevatorConstants.L4));
-
-        // Score coral 4, stow elevator
-        AutoCommands.createScoringSequence(scoreDuration, toReef4, robot);
+        // Score coral 4
+        toReef4.atTimeBeforeEnd(alignDelay).onTrue(AutoCommands.scoreWithAutoAlign(
+            scoreDuration, Target.RIGHT_BRANCH, toReef4, Commands.none(), robot));
 
         return routine;
     }

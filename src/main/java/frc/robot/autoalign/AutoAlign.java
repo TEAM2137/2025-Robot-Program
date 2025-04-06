@@ -111,6 +111,14 @@ public class AutoAlign {
         return poseData.get(id);
     }
 
+    public static List<Pose2d> getPosesFor(Target targetType) {
+        return targetToPoseData.get(targetType);
+    }
+
+    public static Command autoAlignTo(Target targetType, RobotContainer robot) {
+        return autoAlignTo(targetType, robot, () -> new Translation2d());
+    }
+
     /**
      * Returns a command for auto aligning to the nearest avaliable pose
      * @param targetType The pose group to target
@@ -119,26 +127,30 @@ public class AutoAlign {
      * @return The command
      */
     public static Command autoAlignTo(Target targetType, RobotContainer robot, Supplier<Translation2d> motionSupplier) {
-        // Create PID controller
-        ProfiledPIDController angleController = DriveCommands.getAngleController();
-        angleController.enableContinuousInput(-Math.PI, Math.PI);
-
-        // Construct command
         return Commands.sequence(
             Commands.runOnce(() -> {
                 Logger.recordOutput("AutoAlign/TargetType", targetType);
                 targetPose = getFlippedPose(robot.drive, targetType, motionSupplier);
                 AutoAlign.targetType = targetType;
             }),
-            driveToTargetCommand(targetType, robot.drive, angleController).alongWith(Commands.run(() -> {
-                Translation2d robotTranslation = robot.drive.getPose().getTranslation();
-                Translation2d adjustedTranslation = new Translation2d(robotTranslation.getX(), targetType.allowYMovement() ? 0.0 : robotTranslation.getY());
-                if (targetPose.getTranslation().getDistance(adjustedTranslation) < ELEVATOR_RAISE_DISTANCE_METERS) {
-                    if (targetType.name().contains("BRANCH")) setScheduledElevatorHeight(robot.elevator.getScheduledPosition());
-                    robot.elevator.setPosition(AutoAlign.scheduledElevatorHeight);
-                }
-            }))
+            driveToTargetWithElevator(robot)
         );
+    }
+
+    public static Command driveToTargetWithElevator(RobotContainer robot) {
+        // Create PID controller
+        ProfiledPIDController angleController = DriveCommands.getAngleController();
+        angleController.enableContinuousInput(-Math.PI, Math.PI);
+
+        // Construct command
+        return driveToTargetCommand(targetType, robot.drive, angleController).alongWith(Commands.run(() -> {
+            Translation2d robotTranslation = robot.drive.getPose().getTranslation();
+            Translation2d adjustedTranslation = new Translation2d(robotTranslation.getX(), targetType.allowYMovement() ? 0.0 : robotTranslation.getY());
+            if (targetPose != null && targetPose.getTranslation().getDistance(adjustedTranslation) < ELEVATOR_RAISE_DISTANCE_METERS) {
+                if (targetType.name().contains("BRANCH")) setScheduledElevatorHeight(robot.elevator.getScheduledPosition());
+                robot.elevator.setPosition(AutoAlign.scheduledElevatorHeight);
+            }
+        }));
     }
 
     /**
@@ -352,5 +364,9 @@ public class AutoAlign {
 
     public static Command setTargetType(Target target) {
         return Commands.runOnce(() -> AutoAlign.targetType = target);
+    }
+
+    public static void setTargetPose(Pose2d pose) {
+        AutoAlign.targetPose = pose;
     }
 }
