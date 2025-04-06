@@ -7,12 +7,16 @@ import static edu.wpi.first.units.Units.RotationsPerSecond;
 import static edu.wpi.first.units.Units.Volts;
 
 import com.ctre.phoenix6.BaseStatusSignal;
+import com.ctre.phoenix6.StatusCode;
+import com.ctre.phoenix6.StatusSignal;
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
 import com.ctre.phoenix6.controls.VelocityVoltage;
 import com.ctre.phoenix6.controls.VoltageOut;
 import com.ctre.phoenix6.hardware.CANrange;
 import com.ctre.phoenix6.hardware.TalonFX;
 import com.ctre.phoenix6.signals.NeutralModeValue;
+
+import edu.wpi.first.units.measure.Distance;
 
 public class CoralIOTalonFX implements CoralIO {
     public TalonFX rollers = new TalonFX(CoralConstants.rollersID, "rio");
@@ -52,8 +56,13 @@ public class CoralIOTalonFX implements CoralIO {
         inputs.appliedVolts = rollers.getMotorVoltage().getValueAsDouble();
         inputs.currentAmps = rollers.getSupplyCurrent().getValueAsDouble();
 
+        StatusSignal<Distance> eeDistance = endEffectorSensor.getDistance();
+        inputs.endEffectorConnected = BaseStatusSignal.refreshAll(eeDistance).equals(StatusCode.OK);
         inputs.endEffectorDistanceCm = endEffectorSensor.getDistance().getValue().in(Centimeters);
-        inputs.funnelDistanceCm = funnelSensor.getDistance().getValue().in(Centimeters);
+
+        StatusSignal<Distance> fDistance = endEffectorSensor.getDistance();
+        inputs.funnelConnected = BaseStatusSignal.refreshAll(fDistance).equals(StatusCode.OK);
+        inputs.funnelDistanceCm = fDistance.getValue().in(Centimeters);
     }
 
     @Override

@@ -4,6 +4,8 @@ import java.util.function.DoubleSupplier;
 
 import org.littletonrobotics.junction.Logger;
 
+import edu.wpi.first.wpilibj.Alert;
+import edu.wpi.first.wpilibj.Alert.AlertType;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
@@ -17,6 +19,9 @@ public class Coral extends SubsystemBase{
     private boolean isEndEffectorSensorInRange;
     private boolean isFunnelSensorInRange;
 
+    private final Alert funnelSensorAlert = new Alert("Funnel distance sensor disconnected. Auto coral will not work.", AlertType.kError);
+    private final Alert endEffectorSensorAlert = new Alert("End effector distance sensor disconnected. Use operator d-pad right.", AlertType.kError);
+
     public Coral(CoralIO io){
         this.io = io;
         this.inputs = new CoralIOInputsAutoLogged();
@@ -27,8 +32,13 @@ public class Coral extends SubsystemBase{
     @Override
     public void periodic() {
         io.updateInputs(inputs);
+
+        funnelSensorAlert.set(!inputs.funnelConnected);
+        endEffectorSensorAlert.set(!inputs.endEffectorConnected);
+
         isEndEffectorSensorInRange = inputs.endEffectorDistanceCm < CoralConstants.sensorRange;
         isFunnelSensorInRange = inputs.funnelDistanceCm < CoralConstants.funnelSensorRange;
+
         Logger.processInputs("Coral", inputs);
     }
 
@@ -55,8 +65,7 @@ public class Coral extends SubsystemBase{
     }
 
     public Command intakeUntilFunnelEnter() {
-        return setVoltageCommand(5).repeatedly().until(funnelSensor)
-            .finallyDo(() -> io.setRollerVoltage(0));
+        return setVoltageCommand(5).repeatedly().until(funnelSensor.or(endEffectorSensor));
     }
 
     public Command completeIntaking() {

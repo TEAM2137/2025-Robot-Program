@@ -230,9 +230,9 @@ public class RobotContainer {
                 coral.setVelocityCommand(-90),
                 Commands.waitSeconds(0.25),
                 algae.setPivotPosition(AlgaeConstants.grab),
-                Commands.waitSeconds(0.1),
-                coral.setVoltageCommand(5.5),
-                Commands.waitSeconds(0.4),
+                Commands.waitSeconds(0.13),
+                coral.setVoltageCommand(7),
+                Commands.waitSeconds(0.37),
                 algae.setPivotPosition(AlgaeConstants.stow),
                 coral.setVoltageCommand(0),
                 Commands.waitSeconds(0.2),
@@ -299,6 +299,7 @@ public class RobotContainer {
 
         // Drive score sequence (L1)
         scoreL1.onTrue(coral.setVelocityCommand(CoralConstants.l1RadPerSec)
+            .andThen(Commands.waitSeconds(0.1))
             .andThen(elevator.setPositionCommand(ElevatorConstants.L2)));
         scoreL1.onFalse(coral.setVoltageCommand(0)
             .andThen(elevator.setPositionCommand(ElevatorConstants.stow)));
@@ -322,7 +323,7 @@ public class RobotContainer {
         leaveReefZone.and(didGrabAlgae).and(score.negate()).onTrue(AutoAlign.clearTargetType()
             .andThen(elevator.setPositionCommand(ElevatorConstants.stow))
             .andThen(Commands.waitSeconds(0.5))
-            .andThen(coral.setVoltageCommand(-1.5)));
+            .andThen(coral.setVoltageCommand(CoralConstants.algaeHoldVoltage)));
 
         // Driver net auto align
         targetNet.whileTrue(AutoAlign.autoAlignTo(Target.NET, this, joystickSupplier)
@@ -339,7 +340,7 @@ public class RobotContainer {
             .andThen(coral.setVoltageCommand(CoralConstants.algaeHoldVoltage)));
 
         // Driver score sequence (processor)
-        scoreProcessor.onTrue(coral.setVelocityCommand(100)
+        scoreProcessor.onTrue(coral.setVelocityCommand(140)
             .andThen(Commands.waitSeconds(0.5))
             .andThen(coral.setVoltageCommand(0)));
 
@@ -357,7 +358,7 @@ public class RobotContainer {
         groundIntake.onTrue(algae.setPivotPosition(AlgaeConstants.groundIntake)
             .andThen(coral.setVelocityCommand(CoralConstants.algaeGrabRadPerSec)));
         groundIntake.onFalse(algae.setPivotPosition(AlgaeConstants.hold)
-            .andThen(Commands.waitSeconds(0.5))
+            .andThen(Commands.waitSeconds(1.0))
             .andThen(coral.setVoltageCommand(CoralConstants.algaeHoldVoltage)));
 
         // Hold left trigger to enable elevator manual controls using the right stick.
