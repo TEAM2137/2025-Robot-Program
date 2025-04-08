@@ -117,7 +117,7 @@ public class AutoCommands {
     public static Command scoreWithAutoAlign(double duration, Target targetType, AutoTrajectory base, Command onComplete, RobotContainer robot) {
         return new SequentialCommandGroup(
             new SequentialCommandGroup(
-                Commands.waitSeconds(0.5),
+                Commands.waitSeconds(0.7),
                 robot.coral.setVelocityCommand(CoralConstants.l4RadPerSec).repeatedly().withTimeout(duration)
             ).deadlineFor(
                 AutoAlign.driveToTargetWithElevatorCommand(robot).beforeStarting(() -> {
