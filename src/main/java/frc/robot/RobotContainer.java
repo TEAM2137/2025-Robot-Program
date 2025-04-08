@@ -88,7 +88,6 @@ public class RobotContainer {
     public final Trigger resetGyro = driverController.back();
     public final Trigger resetElevator = operatorController.start();
     public final Trigger resetCage = operatorController.rightStick();
-    public final Trigger resetAlgae = operatorController.leftStick();
 
     // Drive/point to different field POIs
     public final Trigger targetRight = driverController.rightBumper();
@@ -96,7 +95,7 @@ public class RobotContainer {
     public final Trigger targetAlgae = driverController.b();
     public final Trigger targetNet = driverController.x();
     public final Trigger targetProcessor = driverController.start();
-    public final Trigger targetCoralStation = driverController.a();
+    public final Trigger targetCoralStation = driverController.a().or(operatorController.rightBumper());
 
     // Multi-purpose "score" button
     public final Trigger score = driverController.rightTrigger(0.25);
@@ -113,7 +112,6 @@ public class RobotContainer {
     public final Trigger cageManual = operatorController.rightTrigger(0.35);
 
     // Operator utilities
-    public final Trigger algaeRollers = operatorController.rightBumper();
     public final Trigger slowEject = operatorController.povRight();
     public final Trigger reverseRollers = operatorController.povLeft();
     public final Trigger climberDeploy = operatorController.povUp();
@@ -389,12 +387,7 @@ public class RobotContainer {
 
         // Reset the elevator encoder position
         resetElevator.onTrue(elevator.resetPositionCommand().ignoringDisable(true));
-        resetAlgae.onTrue(algae.resetPositionCommand().ignoringDisable(true));
         resetCage.onTrue(cage.resetPositionCommand().ignoringDisable(true));
-
-        // Manually run the algae arm rollers
-        algaeRollers.onTrue(coral.setVoltageCommand(-6));
-        algaeRollers.onFalse(coral.setVoltageCommand(0));
 
         // Manually apply the elevator's scheduled position
         elevatorApplyManual.onTrue(elevator.applyScheduledPositionCommand());
