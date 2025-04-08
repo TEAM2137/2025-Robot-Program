@@ -60,7 +60,7 @@ public class CoralIOTalonFX implements CoralIO {
         inputs.endEffectorConnected = BaseStatusSignal.refreshAll(eeDistance).equals(StatusCode.OK);
         inputs.endEffectorDistanceCm = endEffectorSensor.getDistance().getValue().in(Centimeters);
 
-        StatusSignal<Distance> fDistance = endEffectorSensor.getDistance();
+        StatusSignal<Distance> fDistance = funnelSensor.getDistance();
         inputs.funnelConnected = BaseStatusSignal.refreshAll(fDistance).equals(StatusCode.OK);
         inputs.funnelDistanceCm = fDistance.getValue().in(Centimeters);
     }
