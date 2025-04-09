@@ -66,7 +66,7 @@ public class RobotContainer {
     public final Cage cage;
 
     // Auto
-    private final Autonomous autonomous;
+    public final Autonomous autonomous;
 
     // Visuals
     public final RobotVisualizer visualizer;

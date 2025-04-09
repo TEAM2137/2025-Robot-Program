@@ -209,6 +209,7 @@ public class Drive extends SubsystemBase {
 
         // Post dashboard data through SmartDashboard
         field.setRobotPose(getPose());
+        RobotContainer.getInstance().autonomous.getStartPose().ifPresent(pose -> fieldStartPose.setPose(pose));
         SmartDashboard.putData("Field", field);
         SmartDashboard.putData("Swerve Drive", swerveDriveSendable);
     }

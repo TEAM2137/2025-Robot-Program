@@ -115,7 +115,9 @@ public class AutoCommands {
         base.doneDelayed(0.52 + duration).onTrue(onComplete);
     }
 
-    public static Command scoreWithAutoAlign(double alignDelay, double duration, Target targetType, AutoTrajectory base, Command onComplete, RobotContainer robot) {
+    public static Command scoreWithAutoAlign(double alignDelay, boolean flipAligns, double duration, Target targetType, AutoTrajectory base, Command onComplete, RobotContainer robot) {
+        Target flippedTarget = targetType == Target.LEFT_BRANCH && flipAligns ? Target.RIGHT_BRANCH
+            : (targetType == Target.RIGHT_BRANCH && flipAligns ? Target.LEFT_BRANCH : targetType);
         return new SequentialCommandGroup(
             new SequentialCommandGroup(
                 Commands.waitSeconds(alignDelay + 0.4),
@@ -124,7 +126,7 @@ public class AutoCommands {
                 AutoAlign.driveToTargetWithElevatorCommand(robot).beforeStarting(() -> {
                     AutoAlign.setTargetPose(AutoAlign.flipIfRed(AutoAlign.fromPoseId(
                         AutoAlign.getNearestPose(base.getFinalPose().orElse(new Pose2d()),
-                            new Translation2d(), AutoAlign.getPosesFor(targetType), targetType), targetType)
+                            new Translation2d(), AutoAlign.getPosesFor(flippedTarget), flippedTarget), flippedTarget)
                     ));
                 })
             ),

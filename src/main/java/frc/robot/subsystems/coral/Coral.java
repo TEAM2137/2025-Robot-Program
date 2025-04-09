@@ -4,6 +4,7 @@ import java.util.function.DoubleSupplier;
 
 import org.littletonrobotics.junction.Logger;
 
+import edu.wpi.first.math.filter.Debouncer.DebounceType;
 import edu.wpi.first.wpilibj.Alert;
 import edu.wpi.first.wpilibj.Alert.AlertType;
 import edu.wpi.first.wpilibj2.command.Command;
@@ -25,7 +26,8 @@ public class Coral extends SubsystemBase{
     public Coral(CoralIO io){
         this.io = io;
         this.inputs = new CoralIOInputsAutoLogged();
-        this.endEffectorSensor = new Trigger(() -> isEndEffectorSensorInRange);
+        this.endEffectorSensor = new Trigger(() -> isEndEffectorSensorInRange)
+            .debounce(0.1, DebounceType.kFalling); // TODO: test this
         this.funnelSensor = new Trigger(() -> isFunnelSensorInRange);
     }
 

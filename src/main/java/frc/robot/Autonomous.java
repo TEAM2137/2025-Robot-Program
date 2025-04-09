@@ -2,8 +2,13 @@ package frc.robot;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
+import java.util.function.Function;
+import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 import org.littletonrobotics.junction.networktables.LoggedDashboardChooser;
@@ -11,10 +16,12 @@ import org.littletonrobotics.junction.networktables.LoggedDashboardChooser;
 import choreo.auto.AutoFactory;
 import choreo.auto.AutoRoutine;
 import choreo.auto.AutoTrajectory;
+import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.trajectory.Trajectory;
 import edu.wpi.first.networktables.NetworkTableInstance;
 import edu.wpi.first.networktables.StructArrayPublisher;
+import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.SequentialCommandGroup;
@@ -31,6 +38,9 @@ import frc.robot.subsystems.elevator.ElevatorConstants;
 
 public class Autonomous {
     public final AutoFactory factory;
+
+    private final Map<String, Pose2d> startPoses = new HashMap<>();
+    private final Trigger dsAttached = new Trigger(DriverStation::isDSAttached);
 
     private final LoggedDashboardChooser<Command> sysIdCommandChooser;
     private final LoggedDashboardChooser<AutoRoutine> autoChooser;
@@ -83,7 +93,6 @@ public class Autonomous {
         // Assign auto commands to autonomous trigger
         RobotModeTriggers.autonomous().whileTrue(getSelectedAuto());
         RobotModeTriggers.autonomous().onFalse(robot.coral.setVoltageCommand(0).ignoringDisable(true));
-        // RobotModeTriggers.disabled().whileTrue(this.drive.fieldStartPose.setPose());
     }
 
     /** @return A command to schedule the auto selected on the chooser */
@@ -93,6 +102,11 @@ public class Autonomous {
             else if (sysIdCommandChooser.get() != null) return sysIdCommandChooser.get().asProxy();
             else return Commands.none();
         }, Set.of());
+    }
+
+    public Optional<Pose2d> getStartPose() {
+        String selectedAuto = autoChooser.getSendableChooser().getSelected();
+        return Optional.ofNullable(startPoses.get(selectedAuto));
     }
 
     /** Adds autos to the chooser */
@@ -106,12 +120,19 @@ public class Autonomous {
         sysIdCommandChooser.addOption("Drive SysId (Dynamic Reverse)", drive.sysIdDynamic(SysIdRoutine.Direction.kReverse));
 
         // Testing Autos
-        // autoChooser.addOption("4 Coral Left", fourCoral("Upper"));
-        autoChooser.addOption("4 Coral Right", fourCoral("Lower"));
-        autoChooser.addOption("4 Coral Right (Reversed)", fourCoral("Reverse Lower"));
-        autoChooser.addOption("3 Coral Left", threeCoral("Upper"));
-        autoChooser.addOption("3 Coral Right", threeCoral("Lower"));
-        autoChooser.addOption("Center Auto", centerAuto());
+        registerAuto("4 Coral Right", this::fourCoral);
+        registerAuto("4 Coral Right (Reversed)", this::fourCoral);
+        registerAuto("3 Coral Left", this::threeCoral);
+        registerAuto("3 Coral Right", this::threeCoral);
+        registerAuto("Center Auto", this::centerAuto);
+    }
+
+    public void registerAuto(String name, Function<String, AutoRoutine> auto) {
+        autoChooser.addOption(name, auto.apply(name));
+    }
+
+    public void registerAuto(String name, Supplier<AutoRoutine> auto) {
+        autoChooser.addOption(name, auto.get());
     }
 
     public AutoRoutine driveStraight() {
@@ -140,7 +161,7 @@ public class Autonomous {
     private Trigger grabAlgaeTrigger = new Trigger(() -> grabAlgae).and(RobotModeTriggers.autonomous());
     private Trigger scoreNetTrigger = new Trigger(() -> scoreNet).and(RobotModeTriggers.autonomous());
 
-    public AutoRoutine centerAuto() {
+    public AutoRoutine centerAuto(String dashboardName) {
         String pathName = "Center Coral Algae";
         AutoRoutine routine = factory.newRoutine(pathName);
 
@@ -151,6 +172,10 @@ public class Autonomous {
         AutoTrajectory toReef2 = splits.get(4);
         AutoTrajectory toNet2 = splits.get(6);
         AutoTrajectory offLine = splits.get(7);
+
+        // Add start pose to map
+        dsAttached.onTrue(Commands.runOnce(() -> toReef1.getInitialPose()
+            .ifPresent(pose -> startPoses.put(dashboardName, pose))).ignoringDisable(true));
 
         robot.algaeAlignConsumer.accept(targetAlgaeTrigger);
         robot.algaeGrabConsumer.accept(grabAlgaeTrigger);
@@ -205,8 +230,9 @@ public class Autonomous {
         return routine;
     }
 
-    public AutoRoutine threeCoral(String half) {
-        String pathName = "3 Coral " + half;
+    public AutoRoutine threeCoral(String dashboardName) {
+        boolean flipAligns = dashboardName.contains("Left");
+        String pathName = "3 Coral " + (flipAligns ? "Upper" : "Lower");
         AutoRoutine routine = factory.newRoutine(pathName);
 
         // Load the routine's trajectories
@@ -218,6 +244,10 @@ public class Autonomous {
         AutoTrajectory toReef3 = splits.get(4);
         AutoTrajectory toStation4 = splits.get(5);
 
+        // Add start pose to map
+        dsAttached.onTrue(Commands.runOnce(() -> toReef1.getInitialPose()
+            .ifPresent(pose -> startPoses.put(dashboardName, pose))).ignoringDisable(true));
+
         double alignDelay = 0.7;
         double intakeDelay = 0.5;
 
@@ -228,21 +258,21 @@ public class Autonomous {
 
         // Score coral 1 and drive to pickup coral
         toReef1.atTimeBeforeEnd(alignDelay).onTrue(AutoCommands.scoreWithAutoAlign(alignDelay,
-            scoreDuration, Target.LEFT_BRANCH, toReef1, toStation2.cmd(), robot));
+            flipAligns, scoreDuration, Target.LEFT_BRANCH, toReef1, toStation2.cmd(), robot));
 
         // Intake coral 2 from coral station, then drive to reef
         AutoCommands.createIntakeSequenceAutoAlign(intakeDelay, toStation2, toReef2, robot);
 
         // Score coral 2 and drive to pickup coral
         toReef2.atTimeBeforeEnd(alignDelay).onTrue(AutoCommands.scoreWithAutoAlign(alignDelay,
-            scoreDuration, Target.RIGHT_BRANCH, toReef2, toStation3.cmd(), robot));
+            flipAligns, scoreDuration, Target.RIGHT_BRANCH, toReef2, toStation3.cmd(), robot));
 
         // Intake coral 3 from coral station, then drive to reef
         AutoCommands.createIntakeSequenceAutoAlign(intakeDelay, toStation3, toReef3, robot);
 
         // Score coral 3 and drive to pickup coral
         toReef3.atTimeBeforeEnd(alignDelay).onTrue(AutoCommands.scoreWithAutoAlign(alignDelay,
-            scoreDuration, Target.LEFT_BRANCH, toReef3, toStation4.cmd(), robot));
+            flipAligns, scoreDuration, Target.LEFT_BRANCH, toReef3, toStation4.cmd(), robot));
 
         // Intake coral 4 from coral station
         AutoCommands.createIntakeSequenceAutoAlign(intakeDelay, toStation4, null, robot);
@@ -250,8 +280,9 @@ public class Autonomous {
         return routine;
     }
 
-    public AutoRoutine fourCoral(String half) {
-        String pathName = "4 Coral " + half;
+    public AutoRoutine fourCoral(String dashboardName) {
+        boolean flipAligns = dashboardName.contains("Left");
+        String pathName = "4 Coral " + (flipAligns ? "Upper" : "Lower");
         AutoRoutine routine = factory.newRoutine(pathName);
 
         // Load the routine's trajectories
@@ -264,6 +295,10 @@ public class Autonomous {
         AutoTrajectory toStation4 = splits.get(5);
         AutoTrajectory toReef4 = splits.get(6);
 
+        // Add start pose to map
+        dsAttached.onTrue(Commands.runOnce(() -> toReef1.getInitialPose()
+            .ifPresent(pose -> startPoses.put(dashboardName, pose))).ignoringDisable(true));
+
         double alignDelay = 0.9;
         double intakeDelay = 0.7;
 
@@ -274,28 +309,28 @@ public class Autonomous {
 
         // Score coral 1 and drive to pickup coral
         toReef1.atTimeBeforeEnd(alignDelay).onTrue(AutoCommands.scoreWithAutoAlign(alignDelay,
-            scoreDuration, Target.LEFT_BRANCH, toReef1, toStation2.cmd(), robot));
+            flipAligns, scoreDuration, Target.LEFT_BRANCH, toReef1, toStation2.cmd(), robot));
 
         // Intake coral 2 from coral station, then drive to reef
         AutoCommands.createIntakeSequenceAutoAlign(intakeDelay, toStation2, toReef2, robot);
 
         // Score coral 2 and drive to pickup coral
         toReef2.atTimeBeforeEnd(alignDelay).onTrue(AutoCommands.scoreWithAutoAlign(alignDelay,
-            scoreDuration, Target.RIGHT_BRANCH, toReef2, toStation3.cmd(), robot));
+            flipAligns, scoreDuration, Target.RIGHT_BRANCH, toReef2, toStation3.cmd(), robot));
 
         // Intake coral 3 from coral station, then drive to reef
         AutoCommands.createIntakeSequenceAutoAlign(intakeDelay, toStation3, toReef3, robot);
 
         // Score coral 3 and drive to pickup coral
         toReef3.atTimeBeforeEnd(alignDelay).onTrue(AutoCommands.scoreWithAutoAlign(alignDelay,
-            scoreDuration, Target.LEFT_BRANCH, toReef3, toStation4.cmd(), robot));
+            flipAligns, scoreDuration, Target.LEFT_BRANCH, toReef3, toStation4.cmd(), robot));
 
         // Intake coral 4 from coral station, then drive to reef
         AutoCommands.createIntakeSequenceAutoAlign(intakeDelay, toStation4, toReef4, robot);
 
         // Score coral 4
         toReef4.atTimeBeforeEnd(alignDelay).onTrue(AutoCommands.scoreWithAutoAlign(alignDelay,
-            scoreDuration, Target.RIGHT_BRANCH, toReef4, Commands.none(), robot));
+            flipAligns, scoreDuration, Target.RIGHT_BRANCH, toReef4, Commands.none(), robot));
 
         return routine;
     }
