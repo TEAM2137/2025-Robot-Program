@@ -12,6 +12,7 @@ import choreo.auto.AutoFactory;
 import choreo.auto.AutoRoutine;
 import choreo.auto.AutoTrajectory;
 import edu.wpi.first.math.geometry.Translation2d;
+import edu.wpi.first.math.trajectory.Trajectory;
 import edu.wpi.first.networktables.NetworkTableInstance;
 import edu.wpi.first.networktables.StructArrayPublisher;
 import edu.wpi.first.wpilibj2.command.Command;
@@ -53,6 +54,15 @@ public class Autonomous {
             drive, // The drive subsystem
             (trajectory, starting) -> {
                 // Log the supplied trajectory
+                drive.fieldTrajectory.setTrajectory(new Trajectory(trajectory.samples().stream()
+                    .map(sample -> new Trajectory.State(
+                        sample.getTimestamp(),
+                        new Translation2d(sample.vx, sample.vy).getNorm(),
+                        new Translation2d(sample.ax, sample.ay).getNorm(),
+                        AutoAlign.flipIfRed(sample.getPose()),
+                        sample.omega
+                    )).collect(Collectors.toList())
+                ));
                 autoTrajectoryPublisher.accept(Arrays.stream(trajectory.getPoses())
                     .map(pose -> AutoAlign.flipIfRed(pose).getTranslation())
                     .collect(Collectors.toList())
@@ -73,6 +83,7 @@ public class Autonomous {
         // Assign auto commands to autonomous trigger
         RobotModeTriggers.autonomous().whileTrue(getSelectedAuto());
         RobotModeTriggers.autonomous().onFalse(robot.coral.setVoltageCommand(0).ignoringDisable(true));
+        // RobotModeTriggers.disabled().whileTrue(this.drive.fieldStartPose.setPose());
     }
 
     /** @return A command to schedule the auto selected on the chooser */
@@ -115,7 +126,6 @@ public class Autonomous {
 
         return routine;
     }
-
 
     // Seconds before the end of the path that the elevator should raise
     private static final double elevatorDelay = 0.45;
