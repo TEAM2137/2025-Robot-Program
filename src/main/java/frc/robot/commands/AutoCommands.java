@@ -48,10 +48,10 @@ public class AutoCommands {
         }
     }
 
-    public static void createIntakeSequenceAutoAlign(AutoTrajectory base, Command onComplete, RobotContainer robot) {
-        base.atTimeBeforeEnd(0.5).onTrue(new SequentialCommandGroup(
+    public static void createIntakeSequenceAutoAlign(double beforeEnd, AutoTrajectory base, AutoTrajectory onComplete, RobotContainer robot) {
+        base.atTimeBeforeEnd(beforeEnd).onTrue(new SequentialCommandGroup(
             robot.algae.setPivotPosition(AlgaeConstants.intake),
-            robot.coral.intakeUntilFunnelEnter().andThen(Commands.waitSeconds(0.25)).deadlineFor(
+            robot.coral.intakeUntilFunnelEnter().andThen(Commands.waitSeconds(0.15)).deadlineFor(
                 AutoAlign.driveToTargetCommand(robot).beforeStarting(() -> AutoAlign.setTargetPose(
                     (robot.drive.getPose().getY() < 8.19912 / 2.0 == !ChoreoAllianceFlipUtil.shouldFlip())
                         ? AutoAlign.flipIfRed(FieldPOIs.CORAL_STATION_BOTTOM)
@@ -59,9 +59,10 @@ public class AutoCommands {
                 ))
             ),
             (onComplete != null)
-                ? onComplete.asProxy().deadlineFor(robot.algae.setPivotPosition(AlgaeConstants.stow).andThen(robot.coral.completeIntaking()))
+                ? robot.algae.setPivotPosition(AlgaeConstants.stow).andThen(onComplete.cmd().asProxy())
                 : robot.algae.setPivotPosition(AlgaeConstants.stow).andThen(robot.coral.completeIntaking())
         ));
+        if (onComplete != null) onComplete.active().onTrue(robot.coral.completeIntaking());
     }
 
     /**
@@ -114,10 +115,10 @@ public class AutoCommands {
         base.doneDelayed(0.52 + duration).onTrue(onComplete);
     }
 
-    public static Command scoreWithAutoAlign(double duration, Target targetType, AutoTrajectory base, Command onComplete, RobotContainer robot) {
+    public static Command scoreWithAutoAlign(double alignDelay, double duration, Target targetType, AutoTrajectory base, Command onComplete, RobotContainer robot) {
         return new SequentialCommandGroup(
             new SequentialCommandGroup(
-                Commands.waitSeconds(0.7),
+                Commands.waitSeconds(alignDelay + 0.4),
                 robot.coral.setVelocityCommand(CoralConstants.l4RadPerSec).repeatedly().withTimeout(duration)
             ).deadlineFor(
                 AutoAlign.driveToTargetWithElevatorCommand(robot).beforeStarting(() -> {

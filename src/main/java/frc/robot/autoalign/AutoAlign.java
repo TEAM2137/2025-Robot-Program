@@ -203,7 +203,7 @@ public class AutoAlign {
             double velocityDecrease = RobotContainer.getInstance().elevator.getExtensionMeters();
             double accelDecrease = velocityDecrease;
             if (targetPose.getTranslation().getDistance(adjustedTranslation) < ACCEL_LIMIT_DISTANCE_METERS)
-                accelDecrease = RobotContainer.getInstance().elevator.getScheduledPosition();
+                accelDecrease = RobotContainer.getInstance().elevator.getScheduledPosition() * 0.6;
 
             // Dynamically calculate drive constraints based on elevator height
             double accelScaling = MathUtil.clamp(1 - (accelDecrease / 3.0), 0.5, 1);

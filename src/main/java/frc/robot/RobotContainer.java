@@ -95,7 +95,7 @@ public class RobotContainer {
     public final Trigger targetAlgae = driverController.b();
     public final Trigger targetNet = driverController.x();
     public final Trigger targetProcessor = driverController.start();
-    public final Trigger targetCoralStation = driverController.a().or(operatorController.rightBumper());
+    public final Trigger targetCoralStation = driverController.a();
 
     // Multi-purpose "score" button
     public final Trigger score = driverController.rightTrigger(0.25);
@@ -110,6 +110,7 @@ public class RobotContainer {
     // Manual subsystem controls
     public final Trigger elevatorManual = operatorController.leftTrigger(0.35);
     public final Trigger cageManual = operatorController.rightTrigger(0.35);
+    public final Trigger intakeManual = operatorController.rightBumper();
 
     // Operator utilities
     public final Trigger slowEject = operatorController.povRight();
@@ -343,14 +344,16 @@ public class RobotContainer {
             .andThen(coral.setVoltageCommand(0)));
 
         // Driver coral station auto align
-        targetCoralStation.whileTrue(DriveCommands.alignToCoralStation(drive, joystickSupplier, slowMode));
-        targetCoralStation.onTrue(new ScheduleCommand(
+        Command intakeCommand = new ScheduleCommand(
             algae.setPivotPosition(AlgaeConstants.intake).asProxy()
                 .andThen(coral.intakeUntilFunnelEnter())
                 .andThen(algae.setPivotPosition(AlgaeConstants.stow).asProxy())
                 .andThen(coral.completeIntaking())
                 .andThen(coral.setVoltageCommand(0))
-        ));
+        );
+        targetCoralStation.whileTrue(DriveCommands.alignToCoralStation(drive, joystickSupplier, slowMode));
+        targetCoralStation.onTrue(intakeCommand);
+        intakeManual.onTrue(intakeCommand);
 
         // Ground intake
         groundIntake.onTrue(algae.setPivotPosition(AlgaeConstants.groundIntake)
