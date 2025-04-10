@@ -1,8 +1,6 @@
 package frc.robot.subsystems.cage;
 
 import com.revrobotics.spark.SparkLowLevel.MotorType;
-import com.revrobotics.spark.ClosedLoopSlot;
-import com.revrobotics.spark.SparkClosedLoopController;
 import com.revrobotics.spark.SparkMax;
 import com.revrobotics.spark.config.ClosedLoopConfig.FeedbackSensor;
 import com.revrobotics.spark.config.SparkBaseConfig.IdleMode;
@@ -11,16 +9,17 @@ import com.revrobotics.spark.SparkBase.ControlType;
 import com.revrobotics.spark.SparkBase.PersistMode;
 import com.revrobotics.spark.SparkBase.ResetMode;
 
+import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.util.Units;
 
 public class CageIOSparkMax implements CageIO {
     private SparkMax motor;
-    private SparkClosedLoopController controller;
+    private PIDController controller = new PIDController(CageConstants.kP, 0, CageConstants.kD);
+    private boolean usePID = false;
 
     public CageIOSparkMax() {
         motor = new SparkMax(CageConstants.motorID, MotorType.kBrushless);
-        controller = motor.getClosedLoopController();
 
         SparkMaxConfig config = new SparkMaxConfig();
         config
@@ -38,6 +37,11 @@ public class CageIOSparkMax implements CageIO {
 
     @Override
     public void updateInputs(CageIOInputs inputs) {
+        if (usePID) {
+            double volts = controller.calculate(motor.getEncoder().getPosition());
+            motor.getClosedLoopController().setReference(volts, ControlType.kVoltage);
+        }
+
         inputs.appliedVolts = motor.getAppliedOutput() * 12;
         inputs.currentAmps = motor.getOutputCurrent();
         inputs.velocityRadPerSec = Units.rotationsPerMinuteToRadiansPerSecond(motor.getEncoder().getVelocity());
@@ -47,16 +51,19 @@ public class CageIOSparkMax implements CageIO {
 
     @Override
     public void setPosition(double targetPosition) {
-        controller.setReference(targetPosition, ControlType.kPosition, ClosedLoopSlot.kSlot0, 0);
+        controller.setSetpoint(targetPosition);
+        this.usePID = true;
     }
 
     @Override
     public void setVoltage(double volts) {
-        controller.setReference(volts, ControlType.kVoltage);
+        motor.getClosedLoopController().setReference(volts, ControlType.kVoltage);
+        this.usePID = false;
     }
 
     @Override
     public void resetPosition() {
         motor.getEncoder().setPosition(0);
+        this.usePID = false;
     }
 }

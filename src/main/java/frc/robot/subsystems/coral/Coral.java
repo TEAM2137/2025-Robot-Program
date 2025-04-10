@@ -27,7 +27,7 @@ public class Coral extends SubsystemBase{
         this.io = io;
         this.inputs = new CoralIOInputsAutoLogged();
         this.endEffectorSensor = new Trigger(() -> isEndEffectorSensorInRange)
-            .debounce(0.1, DebounceType.kFalling); // TODO: test this
+            .debounce(0.1, DebounceType.kRising); // TODO: test this
         this.funnelSensor = new Trigger(() -> isFunnelSensorInRange);
     }
 

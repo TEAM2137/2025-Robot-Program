@@ -32,6 +32,7 @@ import frc.robot.subsystems.algae.AlgaeArmIOSim;
 import frc.robot.subsystems.algae.AlgaeArmIOTalonFX;
 import frc.robot.subsystems.algae.AlgaeConstants;
 import frc.robot.subsystems.cage.Cage;
+import frc.robot.subsystems.cage.CageConstants;
 import frc.robot.subsystems.cage.CageIO;
 import frc.robot.subsystems.cage.CageIOSim;
 import frc.robot.subsystems.cage.CageIOSparkMax;
@@ -80,14 +81,9 @@ public class RobotContainer {
     public final Consumer<Trigger> algaeAlignConsumer;
     public final Consumer<Trigger> algaeGrabConsumer;
     public final Consumer<Trigger> netScoreConsumer;
+    public final Consumer<Trigger> netPlaceConsumer;
 
     /* Controller trigger bindings */
-
-    // Utilities
-    public final Trigger stopAll = driverController.y();
-    public final Trigger resetGyro = driverController.back();
-    public final Trigger resetElevator = operatorController.start();
-    public final Trigger resetCage = operatorController.rightStick();
 
     // Drive/point to different field POIs
     public final Trigger targetRight = driverController.rightBumper();
@@ -112,11 +108,19 @@ public class RobotContainer {
     public final Trigger cageManual = operatorController.rightTrigger(0.35);
     public final Trigger intakeManual = operatorController.rightBumper();
 
+    // Utilities
+    public final Trigger stopAll = driverController.y();
+    public final Trigger resetGyro = driverController.back();
+    public final Trigger resetElevator = operatorController.start();
+    public final Trigger resetCage = operatorController.rightStick().and(cageManual);
+
     // Operator utilities
     public final Trigger slowEject = operatorController.povRight();
     public final Trigger reverseRollers = operatorController.povLeft();
     public final Trigger climberDeploy = operatorController.povUp();
-    public final Trigger groundIntake = operatorController.povDown();
+    public final Trigger climberClimb = operatorController.povDown();
+    public final Trigger groundIntake = operatorController.rightStick().and(cageManual.negate());
+    public final Trigger lollipopIntake = operatorController.leftStick().and(cageManual.negate());
     public final Trigger elevatorApplyManual = operatorController.back();
 
     /** The container for the robot. Contains subsystems, IO devices, and commands. */
@@ -239,6 +243,19 @@ public class RobotContainer {
             ));
         };
 
+        netPlaceConsumer = trigger -> {
+            trigger.onTrue(new SequentialCommandGroup(
+                algae.setPivotPosition(AlgaeConstants.grab),
+                Commands.waitSeconds(0.25),
+                coral.setVoltageCommand(4),
+                Commands.waitSeconds(0.25),
+                algae.setPivotPosition(AlgaeConstants.stow),
+                coral.setVoltageCommand(0),
+                Commands.waitSeconds(0.5),
+                elevator.setPositionCommand(ElevatorConstants.stow)
+            ));
+        };
+
         // Setup autonomous features
         autonomous = new Autonomous(this);
 
@@ -326,10 +343,10 @@ public class RobotContainer {
 
         // Driver net auto align
         targetNet.whileTrue(AutoAlign.autoAlignTo(Target.NET, this, joystickSupplier)
-            .beforeStarting(() -> AutoAlign.setScheduledElevatorHeight(ElevatorConstants.stow)));
+            .beforeStarting(() -> AutoAlign.setScheduledElevatorHeight(ElevatorConstants.L4)));
 
         // Driver score sequence (net)
-        netScoreConsumer.accept(scoreNet);
+        netPlaceConsumer.accept(scoreNet);
 
         // Driver processor auto align
         targetProcessor.onTrue(AutoAlign.setTargetType(AutoAlign.Target.PROCESSOR)
@@ -401,8 +418,12 @@ public class RobotContainer {
         reverseRollers.onTrue(coral.setVoltageCommand(-4));
         reverseRollers.onFalse(coral.setVoltageCommand(0.0));
 
-        // Move algae arm for climb
-        operatorController.leftStick().onTrue(algae.setPivotPosition(0.3));
+        climberDeploy.onTrue(cage.setPositionCommand(CageConstants.deployPosition));
+        climberDeploy.onFalse(cage.setVoltage(() -> 0.0));
+
+        climberClimb.onTrue(cage.setPositionCommand(CageConstants.climbPosition)
+            .andThen(algae.setPivotPosition(0.2)));
+        climberClimb.onFalse(cage.setVoltage(() -> 0.0));
     }
 
     /**

@@ -143,7 +143,7 @@ public class AutoAlign {
         angleController.enableContinuousInput(-Math.PI, Math.PI);
 
         // Construct command
-        return driveToTargetCommand(targetType, robot.drive, angleController);
+        return driveToTargetCommand(() -> targetType, robot.drive, angleController);
     }
 
     public static Command driveToTargetWithElevatorCommand(RobotContainer robot) {
@@ -151,7 +151,7 @@ public class AutoAlign {
         return driveToTargetCommand(robot).alongWith(Commands.run(() -> {
             Translation2d robotTranslation = robot.drive.getPose().getTranslation();
             Translation2d adjustedTranslation = new Translation2d(robotTranslation.getX(), targetType.allowYMovement() ? 0.0 : robotTranslation.getY());
-            if (targetPose != null && targetPose.getTranslation().getDistance(adjustedTranslation) < ELEVATOR_RAISE_DISTANCE_METERS) {
+            if (targetPose != null && targetPose.getTranslation().getDistance(adjustedTranslation) < ELEVATOR_RAISE_DISTANCE_METERS * (targetType == Target.NET ? 0.3 : 1.0)) {
                 if (targetType.name().contains("BRANCH")) setScheduledElevatorHeight(robot.elevator.getScheduledPosition());
                 robot.elevator.setPosition(AutoAlign.scheduledElevatorHeight);
             }
@@ -195,10 +195,11 @@ public class AutoAlign {
      * @param angleController A ProfiledPIDController from DriveCommands
      * @return The command
      */
-    private static Command driveToTargetCommand(Target targetType, Drive drive, ProfiledPIDController angleController) {
+    private static Command driveToTargetCommand(Supplier<Target> targetTypeSupplier, Drive drive, ProfiledPIDController angleController) {
         // Run the command
         return Commands.runEnd(() -> {
             // Get scheduled or real elevator height depending on distance from reef
+            Target targetType = targetTypeSupplier.get();
             Translation2d adjustedTranslation = new Translation2d(drive.getPose().getX(), targetType.allowYMovement() ? 0.0 : drive.getPose().getY());
             double velocityDecrease = RobotContainer.getInstance().elevator.getExtensionMeters();
             double accelDecrease = velocityDecrease;
@@ -258,8 +259,7 @@ public class AutoAlign {
             // Limit acceleration
             Translation2d finalVelocity = DriveCommands.limitAccelerationFor(
                 ChoreoAllianceFlipUtil.shouldFlip() ? new Translation2d().minus(drive.getLinearSpeedsVector()) : drive.getLinearSpeedsVector(),
-                normalized,
-                DRIVE_MAX_ACCELERATION
+                normalized, DRIVE_MAX_ACCELERATION
             );
 
             // Convert to field relative speeds
