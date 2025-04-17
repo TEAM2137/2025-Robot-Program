@@ -18,5 +18,6 @@ public class AlgaeConstants {
     public static final double stow = -0.01;
     public static final double intake = 0.1; // 0.06
     public static final double processor = 0.72;
+    public static final double lollipopIntake = 0.70;
     public static final double groundIntake = 0.92;
 }

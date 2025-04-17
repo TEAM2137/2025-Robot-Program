@@ -3,6 +3,7 @@ package frc.robot.util;
 import java.util.ArrayList;
 import java.util.List;
 
+import choreo.util.ChoreoAllianceFlipUtil;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Translation2d;
@@ -28,7 +29,8 @@ public class FieldPOIs {
     public static final List<Pose2d> ALGAE_ALIGN_LOCATIONS = filterEach(4, 2, REEF_LOCATIONS);
     public static final List<Pose2d> ALGAE_GRAB_LOCATIONS = filterEach(4, 3, REEF_LOCATIONS);
 
-    public static final Pose2d NET = new Pose2d(new Translation2d(7.33, 0.0), new Rotation2d()); // 7.16 y
+    public static final Pose2d NET = new Pose2d(new Translation2d(7.73, 0.0), Rotation2d.k180deg);
+    public static final Pose2d NET_OPPOSITE = new Pose2d(ChoreoAllianceFlipUtil.flipX(NET.getX()), 0.0, Rotation2d.kZero);
     public static final Pose2d PROCESSOR = new Pose2d(new Translation2d(6.34, 1.1), Rotation2d.fromDegrees(-90.0));
 
     public static final Pose2d CORAL_STATION_TOP = new Pose2d(new Translation2d(1.5, 7.25), new Rotation2d(-0.939));
@@ -66,7 +68,7 @@ public class FieldPOIs {
                 angle.getSin() * (REEF_VERTICAL_OFFSET_METERS + ALGAE_GRAB_VERTICAL_OFFSET_METERS)
             );
 
-            double leftMagnitude = REEF_HORIZONTAL_OFFSET_METERS - END_EFFECTOR_OFFSET;
+            double leftMagnitude = REEF_HORIZONTAL_OFFSET_METERS - (END_EFFECTOR_OFFSET);
             double centerMagnitude = -END_EFFECTOR_OFFSET + ALGAE_HORIZONTAL_OFFSET_METERS;
             double rightMagnitude = REEF_HORIZONTAL_OFFSET_METERS + END_EFFECTOR_OFFSET;
 

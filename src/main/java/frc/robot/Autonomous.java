@@ -32,6 +32,7 @@ import frc.robot.autoalign.AutoAlign;
 import frc.robot.autoalign.AutoAlign.Target;
 import frc.robot.commands.AutoCommands;
 import frc.robot.commands.DriveCommands;
+import frc.robot.subsystems.algae.AlgaeConstants;
 import frc.robot.subsystems.coral.CoralConstants;
 import frc.robot.subsystems.drive.Drive;
 import frc.robot.subsystems.elevator.ElevatorConstants;
@@ -124,7 +125,8 @@ public class Autonomous {
         registerAuto("4 Coral Right (Reversed)", this::fourCoral);
         registerAuto("3 Coral Left", this::threeCoral);
         registerAuto("3 Coral Right", this::threeCoral);
-        registerAuto("Center Auto", this::centerAuto);
+        registerAuto("Center 3 Piece", this::centerThreePiece);
+        registerAuto("Center 4 Piece", this::centerFourPiece);
     }
 
     public void registerAuto(String name, Function<String, AutoRoutine> auto) {
@@ -161,7 +163,7 @@ public class Autonomous {
     private Trigger grabAlgaeTrigger = new Trigger(() -> grabAlgae).and(RobotModeTriggers.autonomous());
     private Trigger scoreNetTrigger = new Trigger(() -> scoreNet).and(RobotModeTriggers.autonomous());
 
-    public AutoRoutine centerAuto(String dashboardName) {
+    public AutoRoutine centerThreePiece(String dashboardName) {
         String pathName = "Center Coral Algae";
         AutoRoutine routine = factory.newRoutine(pathName);
 
@@ -181,10 +183,10 @@ public class Autonomous {
         robot.algaeGrabConsumer.accept(grabAlgaeTrigger);
         robot.netScoreConsumer.accept(scoreNetTrigger);
 
-        routine.active().onTrue(robot.elevator.resetPositionCommand());
+        routine.active().onTrue(robot.elevator.resetPositionCommand().andThen(robot.algae.setPivotPosition(AlgaeConstants.stow)));
         routine.active().onTrue(toReef1.resetOdometry().andThen(toReef1.cmd()));
 
-        toReef1.atTimeBeforeEnd(elevatorDelay).onTrue(
+        toReef1.atTimeBeforeEnd(0.7).onTrue(
             robot.elevator.setPositionCommand(ElevatorConstants.L4));
 
         AutoCommands.createScoringSequence(scoreDuration, toReef1, backUp, robot);
@@ -230,6 +232,96 @@ public class Autonomous {
         return routine;
     }
 
+    public AutoRoutine centerFourPiece(String dashboardName) {
+        String pathName = "3 Algae";
+        AutoRoutine routine = factory.newRoutine(pathName);
+
+        List<AutoTrajectory> splits = loadSplits(routine, pathName, 11);
+        AutoTrajectory toReef1 = splits.get(0);
+        AutoTrajectory backUp = splits.get(1);
+        AutoTrajectory toNet1 = splits.get(3);
+        AutoTrajectory toReef2 = splits.get(4);
+        AutoTrajectory toNet2 = splits.get(6);
+        AutoTrajectory toReef3 = splits.get(7);
+        AutoTrajectory toNet3 = splits.get(9);
+        AutoTrajectory offLine = splits.get(10);
+
+        // Add start pose to map
+        dsAttached.onTrue(Commands.runOnce(() -> toReef1.getInitialPose()
+            .ifPresent(pose -> startPoses.put(dashboardName, pose))).ignoringDisable(true));
+
+        robot.algaeAlignConsumer.accept(targetAlgaeTrigger);
+        robot.algaeGrabConsumer.accept(grabAlgaeTrigger);
+        robot.netScoreConsumer.accept(scoreNetTrigger);
+
+        routine.active().onTrue(robot.elevator.resetPositionCommand().andThen(robot.algae.setPivotPosition(AlgaeConstants.stow)));
+        routine.active().onTrue(toReef1.resetOdometry().andThen(toReef1.cmd()));
+
+        toReef1.atTimeBeforeEnd(elevatorDelay).onTrue(
+            robot.elevator.setPositionCommand(ElevatorConstants.L4));
+
+        AutoCommands.createScoringSequence(scoreDuration, toReef1, backUp, robot);
+
+        backUp.done().onTrue(new SequentialCommandGroup(
+            Commands.runOnce(() -> targetAlgae = true),
+            Commands.waitSeconds(0.5),
+            Commands.runOnce(() -> targetAlgae = false),
+            Commands.runOnce(() -> grabAlgae = true),
+            Commands.waitSeconds(0.7),
+            Commands.runOnce(() -> grabAlgae = false),
+            toNet1.cmd().asProxy()
+        ));
+
+        toNet1.atTime(0.7).onTrue(robot.elevator.setPositionCommand(ElevatorConstants.stow)
+            .andThen(Commands.waitSeconds(0.5))
+            .andThen(robot.coral.setVoltageCommand(CoralConstants.algaeHoldVoltage)));
+
+        toNet1.done().onTrue(Commands.runOnce(() -> scoreNet = true)
+            .andThen(Commands.waitSeconds(1.0))
+            .andThen(Commands.runOnce(() -> scoreNet = false))
+            .andThen(toReef2.cmd().asProxy()));
+
+        toReef2.atTimeBeforeEnd(0.4).onTrue(new SequentialCommandGroup(
+            Commands.runOnce(() -> targetAlgae = true),
+            Commands.waitSeconds(0.5),
+            Commands.runOnce(() -> targetAlgae = false),
+            Commands.runOnce(() -> grabAlgae = true),
+            Commands.waitSeconds(0.7),
+            Commands.runOnce(() -> grabAlgae = false),
+            toNet2.cmd().asProxy()
+        ));
+
+        toNet2.atTime(0.7).onTrue(robot.elevator.setPositionCommand(ElevatorConstants.stow)
+            .andThen(Commands.waitSeconds(0.5))
+            .andThen(robot.coral.setVoltageCommand(CoralConstants.algaeHoldVoltage)));
+
+        toNet2.done().onTrue(Commands.runOnce(() -> scoreNet = true)
+            .andThen(Commands.waitSeconds(1.0))
+            .andThen(Commands.runOnce(() -> scoreNet = false))
+            .andThen(toReef3.cmd().asProxy()));
+
+        toReef3.atTimeBeforeEnd(0.4).onTrue(new SequentialCommandGroup(
+            Commands.runOnce(() -> targetAlgae = true),
+            Commands.waitSeconds(0.5),
+            Commands.runOnce(() -> targetAlgae = false),
+            Commands.runOnce(() -> grabAlgae = true),
+            Commands.waitSeconds(0.7),
+            Commands.runOnce(() -> grabAlgae = false),
+            toNet3.cmd().asProxy()
+        ));
+
+        toNet3.atTime(0.7).onTrue(robot.elevator.setPositionCommand(ElevatorConstants.stow)
+            .andThen(Commands.waitSeconds(0.5))
+            .andThen(robot.coral.setVoltageCommand(CoralConstants.algaeHoldVoltage)));
+
+        toNet3.done().onTrue(Commands.runOnce(() -> scoreNet = true)
+            .andThen(Commands.waitSeconds(1.0))
+            .andThen(Commands.runOnce(() -> scoreNet = false))
+            .andThen(offLine.cmd().asProxy()));
+
+        return routine;
+    }
+
     public AutoRoutine threeCoral(String dashboardName) {
         boolean flipAligns = dashboardName.contains("Left");
         String pathName = "3 Coral " + (flipAligns ? "Upper" : "Lower");
@@ -253,6 +345,7 @@ public class Autonomous {
 
         // When the routine begins, reset odometry and start the first trajectory
         routine.active().onTrue(robot.elevator.resetPositionCommand()
+            .andThen(robot.algae.setPivotPosition(AlgaeConstants.stow))
             .andThen(robot.elevator.schedulePositionCommand(ElevatorConstants.L4)));
         routine.active().onTrue(toReef1.resetOdometry().andThen(toReef1.cmd()));
 
@@ -304,6 +397,7 @@ public class Autonomous {
 
         // When the routine begins, reset odometry and start the first trajectory
         routine.active().onTrue(robot.elevator.resetPositionCommand()
+            .andThen(robot.algae.setPivotPosition(AlgaeConstants.stow))
             .andThen(robot.elevator.schedulePositionCommand(ElevatorConstants.L4)));
         routine.active().onTrue(toReef1.resetOdometry().andThen(toReef1.cmd()));
 

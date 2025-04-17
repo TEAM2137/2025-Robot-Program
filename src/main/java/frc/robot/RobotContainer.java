@@ -15,9 +15,9 @@ import edu.wpi.first.wpilibj.GenericHID;
 import edu.wpi.first.wpilibj.XboxController;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
-import edu.wpi.first.wpilibj2.command.ScheduleCommand;
 import edu.wpi.first.wpilibj2.command.SequentialCommandGroup;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
+import edu.wpi.first.wpilibj2.command.button.RobotModeTriggers;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
 import frc.robot.commands.DriveCommands;
 import frc.robot.generated.TunerConstants;
@@ -82,6 +82,7 @@ public class RobotContainer {
     public final Consumer<Trigger> algaeGrabConsumer;
     public final Consumer<Trigger> netScoreConsumer;
     public final Consumer<Trigger> netPlaceConsumer;
+    public final Consumer<Trigger> intakeConsumer;
 
     /* Controller trigger bindings */
 
@@ -245,15 +246,27 @@ public class RobotContainer {
 
         netPlaceConsumer = trigger -> {
             trigger.onTrue(new SequentialCommandGroup(
-                algae.setPivotPosition(AlgaeConstants.grab),
-                Commands.waitSeconds(0.25),
-                coral.setVoltageCommand(4),
-                Commands.waitSeconds(0.25),
                 algae.setPivotPosition(AlgaeConstants.stow),
+                Commands.waitSeconds(0.35),
+                coral.setVoltageCommand(3),
+                Commands.waitSeconds(0.3),
                 coral.setVoltageCommand(0),
-                Commands.waitSeconds(0.5),
                 elevator.setPositionCommand(ElevatorConstants.stow)
             ));
+        };
+
+        intakeConsumer = trigger -> {
+            Command intakeCommand = new SequentialCommandGroup(
+                algae.setPivotPosition(AlgaeConstants.intake).asProxy(),
+                coral.intakeUntilFunnelEnter(),
+                algae.setPivotPosition(AlgaeConstants.stow).asProxy(),
+                coral.completeIntaking(),
+                coral.setVoltageCommand(0)
+            );
+            trigger.onTrue(Commands.runOnce(() -> {
+                if (intakeCommand.isScheduled()) intakeCommand.cancel();
+            }));
+            trigger.onTrue(intakeCommand);
         };
 
         // Setup autonomous features
@@ -336,14 +349,16 @@ public class RobotContainer {
         algaeGrabConsumer.accept(grabAlgae);
 
         // Stow after grabbing algae and leaving reef zone
-        leaveReefZone.and(didGrabAlgae).and(score.negate()).onTrue(AutoAlign.clearTargetType()
+        leaveReefZone.and(RobotModeTriggers.autonomous().negate()).and(didGrabAlgae).and(score.negate())
+            .onTrue(AutoAlign.clearTargetType()
             .andThen(elevator.setPositionCommand(ElevatorConstants.stow))
             .andThen(Commands.waitSeconds(0.5))
             .andThen(coral.setVoltageCommand(CoralConstants.algaeHoldVoltage)));
 
         // Driver net auto align
-        targetNet.whileTrue(AutoAlign.autoAlignTo(Target.NET, this, joystickSupplier)
-            .beforeStarting(() -> AutoAlign.setScheduledElevatorHeight(ElevatorConstants.L4)));
+        targetNet.whileTrue((AutoAlign.autoAlignTo(Target.NET, this, joystickSupplier))
+            .beforeStarting(coral.setVelocityCommand(CoralConstants.algaeGrabRadPerSec)
+                .andThen(Commands.runOnce(() -> AutoAlign.setScheduledElevatorHeight(ElevatorConstants.L4)))));
 
         // Driver score sequence (net)
         netPlaceConsumer.accept(scoreNet);
@@ -361,16 +376,9 @@ public class RobotContainer {
             .andThen(coral.setVoltageCommand(0)));
 
         // Driver coral station auto align
-        Command intakeCommand = new ScheduleCommand(
-            algae.setPivotPosition(AlgaeConstants.intake).asProxy()
-                .andThen(coral.intakeUntilFunnelEnter())
-                .andThen(algae.setPivotPosition(AlgaeConstants.stow).asProxy())
-                .andThen(coral.completeIntaking())
-                .andThen(coral.setVoltageCommand(0))
-        );
         targetCoralStation.whileTrue(DriveCommands.alignToCoralStation(drive, joystickSupplier, slowMode));
-        targetCoralStation.onTrue(intakeCommand);
-        intakeManual.onTrue(intakeCommand);
+        intakeConsumer.accept(targetCoralStation);
+        intakeConsumer.accept(intakeManual);
 
         // Ground intake
         groundIntake.onTrue(algae.setPivotPosition(AlgaeConstants.groundIntake)
@@ -378,6 +386,14 @@ public class RobotContainer {
         groundIntake.onFalse(algae.setPivotPosition(AlgaeConstants.hold)
             .andThen(Commands.waitSeconds(1.0))
             .andThen(coral.setVoltageCommand(CoralConstants.algaeHoldVoltage)));
+
+        // Ground intake
+        lollipopIntake.onTrue(algae.setPivotPosition(AlgaeConstants.lollipopIntake)
+            .andThen(coral.setVelocityCommand(CoralConstants.algaeGrabRadPerSec)));
+        lollipopIntake.onFalse(algae.setPivotPosition(AlgaeConstants.hold)
+            .andThen(Commands.waitSeconds(1.0))
+            .andThen(coral.setVoltageCommand(CoralConstants.algaeHoldVoltage)));
+
 
         // Hold left trigger to enable elevator manual controls using the right stick.
         elevatorManual.whileTrue(elevator.setVoltage(() ->

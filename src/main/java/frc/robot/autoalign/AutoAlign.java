@@ -69,7 +69,7 @@ public class AutoAlign {
         Target.ALGAE_GRAB, FieldPOIs.ALGAE_GRAB_LOCATIONS,
 
         // X alignment for net scoring
-        Target.NET, List.of(FieldPOIs.NET),
+        Target.NET, List.of(FieldPOIs.NET, FieldPOIs.NET_OPPOSITE),
 
         // Location for processor align (flipped by field half)
         Target.PROCESSOR, List.of(FieldPOIs.PROCESSOR)
@@ -150,7 +150,7 @@ public class AutoAlign {
         // Construct command
         return driveToTargetCommand(robot).alongWith(Commands.run(() -> {
             Translation2d robotTranslation = robot.drive.getPose().getTranslation();
-            Translation2d adjustedTranslation = new Translation2d(robotTranslation.getX(), targetType.allowYMovement() ? 0.0 : robotTranslation.getY());
+            Translation2d adjustedTranslation = new Translation2d(robotTranslation.getX(), targetType.allowYMovement() ? (ChoreoAllianceFlipUtil.shouldFlip() ? ChoreoAllianceFlipUtil.flipY(0.0) : 0.0) : robotTranslation.getY());
             if (targetPose != null && targetPose.getTranslation().getDistance(adjustedTranslation) < ELEVATOR_RAISE_DISTANCE_METERS * (targetType == Target.NET ? 0.3 : 1.0)) {
                 if (targetType.name().contains("BRANCH")) setScheduledElevatorHeight(robot.elevator.getScheduledPosition());
                 robot.elevator.setPosition(AutoAlign.scheduledElevatorHeight);
@@ -214,7 +214,8 @@ public class AutoAlign {
             TrapezoidProfile velocityProfile = new TrapezoidProfile(
                 new TrapezoidProfile.Constraints(
                     DRIVE_MAX_VELOCITY * velocityScaling,
-                    DRIVE_MAX_ACCELERATION * accelScaling)
+                    DRIVE_MAX_ACCELERATION * accelScaling
+                )
             );
 
             // Calculate vector to target
@@ -230,7 +231,7 @@ public class AutoAlign {
             );
 
             // Grab the current drive state
-            TrapezoidProfile.State state = velocityProfile.calculate(0.12,
+            TrapezoidProfile.State state = velocityProfile.calculate(0.11,
                 new TrapezoidProfile.State(toTarget.getNorm(), velocityTowardsGoal),
                 new TrapezoidProfile.State()
             );
@@ -238,7 +239,7 @@ public class AutoAlign {
             // Create a velocity vector based on the drive state's velocity
             Translation2d normalized = new Translation2d(state.velocity, toTarget.getAngle());
             if (targetType.allowYMovement()) normalized = new Translation2d(normalized.getX(),
-                MathUtil.applyDeadband(RobotContainer.getInstance().joystickMotionSupplier().get().getY(), DriveCommands.DEADBAND) * DRIVE_MAX_VELOCITY
+                MathUtil.applyDeadband(RobotContainer.getInstance().joystickMotionSupplier().get().getY(), DriveCommands.DEADBAND) * (DRIVE_MAX_VELOCITY * velocityScaling)
                     * (ChoreoAllianceFlipUtil.shouldFlip() ? 1 : -1));
 
             // Debug info
@@ -294,6 +295,7 @@ public class AutoAlign {
         for (int i = 0; i < locations.size(); i++) {
             // Calculate the distance from the robot to the current reef pole
             Pose2d targetPose = AutoAlign.flipIfRed(locations.get(i));
+            if (targetType.allowYMovement()) targetPose = new Pose2d(targetPose.getX(), pose.getY(), targetPose.getRotation());
             double dst = pose.getTranslation().getDistance(targetPose.getTranslation());
 
             if (targetType.name().contains("BRANCH")) {

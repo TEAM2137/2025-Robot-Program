@@ -10,5 +10,5 @@ public class CageConstants {
     public static final double motorPositionToArmAngle = 360.0;
 
     public static final double deployPosition = 47.5;
-    public static final double climbPosition = -13.5;
+    public static final double climbPosition = -14.25;
 }
