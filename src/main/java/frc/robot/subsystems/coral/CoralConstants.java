@@ -10,9 +10,9 @@ public class CoralConstants {
     public static final double funnelSensorRange = 19.0;
 
     // Roller Speeds
-    public static final double l1RadPerSec = 190.0;
+    public static final double l1RadPerSec = 200.0;
     public static final double scoreRadPerSec = 225.0;
-    public static final double l4RadPerSec = 225.0;
+    public static final double l4RadPerSec = 205.0;
 
     public static final double algaeGrabRadPerSec = -100;
     public static final double algaeHoldVoltage = -1.5;

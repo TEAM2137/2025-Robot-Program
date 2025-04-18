@@ -31,6 +31,7 @@ import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
+import frc.robot.Autonomous;
 import frc.robot.Constants;
 import frc.robot.Constants.Mode;
 import frc.robot.RobotContainer;
@@ -209,7 +210,10 @@ public class Drive extends SubsystemBase {
 
         // Post dashboard data through SmartDashboard
         field.setRobotPose(getPose());
-        RobotContainer.getInstance().autonomous.getStartPose().ifPresent(pose -> fieldStartPose.setPose(pose));
+        RobotContainer.getInstance().autonomous.getStartPose().ifPresent(pose -> {
+            Logger.recordOutput("Autonomous/Setup/Score", Autonomous.getSetupScore(getPose(), pose));
+            fieldStartPose.setPose(pose);
+        });
         SmartDashboard.putData("Field", field);
         SmartDashboard.putData("Swerve Drive", swerveDriveSendable);
     }

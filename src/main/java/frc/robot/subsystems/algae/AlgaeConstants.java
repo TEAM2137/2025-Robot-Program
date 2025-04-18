@@ -3,7 +3,7 @@ package frc.robot.subsystems.algae;
 public class AlgaeConstants {
     public static final int deviceID = 40;
     public static final int encoderID = 41;
-    public static final double encoderOffset = 0.24389;
+    public static final double encoderOffset = 0.23388671875;//0.24389;
     public static final double gearing = 4.0;
 
     // PID Constants

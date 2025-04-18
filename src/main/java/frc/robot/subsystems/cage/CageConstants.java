@@ -9,6 +9,6 @@ public class CageConstants {
     public static final double gearing = 42.0 / 18.0;
     public static final double motorPositionToArmAngle = 360.0;
 
-    public static final double deployPosition = 47.5;
-    public static final double climbPosition = -14.25;
+    public static final double deployPosition = 51.7;
+    public static final double climbPosition = -13.25;
 }

@@ -402,7 +402,7 @@ public class RobotContainer {
 
         // Hold right trigger to enable cage manual controls using the right stick.
         cageManual.whileTrue(cage.setVoltage(() ->
-            MathUtil.applyDeadband(-operatorController.getRightY(), 0.1) * 12));
+            MathUtil.applyDeadband(-operatorController.getRightY(), 0.1) * 5 * 0.929));
         cageManual.onFalse(cage.setVoltage(() -> 0));
 
         // Hold right trigger to enable algae arm manual controls using the left stick.
