@@ -451,7 +451,7 @@ public class Autonomous {
 
         String letterGrade = "F";
         if (scoreRounded >= 97) letterGrade = "A+";
-        else if (scoreRounded >= 94) letterGrade = "A";
+        else if (scoreRounded >= 93) letterGrade = "A";
         else if (scoreRounded >= 90) letterGrade = "A-";
         else if (scoreRounded >= 87) letterGrade = "B+";
         else if (scoreRounded >= 83) letterGrade = "B";
