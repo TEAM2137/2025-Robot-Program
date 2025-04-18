@@ -20,8 +20,6 @@ import choreo.auto.AutoTrajectory;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.trajectory.Trajectory;
-import edu.wpi.first.networktables.NetworkTableInstance;
-import edu.wpi.first.networktables.StructArrayPublisher;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
@@ -50,9 +48,6 @@ public class Autonomous {
     private final RobotContainer robot;
     private final Drive drive;
 
-    private static StructArrayPublisher<Translation2d> autoTrajectoryPublisher = NetworkTableInstance.getDefault()
-        .getStructArrayTopic("Autonomous/AutoTrajectory", Translation2d.struct).publish();
-
     public Autonomous(RobotContainer robot) {
         this.robot = robot;
         this.drive = robot.drive;
@@ -75,7 +70,7 @@ public class Autonomous {
                         sample.omega
                     )).collect(Collectors.toList())
                 ));
-                autoTrajectoryPublisher.accept(Arrays.stream(trajectory.getPoses())
+                Logger.recordOutput("Autonomous/AutoTrajectory", Arrays.stream(trajectory.getPoses())
                     .map(pose -> AutoAlign.flipIfRed(pose).getTranslation())
                     .collect(Collectors.toList())
                     .toArray(new Translation2d[0])
