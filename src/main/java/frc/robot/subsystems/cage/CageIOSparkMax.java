@@ -39,8 +39,7 @@ public class CageIOSparkMax implements CageIO {
     public void updateInputs(CageIOInputs inputs) {
         if (usePID) {
             double volts = controller.calculate(motor.getEncoder().getPosition());
-            if (controller.getSetpoint() == CageConstants.climbPosition) volts *= 0.8;
-            motor.getClosedLoopController().setReference(volts, ControlType.kVoltage);
+            motor.getClosedLoopController().setReference(volts * 0.8, ControlType.kVoltage);
         }
 
         inputs.appliedVolts = motor.getAppliedOutput() * 12;
