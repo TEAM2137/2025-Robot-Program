@@ -441,7 +441,7 @@ public class Autonomous {
         Logger.recordOutput("Autonomous/Setup/RotError", rotationError);
 
         double rawScore = 100 * Math.exp(-(1.0 * positionError + 0.008 * rotationError));
-        int scoreRounded = (int) rawScore;
+        int scoreRounded = (int) Math.round(rawScore);
         double scoreNearestHundreth = ((int) (rawScore * 10.0)) / 10.0;
 
         String letterGrade = "F";
