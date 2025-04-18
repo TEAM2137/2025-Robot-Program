@@ -219,7 +219,7 @@ public class Drive extends SubsystemBase {
             });
             fieldTrajectory.setTrajectory(new Trajectory());
         }
-        
+
         SmartDashboard.putData("Field", field);
         SmartDashboard.putData("Swerve Drive", swerveDriveSendable);
     }
