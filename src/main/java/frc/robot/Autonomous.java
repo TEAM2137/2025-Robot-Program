@@ -440,7 +440,7 @@ public class Autonomous {
         Logger.recordOutput("Autonomous/Setup/PosError", positionError);
         Logger.recordOutput("Autonomous/Setup/RotError", rotationError);
 
-        double rawScore = 100 * Math.exp(-(0.9 * positionError + 0.008 * rotationError));
+        double rawScore = 100 * Math.exp(-(0.95 * positionError + 0.008 * rotationError));
         int scoreRounded = (int) rawScore;
         double scoreNearestHundreth = ((int) (rawScore * 10.0)) / 10.0;
 
