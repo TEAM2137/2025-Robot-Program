@@ -20,6 +20,7 @@ import edu.wpi.first.math.kinematics.SwerveModulePosition;
 import edu.wpi.first.math.kinematics.SwerveModuleState;
 import edu.wpi.first.math.numbers.N1;
 import edu.wpi.first.math.numbers.N3;
+import edu.wpi.first.math.trajectory.Trajectory;
 import edu.wpi.first.util.sendable.Sendable;
 import edu.wpi.first.util.sendable.SendableBuilder;
 import edu.wpi.first.wpilibj.Alert;
@@ -30,7 +31,9 @@ import edu.wpi.first.wpilibj.smartdashboard.FieldObject2d;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
+import edu.wpi.first.wpilibj2.command.button.RobotModeTriggers;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
+import frc.robot.Autonomous;
 import frc.robot.Constants;
 import frc.robot.Constants.Mode;
 import frc.robot.RobotContainer;
@@ -209,7 +212,14 @@ public class Drive extends SubsystemBase {
 
         // Post dashboard data through SmartDashboard
         field.setRobotPose(getPose());
-        RobotContainer.getInstance().autonomous.getStartPose().ifPresent(pose -> fieldStartPose.setPose(pose));
+        if (RobotModeTriggers.disabled().getAsBoolean()) {
+            RobotContainer.getInstance().autonomous.getStartPose().ifPresent(pose -> {
+                Logger.recordOutput("Autonomous/Setup/Score", Autonomous.getSetupScore(getPose(), pose));
+                fieldStartPose.setPose(pose);
+            });
+            fieldTrajectory.setTrajectory(new Trajectory());
+        }
+
         SmartDashboard.putData("Field", field);
         SmartDashboard.putData("Swerve Drive", swerveDriveSendable);
     }

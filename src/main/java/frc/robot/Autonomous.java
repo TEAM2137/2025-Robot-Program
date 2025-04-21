@@ -11,6 +11,7 @@ import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
+import org.littletonrobotics.junction.Logger;
 import org.littletonrobotics.junction.networktables.LoggedDashboardChooser;
 
 import choreo.auto.AutoFactory;
@@ -19,8 +20,6 @@ import choreo.auto.AutoTrajectory;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.trajectory.Trajectory;
-import edu.wpi.first.networktables.NetworkTableInstance;
-import edu.wpi.first.networktables.StructArrayPublisher;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
@@ -49,9 +48,6 @@ public class Autonomous {
     private final RobotContainer robot;
     private final Drive drive;
 
-    private static StructArrayPublisher<Translation2d> autoTrajectoryPublisher = NetworkTableInstance.getDefault()
-        .getStructArrayTopic("Autonomous/AutoTrajectory", Translation2d.struct).publish();
-
     public Autonomous(RobotContainer robot) {
         this.robot = robot;
         this.drive = robot.drive;
@@ -74,7 +70,7 @@ public class Autonomous {
                         sample.omega
                     )).collect(Collectors.toList())
                 ));
-                autoTrajectoryPublisher.accept(Arrays.stream(trajectory.getPoses())
+                Logger.recordOutput("Autonomous/AutoTrajectory", Arrays.stream(trajectory.getPoses())
                     .map(pose -> AutoAlign.flipIfRed(pose).getTranslation())
                     .collect(Collectors.toList())
                     .toArray(new Translation2d[0])
@@ -435,5 +431,33 @@ public class Autonomous {
             splits.add(routine.trajectory(path, i));
         }
         return splits;
+    }
+
+    public static String getSetupScore(Pose2d pose, Pose2d targetPose) {
+        double positionError = pose.getTranslation().getDistance(targetPose.getTranslation());
+        double rotationError = Math.abs(pose.getRotation().minus(targetPose.getRotation()).getDegrees());
+
+        Logger.recordOutput("Autonomous/Setup/PosError", positionError);
+        Logger.recordOutput("Autonomous/Setup/RotError", rotationError);
+
+        double rawScore = 100 * Math.exp(-(1.0 * positionError + 0.008 * rotationError));
+        int scoreRounded = (int) Math.round(rawScore);
+        double scoreNearestHundreth = ((int) (rawScore * 10.0)) / 10.0;
+
+        String letterGrade = "F";
+        if (scoreRounded >= 97) letterGrade = "A+";
+        else if (scoreRounded >= 93) letterGrade = "A";
+        else if (scoreRounded >= 90) letterGrade = "A-";
+        else if (scoreRounded >= 87) letterGrade = "B+";
+        else if (scoreRounded >= 83) letterGrade = "B";
+        else if (scoreRounded >= 80) letterGrade = "B-";
+        else if (scoreRounded >= 77) letterGrade = "C+";
+        else if (scoreRounded >= 73) letterGrade = "C";
+        else if (scoreRounded >= 70) letterGrade = "C-";
+        else if (scoreRounded >= 67) letterGrade = "D+";
+        else if (scoreRounded >= 63) letterGrade = "D";
+        else if (scoreRounded >= 60) letterGrade = "D-";
+
+        return letterGrade + ": " + scoreNearestHundreth + "%";
     }
 }
