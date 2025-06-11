@@ -6,8 +6,9 @@ public class CoralConstants {
     public static final int funnelSensorID = 34;
 
     // Sensor detection range (cm)
-    public static final double sensorRange = 6.0;
+    public static final double endEffectorSensorRange = 6.0;
     public static final double funnelSensorRange = 19.0;
+    public static final double coralSensorRange = 6.0;
 
     // Roller Speeds
     public static final double l1RadPerSec = 200.0;

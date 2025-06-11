@@ -15,20 +15,27 @@ public class Coral extends SubsystemBase{
     private final CoralIO io;
     private final CoralIOInputsAutoLogged inputs;
 
+    public final Trigger isUnused;
     public final Trigger endEffectorSensor;
     public final Trigger funnelSensor;
+    public final Trigger hasCoral;
     private boolean isEndEffectorSensorInRange;
     private boolean isFunnelSensorInRange;
+    private boolean isCoralSensorInRange;
 
     private final Alert funnelSensorAlert = new Alert("Funnel distance sensor disconnected. Auto coral will not work.", AlertType.kError);
     private final Alert endEffectorSensorAlert = new Alert("End effector distance sensor disconnected. Use operator d-pad right.", AlertType.kError);
+    private final Alert coralSensorAlert = new Alert("Coral distance sensor disconnected. you're cooked", AlertType.kError);
 
     public Coral(CoralIO io){
         this.io = io;
         this.inputs = new CoralIOInputsAutoLogged();
         this.endEffectorSensor = new Trigger(() -> isEndEffectorSensorInRange)
-            .debounce(0.1, DebounceType.kRising); // TODO: test this
+            .debounce(0.1, DebounceType.kRising);
         this.funnelSensor = new Trigger(() -> isFunnelSensorInRange);
+        this.hasCoral = new Trigger(() -> isCoralSensorInRange);
+
+        this.isUnused = new Trigger(() -> getCurrentCommand() == null);
     }
 
     @Override
@@ -37,9 +44,11 @@ public class Coral extends SubsystemBase{
 
         funnelSensorAlert.set(!inputs.funnelConnected);
         endEffectorSensorAlert.set(!inputs.endEffectorConnected);
+        coralSensorAlert.set(!inputs.coralSensorConnected);
 
-        isEndEffectorSensorInRange = inputs.endEffectorDistanceCm < CoralConstants.sensorRange;
+        isEndEffectorSensorInRange = inputs.endEffectorDistanceCm < CoralConstants.endEffectorSensorRange;
         isFunnelSensorInRange = inputs.funnelDistanceCm < CoralConstants.funnelSensorRange;
+        isCoralSensorInRange = inputs.coralDistanceCm < CoralConstants.coralSensorRange;
 
         Logger.processInputs("Coral", inputs);
     }

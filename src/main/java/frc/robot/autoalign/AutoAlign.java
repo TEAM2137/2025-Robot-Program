@@ -2,6 +2,7 @@ package frc.robot.autoalign;
 
 import java.util.List;
 import java.util.Map;
+import java.util.function.BooleanSupplier;
 import java.util.function.Supplier;
 
 import org.littletonrobotics.junction.Logger;
@@ -375,5 +376,10 @@ public class AutoAlign {
 
     public static void setTargetPose(Pose2d pose) {
         AutoAlign.targetPose = pose;
+    }
+
+    public static BooleanSupplier isAtTarget(Target target, double tolerance) {
+        return () -> RobotContainer.getInstance().drive.getPose().getTranslation()
+                .getDistance(targetPose.getTranslation()) < tolerance && AutoAlign.targetType == target;
     }
 }

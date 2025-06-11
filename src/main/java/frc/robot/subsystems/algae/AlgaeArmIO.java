@@ -9,6 +9,9 @@ public interface AlgaeArmIO {
         public double pivotVelocity = 0.0;
         public double pivotVoltage = 0.0;
         public double pivotAmps = 0.0;
+
+        public double algaeDistanceCm = 0.0;
+        public boolean algaeSensorConnected = false;
     }
 
     public default void updateInputs(AlgaeIntakeIOInputs inputs) {}
