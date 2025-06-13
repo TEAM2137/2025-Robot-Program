@@ -196,7 +196,7 @@ public class Drive extends SubsystemBase {
         // Post auto align debug displays in NetworkTables
         Pose2d leftPole = AutoAlign.getFlippedPose(this, Target.LEFT_BRANCH, RobotContainer.getInstance().joystickMotionSupplier());
         Pose2d rightPole = AutoAlign.getFlippedPose(this, Target.RIGHT_BRANCH, RobotContainer.getInstance().joystickMotionSupplier());
-        Pose2d offscreenPole = new Pose2d(new Translation2d(100, 100), new Rotation2d());
+        // Pose2d offscreenPole = new Pose2d(new Translation2d(100, 100), new Rotation2d());
 
         // TODO fix
         // boolean isTargetingLeft = RobotContainer.getInstance().getAsBoolean() && AutoAlign.getTargetPose() != null;
