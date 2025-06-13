@@ -1,12 +1,12 @@
-package frc.robot.subsystems.cage;
+package frc.robot.subsystems.climber;
 
 import org.littletonrobotics.junction.AutoLog;
 
 import edu.wpi.first.math.geometry.Rotation2d;
 
-public interface CageIO {
+public interface ClimberIO {
     @AutoLog
-    public static class CageIOInputs {
+    public static class ClimberIOInputs {
         public double appliedVolts = 0.0;
         public double currentAmps = 0.0;
         public double velocityRadPerSec = 0.0;
@@ -14,7 +14,7 @@ public interface CageIO {
         public Rotation2d armAngle = new Rotation2d();
     }
 
-    public default void updateInputs(CageIOInputs inputs) {}
+    public default void updateInputs(ClimberIOInputs inputs) {}
 
     public default void setPosition(double position) {}
 

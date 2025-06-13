@@ -1,4 +1,4 @@
-package frc.robot.subsystems.cage;
+package frc.robot.subsystems.climber;
 
 import com.revrobotics.spark.SparkLowLevel.MotorType;
 import com.revrobotics.spark.SparkMax;
@@ -13,33 +13,33 @@ import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.util.Units;
 
-public class CageIOSparkMax implements CageIO {
+public class ClimberIOSparkMax implements ClimberIO {
     private SparkMax motor;
-    private PIDController controller = new PIDController(CageConstants.kP, 0, CageConstants.kD);
+    private PIDController controller = new PIDController(ClimberConstants.kP, 0, ClimberConstants.kD);
     private boolean usePID = false;
 
-    public CageIOSparkMax() {
-        motor = new SparkMax(CageConstants.motorID, MotorType.kBrushless);
+    public ClimberIOSparkMax() {
+        motor = new SparkMax(ClimberConstants.motorID, MotorType.kBrushless);
 
         SparkMaxConfig config = new SparkMaxConfig();
         config
             .inverted(false)
             .idleMode(IdleMode.kBrake);
         config.closedLoop.feedbackSensor(FeedbackSensor.kAbsoluteEncoder)
-            .p(CageConstants.kP)
-            .d(CageConstants.kD);
+            .p(ClimberConstants.kP)
+            .d(ClimberConstants.kD);
         config.encoder
-            .positionConversionFactor(1.0 / CageConstants.gearing)
-            .velocityConversionFactor(1.0 / CageConstants.gearing);
+            .positionConversionFactor(1.0 / ClimberConstants.gearing)
+            .velocityConversionFactor(1.0 / ClimberConstants.gearing);
 
         motor.configure(config, ResetMode.kResetSafeParameters, PersistMode.kPersistParameters);
     }
 
     @Override
-    public void updateInputs(CageIOInputs inputs) {
+    public void updateInputs(ClimberIOInputs inputs) {
         if (usePID) {
             double volts = Math.min(Math.max(controller.calculate(motor.getEncoder().getPosition()), -12), 12);
-            if (controller.getSetpoint() == CageConstants.climbPosition) volts *= 0.8;
+            if (controller.getSetpoint() == ClimberConstants.climbPosition) volts *= 0.8;
             motor.getClosedLoopController().setReference(volts, ControlType.kVoltage);
         }
 
@@ -47,7 +47,7 @@ public class CageIOSparkMax implements CageIO {
         inputs.currentAmps = motor.getOutputCurrent();
         inputs.velocityRadPerSec = Units.rotationsPerMinuteToRadiansPerSecond(motor.getEncoder().getVelocity());
         inputs.motorRotations = motor.getEncoder().getPosition();
-        inputs.armAngle = Rotation2d.fromRotations(inputs.motorRotations * CageConstants.motorPositionToArmAngle);
+        inputs.armAngle = Rotation2d.fromRotations(inputs.motorRotations * ClimberConstants.motorPositionToArmAngle);
     }
 
     @Override

@@ -33,7 +33,7 @@ public class RisingEdgeTrigger {
                     }
 
                     previousEdge = currentEdge;
-                    // previousOther = currentOther; 
+                    // previousOther = currentOther;
                 }
             }
         );

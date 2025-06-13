@@ -20,7 +20,7 @@ public class AlgaeConstants {
     public static final double processor = 0.72;
     public static final double lollipopIntake = 0.70;
     public static final double groundIntake = 0.92;
-    
+
     // Sensors
     public static final double algaeSensorRange = 10.0;
 }

@@ -1,4 +1,4 @@
-package frc.robot.subsystems.cage;
+package frc.robot.subsystems.climber;
 
 import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.controller.ArmFeedforward;
@@ -7,14 +7,14 @@ import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.system.plant.DCMotor;
 import edu.wpi.first.wpilibj.simulation.SingleJointedArmSim;
 
-public class CageIOSim implements CageIO {
+public class ClimberIOSim implements ClimberIO {
     public final SingleJointedArmSim armSim;
     public final PIDController pid = new PIDController(60.0, 0, 18.0);
     public final ArmFeedforward ff = new ArmFeedforward(0.0, 0, 0.0);
 
     private double appliedVolts = 0.0;
 
-    public CageIOSim() {
+    public ClimberIOSim() {
         armSim = new SingleJointedArmSim(
             DCMotor.getKrakenX60(1),
             3.0, 1.0,
@@ -25,7 +25,7 @@ public class CageIOSim implements CageIO {
     }
 
     @Override
-    public void updateInputs(CageIOInputs inputs) {
+    public void updateInputs(ClimberIOInputs inputs) {
         double feedForward = ff.calculate(armSim.getAngleRads(), armSim.getVelocityRadPerSec());
         appliedVolts = MathUtil.clamp(pid.calculate(armSim.getAngleRads()) + feedForward, -12.0, 12.0);
         armSim.setInputVoltage(appliedVolts);

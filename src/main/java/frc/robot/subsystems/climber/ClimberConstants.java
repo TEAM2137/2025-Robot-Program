@@ -1,6 +1,6 @@
-package frc.robot.subsystems.cage;
+package frc.robot.subsystems.climber;
 
-public class CageConstants {
+public class ClimberConstants {
     public static final double kP = 1.7;
     public static final double kD = 0.0;
 
