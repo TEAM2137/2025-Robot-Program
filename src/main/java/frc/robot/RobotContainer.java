@@ -34,7 +34,7 @@ import frc.robot.subsystems.algae.AlgaeConstants;
 import frc.robot.subsystems.climber.Climber;
 import frc.robot.subsystems.climber.ClimberIO;
 import frc.robot.subsystems.climber.ClimberIOSim;
-import frc.robot.subsystems.climber.ClimberIOSparkMax;
+import frc.robot.subsystems.climber.ClimberIOReal;
 import frc.robot.subsystems.drive.Drive;
 import frc.robot.subsystems.drive.GyroIO;
 import frc.robot.subsystems.drive.GyroIOPigeon2;
@@ -150,7 +150,7 @@ public class RobotContainer {
             coral = new Coral(new CoralIOTalonFX());
 
             algae = new AlgaeArm(new AlgaeArmIOTalonFX());
-            cage = new Climber(new ClimberIOSparkMax());
+            cage = new Climber(new ClimberIOReal());
 
             break;
 

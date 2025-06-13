@@ -14,11 +14,11 @@ public class Climber extends SubsystemBase{
 
     private boolean shouldZeroOnEnable = true;
 
-    public Climber(ClimberIO io){
+    public Climber(ClimberIO io) {
         this.io = io;
         this.inputs = new ClimberIOInputsAutoLogged();
 
-        // Reset elevator position when enabled for the first time
+        // Reset position when enabled for the first time
         RobotModeTriggers.disabled().negate().and(() -> this.shouldZeroOnEnable)
                 .onTrue(resetPositionCommand().andThen(() -> this.shouldZeroOnEnable = false));
     }
@@ -30,11 +30,11 @@ public class Climber extends SubsystemBase{
     }
 
     public Command setPositionCommand(double targetPosition) {
-        return runOnce(() -> io.setPosition(targetPosition));
+        return runOnce(() -> io.setPivotPosition(targetPosition));
     }
 
     public Command setVoltage(DoubleSupplier voltageSupplier) {
-        return run(() -> io.setVoltage(voltageSupplier.getAsDouble()));
+        return run(() -> io.setPivotVoltage(voltageSupplier.getAsDouble()));
     }
 
     public Command resetPositionCommand() {

@@ -31,14 +31,14 @@ public class ClimberIOSim implements ClimberIO {
         armSim.setInputVoltage(appliedVolts);
         armSim.update(0.02);
 
-        inputs.armAngle = Rotation2d.fromRadians(armSim.getAngleRads());
-        inputs.velocityRadPerSec = armSim.getVelocityRadPerSec();
-        inputs.appliedVolts = appliedVolts;
-        inputs.currentAmps = armSim.getCurrentDrawAmps();
+        inputs.pivotAngle = Rotation2d.fromRadians(armSim.getAngleRads());
+        inputs.pivotVelocityRadPerSec = armSim.getVelocityRadPerSec();
+        inputs.pivotAppliedVolts = appliedVolts;
+        inputs.pivotCurrentAmps = armSim.getCurrentDrawAmps();
     }
 
     @Override
-    public void setPosition(double targetPosition) {
+    public void setPivotPosition(double targetPosition) {
         pid.setSetpoint(Math.toRadians(targetPosition));
     }
 }
