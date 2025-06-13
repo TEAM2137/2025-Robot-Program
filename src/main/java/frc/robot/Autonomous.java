@@ -171,7 +171,7 @@ public class Autonomous {
         dsAttached.onTrue(Commands.runOnce(() -> toReef1.getInitialPose()
             .ifPresent(pose -> startPoses.put(dashboardName, pose))).ignoringDisable(true));
 
-        robot.algaeAlignWhen(targetAlgaeTrigger, false); // TODO fix high/low
+        targetAlgaeTrigger.onTrue(robot.createAlgaeAlign(true)); // TODO fix high/low
         robot.netTossWhen(scoreNetTrigger);
 
         routine.active().onTrue(robot.elevator.resetPositionCommand().andThen(robot.algae.setPivotPosition(AlgaeConstants.stow)));

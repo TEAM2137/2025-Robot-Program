@@ -51,6 +51,7 @@ import frc.robot.subsystems.vision.VisionConstants;
 import frc.robot.subsystems.vision.VisionIO;
 import frc.robot.subsystems.vision.VisionIOLimelight;
 import frc.robot.util.FieldPOIs;
+import frc.robot.util.RisingEdgeTrigger;
 import frc.robot.autoalign.AutoAlign;
 import frc.robot.autoalign.AutoAlign.Target;
 
@@ -81,21 +82,20 @@ public class RobotContainer {
     public final Trigger hasNothing;
     
     // "Nothing" state
-    public final Trigger targetCoralStation;
-    public final Trigger algaeAlign;
-    public final Trigger algaeLow;
-    public final Trigger algaeHigh;
+    public final RisingEdgeTrigger targetCoralStation;
+    public final RisingEdgeTrigger algaeLow;
+    public final RisingEdgeTrigger algaeHigh;
     public final Trigger autoIntake;
 
     // "Coral" state
-    public final Trigger targetRight;
-    public final Trigger targetLeft;
-    public final Trigger scoreCoral;
+    public final RisingEdgeTrigger targetRight;
+    public final RisingEdgeTrigger targetLeft;
+    public final RisingEdgeTrigger scoreCoral;
 
     // "Algae" state
-    public final Trigger targetNet;
-    public final Trigger targetProcessor;
-    public final Trigger scoreAlgae;
+    public final RisingEdgeTrigger targetNet;
+    public final RisingEdgeTrigger targetProcessor;
+    public final RisingEdgeTrigger scoreAlgae;
 
     // Elevator setpoints
     public final Trigger l1 = operatorController.x();
@@ -121,6 +121,9 @@ public class RobotContainer {
     public final Trigger slowEject = operatorController.povRight();
     public final Trigger reverseRollers = operatorController.povLeft();
     public final Trigger elevatorApplyManual = operatorController.back();
+
+    public final Command netPlaceCommand;
+    public final Command intakeCommand;
 
     /** The container for the robot. Contains subsystems, IO devices, and commands. */
     public RobotContainer() {
@@ -208,19 +211,29 @@ public class RobotContainer {
         // Setup triggers
         hasNothing = coral.hasCoral.negate().and(algae.hasAlgae.negate());
 
-        targetRight = driverController.rightBumper().and(coral.hasCoral);
-        targetLeft = driverController.leftBumper().and(coral.hasCoral);
-        scoreCoral = driverController.rightTrigger(0.25).and(coral.hasCoral);
+        targetRight = new RisingEdgeTrigger(driverController.rightBumper(), coral.hasCoral);
+        targetLeft = new RisingEdgeTrigger(driverController.leftBumper(), coral.hasCoral);
+        scoreCoral = new RisingEdgeTrigger(driverController.rightTrigger(0.25), coral.hasCoral);
         autoIntake = coral.isUnused.and(algae.isUnused).and(hasNothing);
 
-        targetNet = driverController.leftBumper().and(algae.hasAlgae);
-        targetProcessor = driverController.rightBumper().and(algae.hasAlgae);
-        scoreAlgae = driverController.rightTrigger(0.25).and(algae.hasAlgae);
+        targetNet = new RisingEdgeTrigger(driverController.leftBumper(), algae.hasAlgae);
+        targetProcessor = new RisingEdgeTrigger(driverController.rightBumper(), algae.hasAlgae);
+        scoreAlgae = new RisingEdgeTrigger(driverController.rightTrigger(0.25), algae.hasAlgae);
 
-        targetCoralStation = driverController.leftBumper().and(hasNothing);
-        algaeLow = driverController.rightBumper().and(hasNothing);
-        algaeHigh = driverController.rightTrigger(0.25).and(hasNothing);
-        algaeAlign = algaeLow.or(algaeHigh);
+        targetCoralStation = new RisingEdgeTrigger(driverController.leftBumper(), hasNothing);
+        algaeLow = new RisingEdgeTrigger(driverController.rightBumper(), hasNothing);
+        algaeHigh = new RisingEdgeTrigger(driverController.rightTrigger(0.25), hasNothing);
+
+        netPlaceCommand = new SequentialCommandGroup(
+            algae.setPivotPosition(AlgaeConstants.stow),
+            Commands.waitSeconds(0.35),
+            coral.setVoltageCommand(3),
+            Commands.waitSeconds(0.3),
+            coral.setVoltageCommand(0),
+            elevator.setPositionCommand(ElevatorConstants.stow)
+        );
+
+        intakeCommand = createIntakeCommand();
 
         // Setup autonomous features
         autonomous = new Autonomous(this);
@@ -239,11 +252,12 @@ public class RobotContainer {
         BooleanSupplier slowMode = () -> driverController.getLeftTriggerAxis() > 0.25;
 
         // Scoring and utility triggers
-        Trigger scoreNet = scoreAlgae.and(new Trigger(() -> AutoAlign.getTargetType().name().contains("NET")));
-        Trigger scoreProcessor = scoreAlgae.and(scoreNet.negate()).and(new Trigger(() -> AutoAlign.getTargetType().name().contains("PROCESSOR")));
+        Trigger isTargetingNet = new Trigger(() -> AutoAlign.getTargetType().name().contains("NET"));
+        RisingEdgeTrigger scoreNet = scoreAlgae.and(isTargetingNet);
+        RisingEdgeTrigger scoreProcessor = scoreAlgae.and(isTargetingNet.negate()).and(new Trigger(() -> AutoAlign.getTargetType().name().contains("PROCESSOR")));
 
-        Trigger scoreL1 = scoreCoral.and(new Trigger(() -> elevator.getScheduledPosition() == ElevatorConstants.L1));
-        Trigger scoreLs234 = scoreCoral.and(new Trigger(() -> elevator.getScheduledPosition() == ElevatorConstants.L1));
+        RisingEdgeTrigger scoreL1 = scoreCoral.and(new Trigger(() -> elevator.getScheduledPosition() == ElevatorConstants.L1));
+        RisingEdgeTrigger scoreLs234 = scoreCoral.and(new Trigger(() -> elevator.getScheduledPosition() == ElevatorConstants.L1));
         
         Trigger leaveReefZone = new Trigger(() -> drive.getPose().getTranslation().getDistance(
             AutoAlign.flipIfRed(FieldPOIs.REEF_CENTER).getTranslation()) > FieldPOIs.REEF_ZONE_DISTANCE);
@@ -268,19 +282,23 @@ public class RobotContainer {
             drive).ignoringDisable(true));
 
         // Driver score sequence (L2-L4)
-        scoreLs234.onTrue(coral.setVelocityCommand(() ->
-            elevator.getTargetPosition() < ElevatorConstants.L4
-                ? CoralConstants.scoreRadPerSec : CoralConstants.l4RadPerSec));
-        scoreLs234.onFalse(coral.setVoltageCommand(0)
-            .andThen(algae.setPivotPosition(AlgaeConstants.stow))
-            .andThen(elevator.setPositionCommand(ElevatorConstants.stow)));
+        scoreLs234.onTrueOnFalse(
+            coral.setVelocityCommand(() ->
+                elevator.getTargetPosition() < ElevatorConstants.L4
+                    ? CoralConstants.scoreRadPerSec : CoralConstants.l4RadPerSec),
+            coral.setVoltageCommand(0)
+                .andThen(algae.setPivotPosition(AlgaeConstants.stow))
+                .andThen(elevator.setPositionCommand(ElevatorConstants.stow))
+        );
 
         // Drive score sequence (L1)
-        scoreL1.onTrue(coral.setVelocityCommand(CoralConstants.l1RadPerSec)
-            .andThen(Commands.waitSeconds(0.1))
-            .andThen(elevator.setPositionCommand(ElevatorConstants.L2)));
-        scoreL1.onFalse(coral.setVoltageCommand(0)
-            .andThen(elevator.setPositionCommand(ElevatorConstants.stow)));
+        scoreL1.onTrueOnFalse(
+            coral.setVelocityCommand(CoralConstants.l1RadPerSec)
+                .andThen(Commands.waitSeconds(0.1))
+                .andThen(elevator.setPositionCommand(ElevatorConstants.L2)),
+            coral.setVoltageCommand(0)
+                .andThen(elevator.setPositionCommand(ElevatorConstants.stow))
+        );
 
         driverController.povDown().onTrue(coral.setVoltageCommand(-12));
         driverController.povDown().onFalse(coral.setVoltageCommand(0));
@@ -292,11 +310,11 @@ public class RobotContainer {
             .beforeStarting(() -> AutoAlign.setScheduledElevatorHeight(elevator.getScheduledPosition())));
 
         // Driver algae auto align
-        algaeAlignWhen(algaeHigh, true);
-        algaeAlignWhen(algaeLow, false);
+        algaeHigh.whileTrue(createAlgaeAlign(true));
+        algaeLow.whileTrue(createAlgaeAlign(false));
 
         // Stow after grabbing algae and leaving reef zone
-        leaveReefZone.and(RobotModeTriggers.autonomous().negate()).and(algae.hasAlgae).and(scoreAlgae.negate())
+        leaveReefZone.and(RobotModeTriggers.autonomous().negate()).and(algae.hasAlgae).and(driverController.rightTrigger(0.25).negate())
             .onTrue(AutoAlign.clearTargetType()
             .andThen(elevator.setPositionCommand(ElevatorConstants.stow))
             .andThen(Commands.waitSeconds(0.5))
@@ -308,7 +326,7 @@ public class RobotContainer {
                 .andThen(Commands.runOnce(() -> AutoAlign.setScheduledElevatorHeight(ElevatorConstants.L4)))));
 
         // Driver score sequence (net)
-        netPlaceWhen(scoreAlgae);
+        scoreNet.onTrue(netPlaceCommand);
 
         // Driver processor auto align
         targetProcessor.onTrue(AutoAlign.setTargetType(AutoAlign.Target.PROCESSOR)
@@ -324,9 +342,9 @@ public class RobotContainer {
 
         // Intake + coral station align 
         targetCoralStation.whileTrue(DriveCommands.alignToCoralStation(drive, joystickSupplier, slowMode));
-        intakeWhen(targetCoralStation);
-        intakeWhen(intakeManual);
-        intakeWhen(autoIntake);
+        targetCoralStation.onTrue(intakeCommand);
+        intakeManual.onTrue(intakeCommand);
+        autoIntake.onTrue(intakeCommand);
 
         // Ground intake
         groundIntake.onTrue(algae.setPivotPosition(AlgaeConstants.groundIntake)
@@ -385,30 +403,20 @@ public class RobotContainer {
 
     public static RobotContainer getInstance() { return instance; }
 
-    public void algaeAlignWhen(Trigger trigger, boolean high) {
-        trigger.onTrue(Commands.waitSeconds(0.25).andThen(algae.setPivotPosition(AlgaeConstants.grab)));
-        trigger.whileTrue(AutoAlign.autoAlignTo(Target.ALGAE_ALIGN, this, joystickSupplier)
+    public Command createAlgaeAlign(boolean high) {
+        return AutoAlign.autoAlignTo(Target.ALGAE_ALIGN, this, joystickSupplier)
             .beforeStarting(() -> {
                 // Schedule the proper elevator height
                 AutoAlign.setScheduledElevatorHeight(high ? ElevatorConstants.algaeHigh : ElevatorConstants.algaeLow);
-            }).until(AutoAlign.isAtTarget(Target.ALGAE_ALIGN, 0.1))
+            })
+            .until(AutoAlign.isAtTarget(Target.ALGAE_ALIGN, 0.1))
             .andThen(new ParallelCommandGroup(
                 AutoAlign.autoAlignTo(Target.ALGAE_GRAB, this, joystickSupplier),
                 algae.setPivotPosition(AlgaeConstants.grab)
                     .andThen(coral.setVelocityCommand(CoralConstants.algaeGrabRadPerSec))
             ))
-        );
-    }
-
-    public void netPlaceWhen(Trigger trigger) {
-        trigger.onTrue(new SequentialCommandGroup(
-            algae.setPivotPosition(AlgaeConstants.stow),
-            Commands.waitSeconds(0.35),
-            coral.setVoltageCommand(3),
-            Commands.waitSeconds(0.3),
-            coral.setVoltageCommand(0),
-            elevator.setPositionCommand(ElevatorConstants.stow)
-        ));
+            .deadlineFor(Commands.waitSeconds(0.25).andThen(algae.setPivotPosition(AlgaeConstants.grab)));
+        
     }
 
     @Deprecated
@@ -428,7 +436,7 @@ public class RobotContainer {
         ));
     }
 
-    public void intakeWhen(Trigger trigger) {
+    public Command createIntakeCommand() {
         Command armIntakeAssist = algae.setPivotPosition(AlgaeConstants.stow).asProxy()
             .andThen(Commands.waitSeconds(1.0))
             .andThen(algae.setPivotPosition(AlgaeConstants.intake).asProxy())
@@ -439,7 +447,6 @@ public class RobotContainer {
             coral.completeIntaking().deadlineFor(armIntakeAssist.repeatedly()),
             coral.setVoltageCommand(0)
         );
-        trigger.onTrue(Commands.runOnce(() -> { if (intakeCommand.isScheduled()) intakeCommand.cancel(); }));
-        trigger.onTrue(intakeCommand);
+        return Commands.runOnce(() -> { if (intakeCommand.isScheduled()) intakeCommand.cancel(); }).andThen(intakeCommand);
     }
 }

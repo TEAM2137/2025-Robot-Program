@@ -4,9 +4,9 @@ import java.util.function.BooleanSupplier;
 
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
+import edu.wpi.first.wpilibj2.command.Commands;
 
 public class RisingEdgeTrigger {
-
     private BooleanSupplier risingEdge;
     private BooleanSupplier otherCondition;
 
@@ -37,5 +37,44 @@ public class RisingEdgeTrigger {
                 }
             }
         );
+    }
+
+    /**
+     * @param onTrue The command to run when the trigger is true
+     * @param onFalse The command to run when the trigger is false
+     */
+    public void onTrueOnFalse(Command onTrue, Command onFalse) {
+        CommandScheduler.getInstance().getDefaultButtonLoop().bind(
+            new Runnable() {
+                private boolean previousEdge = risingEdge.getAsBoolean();
+
+                @Override
+                public void run() {
+                    boolean currentEdge = risingEdge.getAsBoolean();
+                    boolean currentOther = otherCondition.getAsBoolean();
+
+                    if (!previousEdge && currentEdge && currentOther) {
+                        onTrue.schedule();
+                    } else if (!currentEdge) {
+                        onFalse.schedule();
+                    }
+
+                    previousEdge = currentEdge;
+                }
+            }
+        );
+    }
+
+    public void onTrue(Command onTrue) {
+        onTrueOnFalse(onTrue, Commands.none());
+    }
+
+    public void onFalse(Command onFalse) {
+        onTrueOnFalse(Commands.none(), onFalse);
+    }
+
+    public RisingEdgeTrigger and(BooleanSupplier other) {
+        this.otherCondition = () -> (otherCondition.getAsBoolean() && other.getAsBoolean());
+        return this;
     }
 }

@@ -198,11 +198,12 @@ public class Drive extends SubsystemBase {
         Pose2d rightPole = AutoAlign.getFlippedPose(this, Target.RIGHT_BRANCH, RobotContainer.getInstance().joystickMotionSupplier());
         Pose2d offscreenPole = new Pose2d(new Translation2d(100, 100), new Rotation2d());
 
-        boolean isTargetingLeft = RobotContainer.getInstance().targetLeft.getAsBoolean() && AutoAlign.getTargetPose() != null;
-        boolean isTargetingRight = RobotContainer.getInstance().targetRight.getAsBoolean() && AutoAlign.getTargetPose() != null;
+        // TODO fix
+        // boolean isTargetingLeft = RobotContainer.getInstance().getAsBoolean() && AutoAlign.getTargetPose() != null;
+        // boolean isTargetingRight = RobotContainer.getInstance().targetRight.getAsBoolean() && AutoAlign.getTargetPose() != null;
 
-        Logger.recordOutput("AutoAlign/LeftBranch", isTargetingLeft ? AutoAlign.getTargetPose() : offscreenPole);
-        Logger.recordOutput("AutoAlign/RightBranch", isTargetingRight ? AutoAlign.getTargetPose() : offscreenPole);
+        // Logger.recordOutput("AutoAlign/LeftBranch", isTargetingLeft ? AutoAlign.getTargetPose() : offscreenPole);
+        // Logger.recordOutput("AutoAlign/RightBranch", isTargetingRight ? AutoAlign.getTargetPose() : offscreenPole);
 
         Logger.recordOutput("AutoAlign/ToLeftBranch", createTrajectoryTo(leftPole.getTranslation()));
         Logger.recordOutput("AutoAlign/ToRightBranch", createTrajectoryTo(rightPole.getTranslation()));
