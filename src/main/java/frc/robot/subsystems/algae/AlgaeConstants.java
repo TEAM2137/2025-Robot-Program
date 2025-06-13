@@ -3,6 +3,8 @@ package frc.robot.subsystems.algae;
 public class AlgaeConstants {
     public static final int deviceID = 40;
     public static final int encoderID = 41;
+    public static final int algaeSensorID = 42;
+
     public static final double encoderOffset = 0.23388671875;//0.24389;
     public static final double gearing = 4.0;
 
@@ -20,7 +22,7 @@ public class AlgaeConstants {
     public static final double processor = 0.72;
     public static final double lollipopIntake = 0.70;
     public static final double groundIntake = 0.92;
-    
+
     // Sensors
-    public static final double algaeSensorRange = 10.0;
+    public static final double algaeSensorRange = 20.0;
 }

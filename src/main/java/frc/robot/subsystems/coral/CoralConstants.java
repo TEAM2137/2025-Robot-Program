@@ -4,6 +4,7 @@ public class CoralConstants {
     public static final int rollersID = 32;
     public static final int endEffectorSensorID = 33;
     public static final int funnelSensorID = 34;
+    public static final int coralSensorID = 35;
 
     // Sensor detection range (cm)
     public static final double endEffectorSensorRange = 6.0;

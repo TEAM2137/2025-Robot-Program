@@ -80,7 +80,7 @@ public class RobotContainer {
     /* Triggers */
 
     public final Trigger hasNothing;
-    
+
     // "Nothing" state
     public final RisingEdgeTrigger targetCoralStation;
     public final RisingEdgeTrigger algaeLow;
@@ -258,7 +258,7 @@ public class RobotContainer {
 
         RisingEdgeTrigger scoreL1 = scoreCoral.and(new Trigger(() -> elevator.getScheduledPosition() == ElevatorConstants.L1));
         RisingEdgeTrigger scoreLs234 = scoreCoral.and(new Trigger(() -> elevator.getScheduledPosition() == ElevatorConstants.L1));
-        
+
         Trigger leaveReefZone = new Trigger(() -> drive.getPose().getTranslation().getDistance(
             AutoAlign.flipIfRed(FieldPOIs.REEF_CENTER).getTranslation()) > FieldPOIs.REEF_ZONE_DISTANCE);
 
@@ -340,7 +340,7 @@ public class RobotContainer {
             .andThen(Commands.waitSeconds(0.5))
             .andThen(coral.setVoltageCommand(0)));
 
-        // Intake + coral station align 
+        // Intake + coral station align
         targetCoralStation.whileTrue(DriveCommands.alignToCoralStation(drive, joystickSupplier, slowMode));
         targetCoralStation.onTrue(intakeCommand);
         intakeManual.onTrue(intakeCommand);
@@ -416,7 +416,7 @@ public class RobotContainer {
                     .andThen(coral.setVelocityCommand(CoralConstants.algaeGrabRadPerSec))
             ))
             .deadlineFor(Commands.waitSeconds(0.25).andThen(algae.setPivotPosition(AlgaeConstants.grab)));
-        
+
     }
 
     @Deprecated
