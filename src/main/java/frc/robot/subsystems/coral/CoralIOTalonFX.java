@@ -22,6 +22,7 @@ public class CoralIOTalonFX implements CoralIO {
     public TalonFX rollers = new TalonFX(CoralConstants.rollersID, "rio");
     public CANrange endEffectorSensor = new CANrange(CoralConstants.endEffectorSensorID, "rio");
     public CANrange funnelSensor = new CANrange(CoralConstants.funnelSensorID, "rio");
+    public CANrange coralSensor = new CANrange(CoralConstants.coralSensorID, "rio");
 
     private VelocityVoltage velocityControl = new VelocityVoltage(0.0);
     private VoltageOut voltageControl = new VoltageOut(0.0);
@@ -63,6 +64,10 @@ public class CoralIOTalonFX implements CoralIO {
         StatusSignal<Distance> fDistance = funnelSensor.getDistance();
         inputs.funnelConnected = BaseStatusSignal.refreshAll(fDistance).equals(StatusCode.OK);
         inputs.funnelDistanceCm = fDistance.getValue().in(Centimeters);
+
+        StatusSignal<Distance> cDistance = coralSensor.getDistance();
+        inputs.coralSensorConnected = BaseStatusSignal.refreshAll(cDistance).equals(StatusCode.OK);
+        inputs.coralDistanceCm = cDistance.getValue().in(Centimeters);
     }
 
     @Override

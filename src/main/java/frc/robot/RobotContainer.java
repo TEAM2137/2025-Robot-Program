@@ -282,14 +282,12 @@ public class RobotContainer {
             drive).ignoringDisable(true));
 
         // Driver score sequence (L2-L4)
-        scoreLs234.onTrueOnFalse(
-            coral.setVelocityCommand(() ->
-                elevator.getTargetPosition() < ElevatorConstants.L4
-                    ? CoralConstants.scoreRadPerSec : CoralConstants.l4RadPerSec),
-            coral.setVoltageCommand(0)
-                .andThen(algae.setPivotPosition(AlgaeConstants.stow))
-                .andThen(elevator.setPositionCommand(ElevatorConstants.stow))
-        );
+        scoreLs234.onTrue(coral.setVelocityCommand(() ->elevator.getTargetPosition() < ElevatorConstants.L4
+                ? CoralConstants.scoreRadPerSec : CoralConstants.l4RadPerSec)
+            .until(coral.hasCoral.negate())
+            .andThen(coral.setVoltageCommand(0))
+            .andThen(algae.setPivotPosition(AlgaeConstants.stow))
+            .andThen(elevator.setPositionCommand(ElevatorConstants.stow)));
 
         // Drive score sequence (L1)
         scoreL1.onTrueOnFalse(
@@ -297,8 +295,7 @@ public class RobotContainer {
                 .andThen(Commands.waitSeconds(0.1))
                 .andThen(elevator.setPositionCommand(ElevatorConstants.L2)),
             coral.setVoltageCommand(0)
-                .andThen(elevator.setPositionCommand(ElevatorConstants.stow))
-        );
+                .andThen(elevator.setPositionCommand(ElevatorConstants.stow)));
 
         driverController.povDown().onTrue(coral.setVoltageCommand(-12));
         driverController.povDown().onFalse(coral.setVoltageCommand(0));
