@@ -32,6 +32,7 @@ import frc.robot.subsystems.algae.AlgaeArmIOSim;
 import frc.robot.subsystems.algae.AlgaeArmIOTalonFX;
 import frc.robot.subsystems.algae.AlgaeConstants;
 import frc.robot.subsystems.climber.Climber;
+import frc.robot.subsystems.climber.ClimberConstants;
 import frc.robot.subsystems.climber.ClimberIO;
 import frc.robot.subsystems.climber.ClimberIOSim;
 import frc.robot.subsystems.climber.ClimberIOReal;
@@ -64,7 +65,7 @@ public class RobotContainer {
     public final Elevator elevator;
     public final Coral coral;
     public final AlgaeArm algae;
-    public final Climber cage;
+    public final Climber climber;
 
     // Auto
     public final Autonomous autonomous;
@@ -109,6 +110,11 @@ public class RobotContainer {
     public final Trigger lollipopIntake = operatorController.leftTrigger(0.25);
     public final Trigger dropAlgae = operatorController.rightTrigger(0.25);
 
+    // Climber
+    public final Trigger climberStow = operatorController.povLeft().or(operatorController.povRight());
+    public final Trigger climberDeploy = operatorController.povUp();
+    public final Trigger climberClimb = operatorController.povDown();
+
     // Manual subsystem controls
     public final Trigger elevatorManual = operatorController.rightTrigger(0.35);
     public final Trigger intakeManual = operatorController.rightBumper();
@@ -150,7 +156,7 @@ public class RobotContainer {
             coral = new Coral(new CoralIOTalonFX());
 
             algae = new AlgaeArm(new AlgaeArmIOTalonFX());
-            cage = new Climber(new ClimberIOReal());
+            climber = new Climber(new ClimberIOReal());
 
             break;
 
@@ -174,7 +180,7 @@ public class RobotContainer {
             coral = new Coral(new CoralIOSim());
 
             algae = new AlgaeArm(new AlgaeArmIOSim());
-            cage = new Climber(new ClimberIOSim() {});
+            climber = new Climber(new ClimberIOSim() {});
 
             break;
 
@@ -198,7 +204,7 @@ public class RobotContainer {
             coral = new Coral(new CoralIO() {});
 
             algae = new AlgaeArm(new AlgaeArmIO() {});
-            cage = new Climber(new ClimberIO() {});
+            climber = new Climber(new ClimberIO() {});
 
             break;
         }
@@ -386,6 +392,23 @@ public class RobotContainer {
         // Run the coral rollers slowly in reverse
         reverseRollers.onTrue(coral.setVoltageCommand(-4));
         reverseRollers.onFalse(coral.setVoltageCommand(0.0));
+
+        // Climber deploy
+        climberDeploy.onTrue(climber.setPivotPosition(ClimberConstants.deployPosition)
+            .andThen(climber.setRollersVoltage(ClimberConstants.deployRollerVoltage)));
+
+        // Climber stow
+        climberStow.onTrue(climber.setPivotPosition(ClimberConstants.stowPosition)
+            .andThen(climber.setRollersVoltage(0)));
+
+        // Climber stow
+        climberClimb.onTrue(climber.setPivotPosition(ClimberConstants.climbPosition)
+            .andThen(climber.setRollersVoltage(ClimberConstants.climbRollerVoltage)));
+
+        // Manual elevator pivot
+        elevatorManual.whileTrue(climber.setPivotVoltage(() ->
+            MathUtil.applyDeadband(-operatorController.getLeftY(), 0.1) * 10));
+        elevatorManual.onFalse(climber.setPivotVoltage(() -> 0));
     }
 
     /**

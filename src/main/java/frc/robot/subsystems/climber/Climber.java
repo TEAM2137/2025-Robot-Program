@@ -29,11 +29,15 @@ public class Climber extends SubsystemBase{
         Logger.processInputs("Climber", inputs);
     }
 
-    public Command setPositionCommand(double targetPosition) {
+    public Command setRollersVoltage(double volts) {
+        return runOnce(() -> io.setRollersVoltage(volts));
+    }
+
+    public Command setPivotPosition(double targetPosition) {
         return runOnce(() -> io.setPivotPosition(targetPosition));
     }
 
-    public Command setVoltage(DoubleSupplier voltageSupplier) {
+    public Command setPivotVoltage(DoubleSupplier voltageSupplier) {
         return run(() -> io.setPivotVoltage(voltageSupplier.getAsDouble()));
     }
 
