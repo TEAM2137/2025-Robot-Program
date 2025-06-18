@@ -379,7 +379,10 @@ public class AutoAlign {
     }
 
     public static BooleanSupplier isAtTarget(Target target, double tolerance) {
-        return () -> RobotContainer.getInstance().drive.getPose().getTranslation()
+        return () -> {
+            if (targetPose == null) return false;
+            return RobotContainer.getInstance().drive.getPose().getTranslation()
                 .getDistance(targetPose.getTranslation()) < tolerance && AutoAlign.targetType == target;
+        };
     }
 }

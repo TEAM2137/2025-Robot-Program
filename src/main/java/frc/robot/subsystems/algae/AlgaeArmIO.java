@@ -10,7 +10,7 @@ public interface AlgaeArmIO {
         public double pivotVoltage = 0.0;
         public double pivotAmps = 0.0;
 
-        public double algaeDistanceCm = 0.0;
+        public boolean algaeIsDetected = false;
         public boolean algaeSensorConnected = false;
     }
 

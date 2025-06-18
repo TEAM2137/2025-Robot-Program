@@ -17,7 +17,6 @@ public class AlgaeArm extends SubsystemBase {
 
     public final Trigger isUnused;
     public final Trigger hasAlgae;
-    private boolean isAlgaeSensorInRange;
 
     private final Alert algaeSensorAlert = new Alert("Algae distance sensor disconnected. you're cooked", AlertType.kError);
 
@@ -26,7 +25,7 @@ public class AlgaeArm extends SubsystemBase {
     public AlgaeArm(AlgaeArmIO io) {
         this.io = io;
         this.inputs = new AlgaeIntakeIOInputsAutoLogged();
-        this.hasAlgae = new Trigger(() -> isAlgaeSensorInRange);
+        this.hasAlgae = new Trigger(() -> inputs.algaeIsDetected).debounce(0.1);
 
         this.isUnused = new Trigger(() -> getCurrentCommand() == null);
 
@@ -40,7 +39,6 @@ public class AlgaeArm extends SubsystemBase {
         io.updateInputs(inputs);
 
         algaeSensorAlert.set(!inputs.algaeSensorConnected);
-        isAlgaeSensorInRange = inputs.algaeDistanceCm < AlgaeConstants.algaeSensorRange;
 
         Logger.processInputs("Algae", inputs);
     }

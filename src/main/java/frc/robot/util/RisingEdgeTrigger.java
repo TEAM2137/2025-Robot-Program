@@ -53,11 +53,8 @@ public class RisingEdgeTrigger {
                     boolean currentEdge = risingEdge.getAsBoolean();
                     boolean currentOther = otherCondition.getAsBoolean();
 
-                    if (!previousEdge && currentEdge && currentOther) {
-                        onTrue.schedule();
-                    } else if (!currentEdge) {
-                        onFalse.schedule();
-                    }
+                    if (!previousEdge && currentEdge && currentOther) onTrue.schedule();
+                    if (previousEdge && !currentEdge) onFalse.schedule();
 
                     previousEdge = currentEdge;
                 }
@@ -74,7 +71,6 @@ public class RisingEdgeTrigger {
     }
 
     public RisingEdgeTrigger and(BooleanSupplier other) {
-        this.otherCondition = () -> (otherCondition.getAsBoolean() && other.getAsBoolean());
-        return this;
+        return new RisingEdgeTrigger(risingEdge, () -> otherCondition.getAsBoolean() && other.getAsBoolean());
     }
 }

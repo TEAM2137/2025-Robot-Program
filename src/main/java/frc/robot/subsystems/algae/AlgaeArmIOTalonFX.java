@@ -3,11 +3,15 @@ package frc.robot.subsystems.algae;
 import static edu.wpi.first.units.Units.Hertz;
 
 import com.ctre.phoenix6.BaseStatusSignal;
+import com.ctre.phoenix6.StatusCode;
+import com.ctre.phoenix6.StatusSignal;
 import com.ctre.phoenix6.configs.CANcoderConfiguration;
+import com.ctre.phoenix6.configs.ProximityParamsConfigs;
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
 import com.ctre.phoenix6.controls.MotionMagicVoltage;
 import com.ctre.phoenix6.controls.VoltageOut;
 import com.ctre.phoenix6.hardware.CANcoder;
+import com.ctre.phoenix6.hardware.CANrange;
 import com.ctre.phoenix6.hardware.TalonFX;
 import com.ctre.phoenix6.signals.FeedbackSensorSourceValue;
 import com.ctre.phoenix6.signals.InvertedValue;
@@ -16,6 +20,7 @@ import com.ctre.phoenix6.signals.NeutralModeValue;
 public class AlgaeArmIOTalonFX implements AlgaeArmIO {
     public TalonFX pivotMotor = new TalonFX(AlgaeConstants.deviceID, "rio");
     public CANcoder encoder = new CANcoder(AlgaeConstants.encoderID, "rio");
+    public CANrange algaeSensor = new CANrange(AlgaeConstants.algaeSensorID, "rio");
 
     private double targetPosition;
 
@@ -65,6 +70,9 @@ public class AlgaeArmIOTalonFX implements AlgaeArmIO {
 
         // Clear unused signals
         pivotMotor.optimizeBusUtilization();
+
+        algaeSensor.getConfigurator().apply(new ProximityParamsConfigs()
+            .withProximityThreshold(AlgaeConstants.algaeSensorRange / 100.0));
     }
 
     @Override
@@ -78,6 +86,10 @@ public class AlgaeArmIOTalonFX implements AlgaeArmIO {
         inputs.pivotVelocity = pivotMotor.getVelocity().getValueAsDouble();
         inputs.pivotVoltage = pivotMotor.getMotorVoltage().getValueAsDouble();
         inputs.pivotAmps = pivotMotor.getSupplyCurrent().getValueAsDouble();
+
+        StatusSignal<Boolean> algaeIsDetected = algaeSensor.getIsDetected();
+        inputs.algaeSensorConnected = BaseStatusSignal.refreshAll(algaeIsDetected).equals(StatusCode.OK);
+        inputs.algaeIsDetected = algaeSensor.getIsDetected().getValue();
     }
 
     @Override
