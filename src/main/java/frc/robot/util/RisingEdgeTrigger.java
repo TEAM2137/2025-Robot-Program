@@ -9,10 +9,16 @@ import edu.wpi.first.wpilibj2.command.Commands;
 public class RisingEdgeTrigger {
     private BooleanSupplier risingEdge;
     private BooleanSupplier otherCondition;
+    private boolean stopOnOtherFalse;
 
     public RisingEdgeTrigger(BooleanSupplier risingEdge, BooleanSupplier otherCondition) {
+        this(risingEdge, otherCondition, false);
+    }
+
+    public RisingEdgeTrigger(BooleanSupplier risingEdge, BooleanSupplier otherCondition, boolean stopOnOtherFalse) {
         this.risingEdge = risingEdge;
         this.otherCondition = otherCondition;
+        this.stopOnOtherFalse = stopOnOtherFalse;
     }
 
     public void whileTrue(Command command) {
@@ -28,7 +34,7 @@ public class RisingEdgeTrigger {
 
                     if (!previousEdge && currentEdge && currentOther) {
                         command.schedule();
-                    } else if (!currentEdge) {
+                    } else if (!currentEdge || (!currentOther && stopOnOtherFalse)) {
                         command.cancel();
                     }
 
@@ -47,6 +53,7 @@ public class RisingEdgeTrigger {
         CommandScheduler.getInstance().getDefaultButtonLoop().bind(
             new Runnable() {
                 private boolean previousEdge = risingEdge.getAsBoolean();
+                private boolean previousOther = otherCondition.getAsBoolean();
 
                 @Override
                 public void run() {
@@ -54,9 +61,10 @@ public class RisingEdgeTrigger {
                     boolean currentOther = otherCondition.getAsBoolean();
 
                     if (!previousEdge && currentEdge && currentOther) onTrue.schedule();
-                    if (previousEdge && !currentEdge) onFalse.schedule();
+                    if ((previousEdge && previousOther) && (!currentEdge || !currentOther)) onFalse.schedule();
 
                     previousEdge = currentEdge;
+                    previousOther = currentOther;
                 }
             }
         );

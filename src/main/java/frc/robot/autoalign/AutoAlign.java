@@ -378,11 +378,14 @@ public class AutoAlign {
         AutoAlign.targetPose = pose;
     }
 
-    public static BooleanSupplier isAtTarget(Target target, double tolerance) {
+    public static BooleanSupplier isAtTarget(Target target, double translationTolerance, double rotationTolerance) {
         return () -> {
-            if (targetPose == null) return false;
-            return RobotContainer.getInstance().drive.getPose().getTranslation()
-                .getDistance(targetPose.getTranslation()) < tolerance && AutoAlign.targetType == target;
+            if (targetPose == null || AutoAlign.targetType != target) return false;
+            boolean translationSatisfied = RobotContainer.getInstance().drive.getPose().getTranslation()
+                .getDistance(targetPose.getTranslation()) < translationTolerance;
+            boolean rotationSatisfied = RobotContainer.getInstance().drive.getPose().getRotation()
+                .minus(targetPose.getRotation()).getDegrees() < translationTolerance;
+            return translationSatisfied && rotationSatisfied;
         };
     }
 }

@@ -39,7 +39,6 @@ import frc.robot.Constants.Mode;
 import frc.robot.RobotContainer;
 import frc.robot.generated.TunerConstants;
 import frc.robot.autoalign.*;
-import frc.robot.autoalign.AutoAlign.Target;
 
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
@@ -194,20 +193,7 @@ public class Drive extends SubsystemBase {
         gyroDisconnectedAlert.set(!gyroInputs.connected && Constants.currentMode != Mode.SIM);
 
         // Post auto align debug displays in NetworkTables
-        Pose2d leftPole = AutoAlign.getFlippedPose(this, Target.LEFT_BRANCH, RobotContainer.getInstance().joystickMotionSupplier());
-        Pose2d rightPole = AutoAlign.getFlippedPose(this, Target.RIGHT_BRANCH, RobotContainer.getInstance().joystickMotionSupplier());
-        // Pose2d offscreenPole = new Pose2d(new Translation2d(100, 100), new Rotation2d());
-
-        // TODO fix
-        // boolean isTargetingLeft = RobotContainer.getInstance().getAsBoolean() && AutoAlign.getTargetPose() != null;
-        // boolean isTargetingRight = RobotContainer.getInstance().targetRight.getAsBoolean() && AutoAlign.getTargetPose() != null;
-
-        // Logger.recordOutput("AutoAlign/LeftBranch", isTargetingLeft ? AutoAlign.getTargetPose() : offscreenPole);
-        // Logger.recordOutput("AutoAlign/RightBranch", isTargetingRight ? AutoAlign.getTargetPose() : offscreenPole);
-
-        Logger.recordOutput("AutoAlign/ToLeftBranch", createTrajectoryTo(leftPole.getTranslation()));
-        Logger.recordOutput("AutoAlign/ToRightBranch", createTrajectoryTo(rightPole.getTranslation()));
-
+        Logger.recordOutput("AutoAlign/TargetPose", AutoAlign.getTargetPose());
         Logger.recordOutput("AutoAlign/JoystickVector", createTrajectoryTo(getPose().getTranslation()
             .minus(RobotContainer.getInstance().joystickMotionSupplier().get().times(1.5))));
 
