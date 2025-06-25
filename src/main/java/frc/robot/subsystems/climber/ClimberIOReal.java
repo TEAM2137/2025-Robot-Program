@@ -4,7 +4,9 @@ import com.revrobotics.spark.SparkLowLevel.MotorType;
 
 import static edu.wpi.first.units.Units.RadiansPerSecond;
 
+import com.ctre.phoenix6.configs.TalonFXConfiguration;
 import com.ctre.phoenix6.hardware.TalonFX;
+import com.ctre.phoenix6.signals.InvertedValue;
 import com.revrobotics.spark.SparkMax;
 import com.revrobotics.spark.config.ClosedLoopConfig.FeedbackSensor;
 import com.revrobotics.spark.config.SparkBaseConfig.IdleMode;
@@ -38,6 +40,8 @@ public class ClimberIOReal implements ClimberIO {
             .velocityConversionFactor(1.0 / ClimberConstants.gearing);
 
         pivotMotor.configure(config, ResetMode.kResetSafeParameters, PersistMode.kPersistParameters);
+
+        rollersMotor.getConfigurator().apply(new TalonFXConfiguration().MotorOutput.withInverted(InvertedValue.Clockwise_Positive));
     }
 
     @Override

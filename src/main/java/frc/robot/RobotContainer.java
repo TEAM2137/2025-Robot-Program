@@ -359,7 +359,7 @@ public class RobotContainer {
 
         // Ground intake
         groundIntake.onTrue(algae.setPivotPosition(AlgaeConstants.groundIntake)
-            .andThen(coral.setVelocityCommand(CoralConstants.algaeGrabRadPerSec))
+            .andThen(coral.setVelocityCommand(CoralConstants.algaeGrabRadPerSec)).repeatedly()
             .withName("Ground Algae Intake"));
         groundIntake.onFalse(Commands.waitSeconds(0.2)
             .andThen(algae.setPivotPosition(AlgaeConstants.hold))
@@ -400,12 +400,12 @@ public class RobotContainer {
         elevatorApplyManual.onTrue(elevator.applyScheduledPositionCommand().withName("Apply Elevator Position"));
 
         // Run the coral rollers slowly
-        slowEject.onTrue(coral.setVoltageCommand(4.5).withName("Slow Coral Eject"));
-        slowEject.onFalse(coral.setVoltageCommand(0.0));
+        // slowEject.onTrue(coral.setVoltageCommand(4.5).withName("Slow Coral Eject"));
+        // slowEject.onFalse(coral.setVoltageCommand(0.0));
 
         // Run the coral rollers slowly in reverse
-        reverseRollers.onTrue(coral.setVoltageCommand(-4).withName("Reverse Coral Eject"));
-        reverseRollers.onFalse(coral.setVoltageCommand(0.0));
+        // reverseRollers.onTrue(coral.setVoltageCommand(-4).withName("Reverse Coral Eject"));
+        // reverseRollers.onFalse(coral.setVoltageCommand(0.0));
 
         // Climber deploy
         climberDeploy.onTrue(climber.setPivotPosition(ClimberConstants.deployPosition)
@@ -415,14 +415,19 @@ public class RobotContainer {
         climberStow.onTrue(climber.setPivotPosition(ClimberConstants.stowPosition)
             .andThen(climber.setRollersVoltage(0)));
 
-        // Climber stow
-        climberClimb.onTrue(climber.setPivotPosition(ClimberConstants.climbPosition)
-            .andThen(climber.setRollersVoltage(ClimberConstants.climbRollerVoltage)));
+        // Climber climb
+        climberClimb.whileTrue(climber.setPivotPosition(ClimberConstants.climbPosition)
+            .andThen(climber.setRollersVoltage(ClimberConstants.climbRollerVoltage))
+            .andThen(algae.setPivotPosition(AlgaeConstants.hold))
+            .andThen(coral.setVoltageCommand(0)).repeatedly());
 
         // Manual elevator pivot
         elevatorManual.whileTrue(climber.setPivotVoltage(() ->
             MathUtil.applyDeadband(-operatorController.getLeftY(), 0.1) * 10));
         elevatorManual.onFalse(climber.setPivotVoltage(() -> 0));
+
+        // Zero climber
+        elevatorManual.and(operatorController.rightStick()).onTrue(climber.resetPositionCommand());
     }
 
     public void logTriggers() {
