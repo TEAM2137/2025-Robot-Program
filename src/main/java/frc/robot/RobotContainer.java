@@ -16,8 +16,10 @@ import edu.wpi.first.wpilibj.GenericHID;
 import edu.wpi.first.wpilibj.XboxController;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
+import edu.wpi.first.wpilibj2.command.InstantCommand;
 import edu.wpi.first.wpilibj2.command.ParallelCommandGroup;
 import edu.wpi.first.wpilibj2.command.SequentialCommandGroup;
+import edu.wpi.first.wpilibj2.command.WaitCommand;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import edu.wpi.first.wpilibj2.command.button.RobotModeTriggers;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
@@ -133,6 +135,9 @@ public class RobotContainer {
     public final Command netPlaceCommand;
     public final Command intakeCommand;
 
+    // Leave Reef Zone
+    public final Trigger leaveReefZone;
+
     /** The container for the robot. Contains subsystems, IO devices, and commands. */
     public RobotContainer() {
         RobotContainer.instance = this;
@@ -219,10 +224,13 @@ public class RobotContainer {
         // Setup triggers
         hasNothing = coral.hasCoral.negate().and(algae.hasAlgae.negate());
 
-        targetRight = new RisingEdgeTrigger(driverController.rightBumper(), coral.hasCoral);
-        targetLeft = new RisingEdgeTrigger(driverController.leftBumper(), coral.hasCoral);
+        leaveReefZone = new Trigger(() -> drive.getPose().getTranslation().getDistance(
+            AutoAlign.flipIfRed(FieldPOIs.REEF_CENTER).getTranslation()) > FieldPOIs.REEF_ZONE_DISTANCE);
+
+        targetRight = new RisingEdgeTrigger(driverController.rightBumper(), coral.hasCoral, true);
+        targetLeft = new RisingEdgeTrigger(driverController.leftBumper(), coral.hasCoral, true);
         scoreCoral = new RisingEdgeTrigger(driverController.rightTrigger(0.25), coral.hasCoral);
-        autoIntake = coral.isUnused.and(algae.isUnused).and(hasNothing).and(RobotModeTriggers.teleop());
+        autoIntake = coral.isUnused.and(algae.isUnused).and(elevator.isUnused).and(hasNothing).and(leaveReefZone).and(RobotModeTriggers.teleop());
 
         targetNet = new RisingEdgeTrigger(driverController.leftBumper(), algae.hasAlgae);
         targetProcessor = new RisingEdgeTrigger(driverController.rightBumper(), algae.hasAlgae);
@@ -267,10 +275,9 @@ public class RobotContainer {
         RisingEdgeTrigger scoreProcessor = scoreAlgae.and(isTargetingNet.negate()).and(new Trigger(() -> AutoAlign.getTargetType().name().contains("PROCESSOR")));
 
         RisingEdgeTrigger scoreL1 = scoreCoral.and(new Trigger(() -> elevator.getScheduledPosition() == ElevatorConstants.L1));
-        RisingEdgeTrigger scoreLs234 = scoreCoral.and(new Trigger(() -> elevator.getScheduledPosition() == ElevatorConstants.L1));
+        RisingEdgeTrigger scoreLs234 = scoreCoral.and(new Trigger(() -> elevator.getScheduledPosition() != ElevatorConstants.L1));
 
-        Trigger leaveReefZone = new Trigger(() -> drive.getPose().getTranslation().getDistance(
-            AutoAlign.flipIfRed(FieldPOIs.REEF_CENTER).getTranslation()) > FieldPOIs.REEF_ZONE_DISTANCE);
+
 
         // Default command, normal field-relative drive
         drive.setDefaultCommand(DriveCommands.joystickDrive(drive,
@@ -293,8 +300,9 @@ public class RobotContainer {
 
         // Driver score sequence (L2-L4)
         scoreLs234.onTrue(coral.setVelocityCommand(() -> elevator.getTargetPosition() < ElevatorConstants.L4
-                ? CoralConstants.scoreRadPerSec : CoralConstants.l4RadPerSec)
+                ? CoralConstants.scoreRadPerSec : CoralConstants.l4RadPerSec).repeatedly()
             .until(coral.hasCoral.negate())
+            .andThen(new WaitCommand(0.1))
             .andThen(coral.setVoltageCommand(0))
             .andThen(algae.setPivotPosition(AlgaeConstants.stow))
             .andThen(elevator.setPositionCommand(ElevatorConstants.stow)).withName("L2-L4 Score"));
@@ -325,7 +333,8 @@ public class RobotContainer {
             .onTrue(AutoAlign.clearTargetType()
             .andThen(elevator.setPositionCommand(ElevatorConstants.stow))
             .andThen(Commands.waitSeconds(0.5))
-            .andThen(coral.setVoltageCommand(CoralConstants.algaeHoldVoltage)).withName("Stow Algae after Leaving Reef"));
+            .andThen(coral.setVoltageCommand(CoralConstants.algaeHoldVoltage))
+            .andThen(algae.setPivotPosition(AlgaeConstants.hold)).withName("Stow Algae after Leaving Reef"));
 
         // Driver net auto align
         targetNet.whileTrue((AutoAlign.autoAlignTo(Target.NET, this, joystickSupplier))
@@ -355,7 +364,7 @@ public class RobotContainer {
             .withName("Align to Coral Station"));
         targetCoralStation.onTrue(intakeCommand);
         intakeManual.onTrue(intakeCommand);
-        autoIntake.onTrue(intakeCommand);
+        autoIntake.onTrue(elevator.setPositionCommand(ElevatorConstants.stow).alongWith(intakeCommand));
 
         // Ground intake
         groundIntake.onTrue(algae.setPivotPosition(AlgaeConstants.groundIntake)
@@ -428,6 +437,13 @@ public class RobotContainer {
 
         // Zero climber
         elevatorManual.and(operatorController.rightStick()).onTrue(climber.resetPositionCommand());
+
+        // Debug RisingEdgeTriggers
+        scoreCoral.onTrue(new InstantCommand(() -> Logger.recordOutput("Triggers/scoreCoral", true)));
+        scoreCoral.onFalse(new InstantCommand(() -> Logger.recordOutput("Triggers/scoreCoral", false)));
+
+        scoreLs234.onTrue(new InstantCommand(() -> Logger.recordOutput("Triggers/scoreLs234", true)));
+        scoreLs234.onFalse(new InstantCommand(() -> Logger.recordOutput("Triggers/scoreLs234", false)));
     }
 
     public void logTriggers() {

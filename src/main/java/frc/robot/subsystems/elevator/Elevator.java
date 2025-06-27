@@ -7,10 +7,13 @@ import org.littletonrobotics.junction.Logger;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import edu.wpi.first.wpilibj2.command.button.RobotModeTriggers;
+import edu.wpi.first.wpilibj2.command.button.Trigger;
 
 public class Elevator extends SubsystemBase {
     private final ElevatorIO io;
     private final ElevatorIOInputsAutoLogged inputs;
+
+    public final Trigger isUnused;
 
     // This is to make the elevator position only reset the first time it's enabled
     private boolean shouldZeroOnEnable = true;
@@ -23,6 +26,8 @@ public class Elevator extends SubsystemBase {
         // Reset elevator position when enabled for the first time
         RobotModeTriggers.disabled().negate().and(() -> this.shouldZeroOnEnable)
                 .onTrue(resetPositionCommand().andThen(() -> this.shouldZeroOnEnable = false));
+
+        this.isUnused = new Trigger(() -> getCurrentCommand() == null);
     }
 
     @Override

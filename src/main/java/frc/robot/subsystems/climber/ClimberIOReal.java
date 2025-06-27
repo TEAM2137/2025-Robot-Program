@@ -39,6 +39,8 @@ public class ClimberIOReal implements ClimberIO {
             .positionConversionFactor(1.0 / ClimberConstants.gearing)
             .velocityConversionFactor(1.0 / ClimberConstants.gearing);
 
+        config.closedLoop.maxOutput(ClimberConstants.maxVoltage);
+
         pivotMotor.configure(config, ResetMode.kResetSafeParameters, PersistMode.kPersistParameters);
 
         rollersMotor.getConfigurator().apply(new TalonFXConfiguration().MotorOutput.withInverted(InvertedValue.Clockwise_Positive));

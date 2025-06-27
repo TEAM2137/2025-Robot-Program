@@ -149,9 +149,11 @@ public class Autonomous {
     private static final double scoreDuration = 0.4;
 
     private boolean targetAlgae = false;
+    private boolean highAlgae = false;
     private boolean scoreNet = false;
 
     private Trigger targetAlgaeTrigger = new Trigger(() -> targetAlgae).and(RobotModeTriggers.autonomous());
+    private Trigger highAlgaeTrigger = new Trigger(() -> highAlgae);
     private Trigger scoreNetTrigger = new Trigger(() -> scoreNet).and(RobotModeTriggers.autonomous());
 
     @SuppressWarnings("deprecation")
@@ -171,7 +173,8 @@ public class Autonomous {
         dsAttached.onTrue(Commands.runOnce(() -> toReef1.getInitialPose()
             .ifPresent(pose -> startPoses.put(dashboardName, pose))).ignoringDisable(true));
 
-        targetAlgaeTrigger.onTrue(robot.createAlgaeAlign(true)); // TODO fix high/low
+        targetAlgaeTrigger.and(highAlgaeTrigger).onTrue(robot.createAlgaeAlign(true));
+        targetAlgaeTrigger.and(highAlgaeTrigger.negate()).onTrue(robot.createAlgaeAlign(false));
         robot.netTossWhen(scoreNetTrigger);
 
         routine.active().onTrue(robot.elevator.resetPositionCommand().andThen(robot.algae.setPivotPosition(AlgaeConstants.stow)));
@@ -184,6 +187,7 @@ public class Autonomous {
 
         backUp.done().onTrue(new SequentialCommandGroup(
             Commands.runOnce(() -> targetAlgae = true),
+            Commands.runOnce(() -> highAlgae = false),
             Commands.waitSeconds(1.2),
             Commands.runOnce(() -> targetAlgae = false),
             toNet1.cmd().asProxy()
@@ -200,6 +204,7 @@ public class Autonomous {
 
         toReef2.atTimeBeforeEnd(0.4).onTrue(new SequentialCommandGroup(
             Commands.runOnce(() -> targetAlgae = true),
+            Commands.runOnce(() -> highAlgae = true),
             Commands.waitSeconds(1.2),
             Commands.runOnce(() -> targetAlgae = false),
             toNet2.cmd().asProxy()
