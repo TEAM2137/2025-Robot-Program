@@ -87,4 +87,8 @@ public class Elevator extends SubsystemBase {
     public Command stowCommand() {
         return schedulePositionCommand(ElevatorConstants.stow);
     }
+
+    public boolean isAtTarget() {
+        return io.isAtTarget();
+    }
 }

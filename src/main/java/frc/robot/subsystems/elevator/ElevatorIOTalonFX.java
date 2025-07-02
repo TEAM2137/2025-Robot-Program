@@ -145,4 +145,10 @@ public class ElevatorIOTalonFX implements ElevatorIO {
             .withMotionMagicAcceleration(a)
             .withMotionMagicJerk(j));
     }
+
+    @Override
+    public boolean isAtTarget() {
+        // TODO: tune the threshold
+        return leadMotor.getClosedLoopError().getValueAsDouble() < 0.1f;
+    }
 }

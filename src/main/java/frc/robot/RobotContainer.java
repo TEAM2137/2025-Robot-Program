@@ -120,8 +120,8 @@ public class RobotContainer {
     public final Trigger climberClimb = operatorController.povDown();
 
     // Manual subsystem controls
-    public final Trigger elevatorManual = operatorController.rightTrigger(0.35);
-    public final Trigger intakeManual = operatorController.rightBumper();
+    public final Trigger elevatorManual = operatorController.back();
+    public final Trigger climbManual = operatorController.rightBumper();
 
     // Utilities
     public final Trigger stopAll = driverController.y();
@@ -130,7 +130,6 @@ public class RobotContainer {
     // Operator utilities
     public final Trigger slowEject = operatorController.povRight();
     public final Trigger reverseRollers = operatorController.povLeft();
-    public final Trigger elevatorApplyManual = operatorController.back();
 
     public final Command netPlaceCommand;
     public final Command intakeCommand;
@@ -243,11 +242,11 @@ public class RobotContainer {
         lollipopIntake = new RisingEdgeTrigger(operatorController.leftBumper(), hasNothing);
 
         netPlaceCommand = new SequentialCommandGroup(
-            algae.setPivotPosition(AlgaeConstants.stow),
-            Commands.waitSeconds(0.35),
             coral.setVoltageCommand(3),
             Commands.waitSeconds(0.3),
             coral.setVoltageCommand(0),
+            algae.setPivotPosition(AlgaeConstants.hold),
+            Commands.waitSeconds(0.3),
             elevator.setPositionCommand(ElevatorConstants.stow)
         );
 
@@ -272,12 +271,9 @@ public class RobotContainer {
         // Scoring and utility triggers
         Trigger isTargetingNet = new Trigger(() -> AutoAlign.getTargetType().name().contains("NET"));
         RisingEdgeTrigger scoreNet = scoreAlgae.and(isTargetingNet);
-        RisingEdgeTrigger scoreProcessor = scoreAlgae.and(isTargetingNet.negate()).and(new Trigger(() -> AutoAlign.getTargetType().name().contains("PROCESSOR")));
 
         RisingEdgeTrigger scoreL1 = scoreCoral.and(new Trigger(() -> elevator.getScheduledPosition() == ElevatorConstants.L1));
         RisingEdgeTrigger scoreLs234 = scoreCoral.and(new Trigger(() -> elevator.getScheduledPosition() != ElevatorConstants.L1));
-
-
 
         // Default command, normal field-relative drive
         drive.setDefaultCommand(DriveCommands.joystickDrive(drive,
@@ -285,7 +281,8 @@ public class RobotContainer {
                 slowMode, () -> -driverController.getRightX() * 0.75).withName("Default Drive"));
 
         // Stop all active subsystems
-        stopAll.onTrue(coral.setVoltageCommand(0)
+        stopAll.toggleOnTrue(coral.setVoltageCommand(0)
+            .andThen(climber.setRollersVoltage(0))
             .andThen(elevator.setVoltage(() -> 0)).withName("Stop all subsystems"));
 
         // Reset gyro to 0°
@@ -308,12 +305,14 @@ public class RobotContainer {
             .andThen(elevator.setPositionCommand(ElevatorConstants.stow)).withName("L2-L4 Score"));
 
         // Drive score sequence (L1)
-        scoreL1.onTrueOnFalse(
-            coral.setVelocityCommand(CoralConstants.l1RadPerSec)
-                .andThen(Commands.waitSeconds(0.1))
-                .andThen(elevator.setPositionCommand(ElevatorConstants.L2)).withName("L1 score A"),
-            coral.setVoltageCommand(0)
-                .andThen(elevator.setPositionCommand(ElevatorConstants.stow)).withName("L1 Score B"));
+        scoreL1.whileTrue(coral.setVelocityCommand(CoralConstants.l1RadPerSec)
+            .andThen(Commands.waitSeconds(0.1))
+            .andThen(elevator.setPositionCommand(ElevatorConstants.L2)).repeatedly()
+            .finallyDo(() -> elevator.setPositionCommand(ElevatorConstants.stow)
+                .andThen(Commands.waitSeconds(0.5))
+                .andThen(coral.setVoltageCommand(0))
+                .withName("L1 Score B").schedule())
+            .withName("L1 score A"));
 
         driverController.povDown().onTrue(coral.setVoltageCommand(-12).withName("Manual Coral"));
         driverController.povDown().onFalse(coral.setVoltageCommand(0).withName("Manual Coral Stop"));
@@ -337,10 +336,18 @@ public class RobotContainer {
             .andThen(algae.setPivotPosition(AlgaeConstants.hold)).withName("Stow Algae after Leaving Reef"));
 
         // Driver net auto align
-        targetNet.whileTrue((AutoAlign.autoAlignTo(Target.NET, this, joystickSupplier))
-            .beforeStarting(coral.setVelocityCommand(CoralConstants.algaeGrabRadPerSec)
-                .andThen(Commands.runOnce(() -> AutoAlign.setScheduledElevatorHeight(ElevatorConstants.L4))))
-                .withName("Target Net"));
+        targetNet.whileTrue(DriveCommands.joystickDriveAtAngle(drive, joystickSupplier, slowMode, () ->
+                (drive.getPose().getX() > 8.77) ? Rotation2d.kZero : Rotation2d.k180deg)
+            .alongWith(Commands.run(() -> {
+                if (drive.getPose().getX() > 7 && drive.getPose().getX() < 10.5) elevator.setPositionCommand(ElevatorConstants.L4);
+                if (elevator.isAtTarget()) algae.setPivotPosition(AlgaeConstants.stow);
+            }, elevator, algae))
+            .withName("Target Net"));
+        // targetNet.whileTrue((AutoAlign.autoAlignTo(Target.NET, this, joystickSupplier))
+        //     .beforeStarting(coral.setVelocityCommand(CoralConstants.algaeGrabRadPerSec)
+        //         .andThen(Commands.runOnce(() -> AutoAlign.setScheduledElevatorHeight(ElevatorConstants.L4))))
+        //         .withName("Target Net"));
+        // targetNet.onFalse(algae.setPivotPosition(AlgaeConstants.stow));
 
         // Driver score sequence (net)
         scoreNet.onTrue(netPlaceCommand.withName("Place in Net"));
@@ -351,19 +358,24 @@ public class RobotContainer {
             .andThen(algae.setPivotPosition(AlgaeConstants.processor))
             .andThen(Commands.waitSeconds(0.5))
             .andThen(coral.setVoltageCommand(CoralConstants.algaeHoldVoltage))
+            .andThen(Commands.waitUntil(driverController.rightTrigger(0.25)))
+            .andThen(coral.setVelocityCommand(140)
+            .andThen(Commands.waitSeconds(0.5))
+            .andThen(coral.setVoltageCommand(0)))
+            .andThen(Commands.waitUntil(driverController.rightBumper().negate().and(driverController.rightTrigger(0.25).negate())))
             .withName("Target Processor"));
 
         // Driver score sequence (processor)
-        scoreProcessor.onTrue(coral.setVelocityCommand(140)
-            .andThen(Commands.waitSeconds(0.5))
-            .andThen(coral.setVoltageCommand(0))
-            .withName("Score in Processor"));
+        // scoreProcessor.onTrue(coral.setVelocityCommand(140)
+        //     .andThen(Commands.waitSeconds(0.5))
+        //     .andThen(coral.setVoltageCommand(0))
+        //     .withName("Score in Processor"));
 
         // Intake + coral station align
         targetCoralStation.whileTrue(DriveCommands.alignToCoralStation(drive, joystickSupplier, slowMode)
             .withName("Align to Coral Station"));
-        targetCoralStation.onTrue(intakeCommand);
-        intakeManual.onTrue(intakeCommand);
+        // targetCoralStation.onTrue(intakeCommand);
+        // intakeManual.onTrue(intakeCommand);
         autoIntake.onTrue(elevator.setPositionCommand(ElevatorConstants.stow).alongWith(intakeCommand));
 
         // Ground intake
@@ -392,6 +404,7 @@ public class RobotContainer {
             MathUtil.applyDeadband(-operatorController.getRightY(), 0.1) * 8)
                 .withName("Manual Elevator"));
         elevatorManual.onFalse(elevator.setPositionCommand(() -> elevator.getExtensionMeters()));
+        elevatorManual.and(operatorController.rightStick()).onTrue(elevator.resetPositionCommand().ignoringDisable(true));
 
         // Schedule different reef heights
         l1.onTrue(elevator.schedulePositionCommand(ElevatorConstants.L1).andThen(AutoAlign.clearTargetType()));
@@ -404,9 +417,6 @@ public class RobotContainer {
             .andThen(coral.setVoltageCommand(0))
             .andThen(algae.setPivotPosition(AlgaeConstants.stow))
             .withName("Manual Stow"));
-
-        // Manually apply the elevator's scheduled position
-        elevatorApplyManual.onTrue(elevator.applyScheduledPositionCommand().withName("Apply Elevator Position"));
 
         // Run the coral rollers slowly
         // slowEject.onTrue(coral.setVoltageCommand(4.5).withName("Slow Coral Eject"));
@@ -431,12 +441,12 @@ public class RobotContainer {
             .andThen(coral.setVoltageCommand(0)).repeatedly());
 
         // Manual elevator pivot
-        elevatorManual.whileTrue(climber.setPivotVoltage(() ->
-            MathUtil.applyDeadband(-operatorController.getLeftY(), 0.1) * 10));
-        elevatorManual.onFalse(climber.setPivotVoltage(() -> 0));
+        climbManual.whileTrue(climber.setPivotVoltage(() ->
+            MathUtil.applyDeadband(-operatorController.getLeftY(), 0.1) * 6));
+        climbManual.onFalse(climber.setPivotVoltage(() -> 0));
 
         // Zero climber
-        elevatorManual.and(operatorController.rightStick()).onTrue(climber.resetPositionCommand());
+        climbManual.and(operatorController.leftStick()).onTrue(climber.resetPositionCommand().ignoringDisable(true));
 
         // Debug RisingEdgeTriggers
         scoreCoral.onTrue(new InstantCommand(() -> Logger.recordOutput("Triggers/scoreCoral", true)));
@@ -488,7 +498,7 @@ public class RobotContainer {
                 AutoAlign.autoAlignTo(Target.ALGAE_GRAB, this, joystickSupplier),
                 algae.setPivotPosition(AlgaeConstants.grab)
                     .andThen(coral.setVelocityCommand(CoralConstants.algaeGrabRadPerSec))
-            ));
+            )).finallyDo(() -> algae.setPivotPosition(AlgaeConstants.hold).schedule());
     }
 
     @Deprecated

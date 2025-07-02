@@ -46,4 +46,6 @@ public interface ElevatorIO {
 
     /** Resets the elevator's encoder position to 0 rotations/meters */
     public default void resetPosition() {}
+
+    public default boolean isAtTarget() { return false; }
 }
