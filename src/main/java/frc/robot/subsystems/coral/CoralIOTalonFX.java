@@ -57,6 +57,9 @@ public class CoralIOTalonFX implements CoralIO {
         inputs.appliedVolts = rollers.getMotorVoltage().getValueAsDouble();
         inputs.currentAmps = rollers.getSupplyCurrent().getValueAsDouble();
 
+        inputs.motorTemperature = rollers.getDeviceTemp().getValueAsDouble();
+        inputs.thermalShutdown = rollers.getFault_DeviceTemp().getValue();
+
         StatusSignal<Distance> eeDistance = endEffectorSensor.getDistance();
         inputs.endEffectorConnected = BaseStatusSignal.refreshAll(eeDistance).equals(StatusCode.OK);
         inputs.endEffectorDistanceCm = endEffectorSensor.getDistance().getValue().in(Centimeters);

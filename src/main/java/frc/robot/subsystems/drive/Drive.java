@@ -209,6 +209,8 @@ public class Drive extends SubsystemBase {
 
         SmartDashboard.putData("Field", field);
         SmartDashboard.putData("Swerve Drive", swerveDriveSendable);
+        var command = getCurrentCommand();
+        if (command != null) Logger.recordOutput("Triggers/DriveCommand", command.getName());
     }
 
     public Translation2d[] createTrajectoryTo(Translation2d point) {

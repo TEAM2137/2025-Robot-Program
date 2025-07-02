@@ -328,7 +328,9 @@ public class RobotContainer {
         algaeLow.whileTrue(createAlgaeAlign(false).withName("Algae Align Low"));
 
         // Stow after grabbing algae and leaving reef zone
-        leaveReefZone.and(RobotModeTriggers.autonomous().negate()).and(algae.hasAlgae).and(driverController.rightTrigger(0.25).negate())
+        leaveReefZone.and(RobotModeTriggers.autonomous().negate())
+                .and(algae.hasAlgae).and(isTargetingNet.negate())
+                .and(driverController.rightTrigger(0.25).negate())
             .onTrue(AutoAlign.clearTargetType()
             .andThen(elevator.setPositionCommand(ElevatorConstants.stow))
             .andThen(Commands.waitSeconds(0.5))
@@ -339,15 +341,13 @@ public class RobotContainer {
         targetNet.whileTrue(DriveCommands.joystickDriveAtAngle(drive, joystickSupplier, slowMode, () ->
                 (drive.getPose().getX() > 8.77) ? Rotation2d.kZero : Rotation2d.k180deg)
             .alongWith(Commands.run(() -> {
-                if (drive.getPose().getX() > 7 && drive.getPose().getX() < 10.5) elevator.setPositionCommand(ElevatorConstants.L4);
-                if (elevator.isAtTarget()) algae.setPivotPosition(AlgaeConstants.stow);
+                if (drive.getPose().getX() > 7 && drive.getPose().getX() < 10.5) {
+                    elevator.setPosition(ElevatorConstants.L4);
+                    if (elevator.isAtTarget()) algae.setPivotPositionRaw(AlgaeConstants.stow);
+                }
             }, elevator, algae))
+            .beforeStarting(AutoAlign.setTargetType(Target.NET))
             .withName("Target Net"));
-        // targetNet.whileTrue((AutoAlign.autoAlignTo(Target.NET, this, joystickSupplier))
-        //     .beforeStarting(coral.setVelocityCommand(CoralConstants.algaeGrabRadPerSec)
-        //         .andThen(Commands.runOnce(() -> AutoAlign.setScheduledElevatorHeight(ElevatorConstants.L4))))
-        //         .withName("Target Net"));
-        // targetNet.onFalse(algae.setPivotPosition(AlgaeConstants.stow));
 
         // Driver score sequence (net)
         scoreNet.onTrue(netPlaceCommand.withName("Place in Net"));
@@ -374,9 +374,8 @@ public class RobotContainer {
         // Intake + coral station align
         targetCoralStation.whileTrue(DriveCommands.alignToCoralStation(drive, joystickSupplier, slowMode)
             .withName("Align to Coral Station"));
-        // targetCoralStation.onTrue(intakeCommand);
-        // intakeManual.onTrue(intakeCommand);
-        autoIntake.onTrue(elevator.setPositionCommand(ElevatorConstants.stow).alongWith(intakeCommand));
+        autoIntake.onTrue(elevator.setPositionCommand(ElevatorConstants.stow).alongWith(intakeCommand)
+            .withName("Auto intake"));
 
         // Ground intake
         groundIntake.onTrue(algae.setPivotPosition(AlgaeConstants.groundIntake)

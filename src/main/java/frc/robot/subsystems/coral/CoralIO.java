@@ -11,6 +11,9 @@ public interface CoralIO {
         public double appliedVolts = 0.0;
         public double currentAmps = 0.0;
 
+        public double motorTemperature = 0.0;
+        public boolean thermalShutdown = false;
+
         public double endEffectorDistanceCm = 0.0;
         public double funnelDistanceCm = 0.0;
         public double coralDistanceCm = 0.0;
