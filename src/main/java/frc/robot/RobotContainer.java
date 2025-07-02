@@ -270,10 +270,12 @@ public class RobotContainer {
 
         // Scoring and utility triggers
         Trigger isTargetingNet = new Trigger(() -> AutoAlign.getTargetType().name().contains("NET"));
-        RisingEdgeTrigger scoreNet = scoreAlgae.and(isTargetingNet);
+        Trigger isL1Selected = new Trigger(() -> elevator.getScheduledPosition() == ElevatorConstants.L1);
+        Trigger enterReefZone = leaveReefZone.negate();
 
-        RisingEdgeTrigger scoreL1 = scoreCoral.and(new Trigger(() -> elevator.getScheduledPosition() == ElevatorConstants.L1));
-        RisingEdgeTrigger scoreLs234 = scoreCoral.and(new Trigger(() -> elevator.getScheduledPosition() != ElevatorConstants.L1));
+        RisingEdgeTrigger scoreNet = scoreAlgae.and(isTargetingNet);
+        RisingEdgeTrigger scoreL1 = scoreCoral.and(isL1Selected);
+        RisingEdgeTrigger scoreLs234 = scoreCoral.and(isL1Selected.negate());
 
         // Default command, normal field-relative drive
         drive.setDefaultCommand(DriveCommands.joystickDrive(drive,
@@ -336,6 +338,12 @@ public class RobotContainer {
             .andThen(Commands.waitSeconds(0.5))
             .andThen(coral.setVoltageCommand(CoralConstants.algaeHoldVoltage))
             .andThen(algae.setPivotPosition(AlgaeConstants.hold)).withName("Stow Algae after Leaving Reef"));
+
+        enterReefZone.and(RobotModeTriggers.autonomous().negate())
+                .and(coral.hasCoral).and(isL1Selected)
+                .and(driverController.rightTrigger(0.25).negate())
+            .onTrue(elevator.applyScheduledPositionCommand()
+            .withName("Apply L1 height"));
 
         // Driver net auto align
         targetNet.whileTrue(DriveCommands.joystickDriveAtAngle(drive, joystickSupplier, slowMode, () ->

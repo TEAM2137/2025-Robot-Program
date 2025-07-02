@@ -103,8 +103,7 @@ public class ElevatorIOTalonFX implements ElevatorIO {
     @Override
     public void schedulePosition(double targetPosition) {
         this.scheduledPosition = targetPosition;
-        if ((targetPosition == ElevatorConstants.L1 || this.targetPosition > 0.05)
-            && DriverStation.isEnabled()) setTargetPosition(targetPosition);
+        if (this.targetPosition > 0.05 && DriverStation.isEnabled()) setTargetPosition(targetPosition);
     }
 
     @Override

@@ -23,9 +23,10 @@ public class Coral extends SubsystemBase{
     private boolean isFunnelSensorInRange;
     private boolean isCoralSensorInRange;
 
-    private final Alert funnelSensorAlert = new Alert("Funnel distance sensor disconnected. Auto coral will not work.", AlertType.kError);
-    private final Alert endEffectorSensorAlert = new Alert("End effector distance sensor disconnected. Use operator d-pad right.", AlertType.kError);
-    private final Alert coralSensorAlert = new Alert("Coral distance sensor disconnected. you're cooked", AlertType.kError);
+    private final Alert funnelSensorAlert = new Alert("Funnel canrange disconnected", AlertType.kError);
+    private final Alert endEffectorSensorAlert = new Alert("End effector canrange disconnected", AlertType.kError);
+    private final Alert coralSensorAlert = new Alert("Coral canrange disconnected", AlertType.kError);
+    private final Alert thermalShutdownAlert = new Alert("Thermal shutdown fault on end effector rollers", AlertType.kError);
 
     public Coral(CoralIO io){
         this.io = io;
@@ -45,6 +46,7 @@ public class Coral extends SubsystemBase{
         funnelSensorAlert.set(!inputs.funnelConnected);
         endEffectorSensorAlert.set(!inputs.endEffectorConnected);
         coralSensorAlert.set(!inputs.coralSensorConnected);
+        thermalShutdownAlert.set(inputs.thermalShutdown);
 
         isEndEffectorSensorInRange = inputs.endEffectorDistanceCm < CoralConstants.endEffectorSensorRange;
         isFunnelSensorInRange = inputs.funnelDistanceCm < CoralConstants.funnelSensorRange;
