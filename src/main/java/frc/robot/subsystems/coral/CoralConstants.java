@@ -17,7 +17,8 @@ public class CoralConstants {
     public static final double l4RadPerSec = 205.0;
 
     public static final double algaeGrabRadPerSec = -100;
-    public static final double algaeHoldVoltage = -1.5;
+    public static final double algaeHoldVoltage = -2.0;
+    public static final double algaeNetScore = 4.0;
 
     // PID Constants
     public static final double kP = 0.10; // PID P

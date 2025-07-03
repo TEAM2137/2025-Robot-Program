@@ -242,7 +242,7 @@ public class RobotContainer {
         lollipopIntake = new RisingEdgeTrigger(operatorController.leftBumper(), hasNothing);
 
         netPlaceCommand = new SequentialCommandGroup(
-            coral.setVoltageCommand(3),
+            coral.setVoltageCommand(CoralConstants.algaeNetScore),
             Commands.waitSeconds(0.3),
             coral.setVoltageCommand(0),
             algae.setPivotPosition(AlgaeConstants.hold),
@@ -301,7 +301,7 @@ public class RobotContainer {
         scoreLs234.onTrue(coral.setVelocityCommand(() -> elevator.getTargetPosition() < ElevatorConstants.L4
                 ? CoralConstants.scoreRadPerSec : CoralConstants.l4RadPerSec).repeatedly()
             .until(coral.hasCoral.negate())
-            .andThen(new WaitCommand(0.1))
+            .andThen(new WaitCommand(0.15))
             .andThen(coral.setVoltageCommand(0))
             .andThen(algae.setPivotPosition(AlgaeConstants.stow))
             .andThen(elevator.setPositionCommand(ElevatorConstants.stow)).withName("L2-L4 Score"));
@@ -502,7 +502,8 @@ public class RobotContainer {
                 AutoAlign.setScheduledElevatorHeight(high ? ElevatorConstants.algaeHigh : ElevatorConstants.algaeLow);
             })
             .deadlineFor(Commands.waitSeconds(0.25).andThen(algae.setPivotPosition(AlgaeConstants.grab)))
-            .until(AutoAlign.isAtTarget(Target.ALGAE_ALIGN, 0.1, 2.0))
+            .until(new Trigger(AutoAlign.isAtTarget(Target.ALGAE_ALIGN,
+                0.1, 2.0)).and(() -> algae.isAtTarget()))
             .andThen(new ParallelCommandGroup(
                 AutoAlign.autoAlignTo(Target.ALGAE_GRAB, this, joystickSupplier),
                 algae.setPivotPosition(AlgaeConstants.grab)

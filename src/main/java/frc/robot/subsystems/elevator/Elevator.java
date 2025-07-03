@@ -89,6 +89,6 @@ public class Elevator extends SubsystemBase {
     }
 
     public boolean isAtTarget() {
-        return io.isAtTarget();
+        return Math.abs(getTargetPosition() - getExtensionMeters()) < 0.1;
     }
 }
