@@ -388,23 +388,25 @@ public class RobotContainer {
         // Ground intake
         groundIntake.onTrue(algae.setPivotPosition(AlgaeConstants.groundIntake)
             .andThen(coral.setVelocityCommand(CoralConstants.algaeGrabRadPerSec)).repeatedly()
-            .withName("Ground Algae Intake"));
+            .withName("Ground Algae Intake onTrue"));
         groundIntake.onFalse(Commands.waitSeconds(0.2)
             .andThen(algae.setPivotPosition(AlgaeConstants.hold))
             .andThen(Commands.waitSeconds(1.0))
-            .andThen(coral.setVoltageCommand(CoralConstants.algaeHoldVoltage)));
+            .andThen(coral.setVoltageCommand(CoralConstants.algaeHoldVoltage))
+            .withName("Ground Algae Intake onFalse"));
 
         // Ground intake
         lollipopIntake.onTrue(algae.setPivotPosition(AlgaeConstants.lollipopIntake)
             .andThen(coral.setVelocityCommand(CoralConstants.algaeGrabRadPerSec).repeatedly())
-            .withName("Lollipop Algae Intake"));
+            .withName("Lollipop Algae Intake onTrue"));
         lollipopIntake.onFalse(Commands.waitSeconds(0.2)
             .andThen(algae.setPivotPosition(AlgaeConstants.hold))
             .andThen(Commands.waitSeconds(1.0))
-            .andThen(coral.setVoltageCommand(CoralConstants.algaeHoldVoltage)));
+            .andThen(coral.setVoltageCommand(CoralConstants.algaeHoldVoltage))
+            .withName("Lollipop Algae Intake onFalse"));
 
-        dropAlgae.onTrue(coral.setVoltageCommand(6));
-        dropAlgae.onFalse(coral.setVoltageCommand(0));
+        dropAlgae.onTrue(coral.setVoltageCommand(6).withName("Drop Algae onTrue"));
+        dropAlgae.onFalse(coral.setVoltageCommand(0).withName("Drop Algae onFalse"));
 
         // Hold left trigger to enable elevator manual controls using the right stick.
         elevatorManual.whileTrue(elevator.setVoltage(() ->
@@ -534,7 +536,8 @@ public class RobotContainer {
             algae.setPivotPosition(AlgaeConstants.intake).asProxy(),
             coral.intakeUntilFunnelEnter(),
             coral.completeIntaking().deadlineFor(armIntakeAssist.repeatedly()),
-            coral.setVoltageCommand(0)
+            coral.setVoltageCommand(0),
+            algae.setPivotPosition(AlgaeConstants.stow).asProxy()
         );
         return Commands.runOnce(() -> { if (intakeCommand.isScheduled()) intakeCommand.cancel(); }).andThen(intakeCommand).withName("Intake");
     }

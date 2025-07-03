@@ -41,6 +41,9 @@ public class AlgaeArm extends SubsystemBase {
         algaeSensorAlert.set(!inputs.algaeSensorConnected);
 
         Logger.processInputs("Algae", inputs);
+
+        var command = getCurrentCommand();
+        if (command != null) Logger.recordOutput("Triggers/AlgaeCommand", command.getName());
     }
 
     public Command setPivotPosition(double position) {
