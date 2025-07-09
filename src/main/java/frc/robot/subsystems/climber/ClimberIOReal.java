@@ -49,7 +49,7 @@ public class ClimberIOReal implements ClimberIO {
     @Override
     public void updateInputs(ClimberIOInputs inputs) {
         if (usePID) {
-            double volts = Math.min(Math.max(controller.calculate(pivotMotor.getEncoder().getPosition()), -12), 12);
+            double volts = Math.min(Math.max(controller.calculate(pivotMotor.getEncoder().getPosition()), -12), 1);
             if (controller.getSetpoint() == ClimberConstants.climbPosition) volts *= 0.8;
             pivotMotor.getClosedLoopController().setReference(volts, ControlType.kVoltage);
         }

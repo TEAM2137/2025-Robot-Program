@@ -44,6 +44,8 @@ public class CoralIOTalonFX implements CoralIO {
             rollers.getSupplyCurrent()
         );
 
+        rollers.getDeviceTemp().setUpdateFrequency(4);
+
         // Apply configurations
         rollers.getConfigurator().apply(config);
         rollers.optimizeBusUtilization();

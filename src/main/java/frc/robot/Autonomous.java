@@ -23,6 +23,7 @@ import edu.wpi.first.math.trajectory.Trajectory;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
+import edu.wpi.first.wpilibj2.command.ParallelCommandGroup;
 import edu.wpi.first.wpilibj2.command.SequentialCommandGroup;
 import edu.wpi.first.wpilibj2.command.button.RobotModeTriggers;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
@@ -117,11 +118,10 @@ public class Autonomous {
         sysIdCommandChooser.addOption("Drive SysId (Dynamic Reverse)", drive.sysIdDynamic(SysIdRoutine.Direction.kReverse));
 
         // Testing Autos
-        registerAuto("4 Coral Right", this::fourCoral);
-        registerAuto("4 Coral Right (Reversed)", this::fourCoral);
         registerAuto("3 Coral Left", this::threeCoral);
         registerAuto("3 Coral Right", this::threeCoral);
-        registerAuto("Center 3 Piece", this::centerThreePiece);
+        registerAuto("Algae Auto (Reef)", this::centerThreePiece);
+        registerAuto("Algae Auto (IRI)", this::iriThreePiece);
     }
 
     public void registerAuto(String name, Function<String, AutoRoutine> auto) {
@@ -213,6 +213,77 @@ public class Autonomous {
         toNet2.atTime(0.7).onTrue(robot.elevator.setPositionCommand(ElevatorConstants.stow)
             .andThen(Commands.waitSeconds(0.5))
             .andThen(robot.coral.setVoltageCommand(CoralConstants.algaeHoldVoltage)));
+
+        toNet2.done().onTrue(Commands.runOnce(() -> scoreNet = true)
+            .andThen(Commands.waitSeconds(1.0))
+            .andThen(Commands.runOnce(() -> scoreNet = false))
+            .andThen(offLine.cmd().asProxy()));
+
+        return routine;
+    }
+
+    @SuppressWarnings("deprecation")
+    public AutoRoutine iriThreePiece(String dashboardName) {
+        String pathName = "IRI Algae";
+        AutoRoutine routine = factory.newRoutine(pathName);
+
+        List<AutoTrajectory> splits = loadSplits(routine, pathName, 8);
+        AutoTrajectory toReef1 = splits.get(0);
+        AutoTrajectory backUp = splits.get(1);
+        AutoTrajectory toNet1 = splits.get(3);
+        AutoTrajectory toGroundAlgae = splits.get(4);
+        AutoTrajectory toNet2 = splits.get(5);
+        AutoTrajectory offLine = splits.get(6);
+
+        // Add start pose to map
+        dsAttached.onTrue(Commands.runOnce(() -> toReef1.getInitialPose()
+            .ifPresent(pose -> startPoses.put(dashboardName, pose))).ignoringDisable(true));
+
+        targetAlgaeTrigger.and(highAlgaeTrigger).onTrue(robot.createAlgaeAlign(true));
+        targetAlgaeTrigger.and(highAlgaeTrigger.negate()).onTrue(robot.createAlgaeAlign(false));
+        robot.netTossWhen(scoreNetTrigger);
+
+        routine.active().onTrue(robot.elevator.resetPositionCommand().andThen(robot.algae.setPivotPosition(AlgaeConstants.stow)));
+        routine.active().onTrue(toReef1.resetOdometry().andThen(toReef1.cmd()));
+
+        toReef1.atTimeBeforeEnd(0.7).onTrue(
+            robot.elevator.setPositionCommand(ElevatorConstants.L4));
+
+        AutoCommands.createScoringSequence(scoreDuration, toReef1, backUp, robot);
+
+        backUp.done().onTrue(new SequentialCommandGroup(
+            Commands.runOnce(() -> targetAlgae = true),
+            Commands.runOnce(() -> highAlgae = false),
+            Commands.waitSeconds(1.2),
+            Commands.runOnce(() -> targetAlgae = false),
+            toNet1.cmd().asProxy()
+        ));
+
+        toNet1.atTime(0.7).onTrue(robot.elevator.setPositionCommand(ElevatorConstants.stow)
+            .andThen(Commands.waitSeconds(0.5))
+            .andThen(robot.coral.setVoltageCommand(CoralConstants.algaeHoldVoltage)));
+
+        toNet1.done().onTrue(Commands.runOnce(() -> scoreNet = true)
+            .andThen(Commands.waitSeconds(1.0))
+            .andThen(Commands.runOnce(() -> scoreNet = false))
+            .andThen(toGroundAlgae.cmd().asProxy()));
+
+        toGroundAlgae.atTimeBeforeEnd(1).onTrue(new SequentialCommandGroup(
+            robot.algae.setPivotPosition(AlgaeConstants.groundIntake),
+            robot.coral.setVelocityCommand(CoralConstants.algaeGrabRadPerSec)
+        ));
+        toGroundAlgae.done().onTrue(new SequentialCommandGroup(
+            Commands.waitSeconds(2),
+            new ParallelCommandGroup(
+                toNet2.cmd().asProxy(),
+                new SequentialCommandGroup(
+                    Commands.waitSeconds(0.2),
+                    robot.algae.setPivotPosition(AlgaeConstants.hold),
+                    Commands.waitSeconds(1.0),
+                    robot.coral.setVoltageCommand(CoralConstants.algaeHoldVoltage)
+                )
+            )
+        ));
 
         toNet2.done().onTrue(Commands.runOnce(() -> scoreNet = true)
             .andThen(Commands.waitSeconds(1.0))

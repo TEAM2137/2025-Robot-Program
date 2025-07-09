@@ -5,6 +5,7 @@ import java.util.function.BooleanSupplier;
 import java.util.function.Supplier;
 
 import org.littletonrobotics.junction.Logger;
+import org.littletonrobotics.junction.networktables.LoggedNetworkBoolean;
 
 import choreo.util.ChoreoAllianceFlipUtil;
 import edu.wpi.first.cameraserver.CameraServer;
@@ -76,6 +77,7 @@ public class RobotContainer {
 
     // Visuals
     public final RobotVisualizer visualizer;
+    public final LoggedNetworkBoolean shouldManualClimb = new LoggedNetworkBoolean("ManualClimb", false);
 
     // Controllers
     private final CommandXboxController driverController = new CommandXboxController(0);
@@ -121,7 +123,7 @@ public class RobotContainer {
 
     // Manual subsystem controls
     public final Trigger elevatorManual = operatorController.back();
-    public final Trigger climbManual = operatorController.rightBumper();
+    public final Trigger climbManual = new Trigger(() -> shouldManualClimb.get());
 
     // Utilities
     public final Trigger stopAll = driverController.y();
@@ -448,11 +450,14 @@ public class RobotContainer {
             .andThen(climber.setRollersVoltage(ClimberConstants.climbRollerVoltage))
             .andThen(algae.setPivotPosition(AlgaeConstants.hold))
             .andThen(coral.setVoltageCommand(0)).repeatedly());
+        climberClimb.onFalse(coral.setVoltageCommand(0)
+            .andThen(algae.setPivotPosition(AlgaeConstants.hold))
+            .andThen(climber.setPivotVoltage(() -> 0)));
 
         // Manual elevator pivot
         climbManual.whileTrue(climber.setPivotVoltage(() ->
-            MathUtil.applyDeadband(-operatorController.getLeftY(), 0.1) * 6));
-        climbManual.onFalse(climber.setPivotVoltage(() -> 0));
+            MathUtil.applyDeadband(-operatorController.getLeftY(), 0.1) * 6).ignoringDisable(true));
+        climbManual.onFalse(climber.setPivotVoltage(() -> 0).ignoringDisable(true));
 
         // Zero climber
         climbManual.and(operatorController.leftStick()).onTrue(climber.resetPositionCommand().ignoringDisable(true));
