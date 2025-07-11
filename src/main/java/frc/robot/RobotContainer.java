@@ -272,6 +272,7 @@ public class RobotContainer {
         // Scoring and utility triggers
         Trigger isTargetingNet = new Trigger(() -> AutoAlign.getTargetType().name().contains("NET"));
         Trigger isL1Selected = new Trigger(() -> elevator.getScheduledPosition() == ElevatorConstants.L1);
+        Trigger isAtL4Height = new Trigger(() -> elevator.isAtTarget() && elevator.getTargetPosition() == ElevatorConstants.L4);
         Trigger enterReefZone = leaveReefZone.negate();
 
         RisingEdgeTrigger scoreNet = scoreAlgae.and(isTargetingNet);
@@ -353,11 +354,13 @@ public class RobotContainer {
                 if (drive.getPose().getX() > 7 && drive.getPose().getX() < 10.5) {
                     elevator.setPosition(ElevatorConstants.L4);
                     if (elevator.isAtTarget() && elevator.getTargetPosition() == ElevatorConstants.L4)
-                        algae.setPivotPositionRaw(AlgaeConstants.stow);
+                        ;
                 }
             }, elevator, algae))
             .beforeStarting(AutoAlign.setTargetType(Target.NET))
             .withName("Target Net"));
+
+        isAtL4Height.and(algae.hasAlgae).onTrue(algae.setPivotPosition(AlgaeConstants.stow));
 
         // Driver score sequence (net)
         scoreNet.onTrue(netPlaceCommand.withName("Place in Net"));
