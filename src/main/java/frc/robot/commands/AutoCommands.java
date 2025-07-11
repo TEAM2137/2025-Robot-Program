@@ -51,7 +51,7 @@ public class AutoCommands {
     public static void createIntakeSequenceAutoAlign(double beforeEnd, AutoTrajectory base, AutoTrajectory onComplete, RobotContainer robot) {
         base.atTimeBeforeEnd(beforeEnd).onTrue(new SequentialCommandGroup(
             robot.algae.setPivotPosition(AlgaeConstants.intake),
-            robot.coral.intakeUntilFunnelEnter().andThen(Commands.waitSeconds(0.15)).deadlineFor(
+            robot.coral.intakeUntilFunnelEnter().andThen(Commands.waitSeconds(0.25)).deadlineFor(
                 AutoAlign.driveToTargetCommand(robot).beforeStarting(() -> AutoAlign.setTargetPose(
                     (robot.drive.getPose().getY() < 8.19912 / 2.0 == !ChoreoAllianceFlipUtil.shouldFlip())
                         ? AutoAlign.flipIfRed(FieldPOIs.CORAL_STATION_BOTTOM)
