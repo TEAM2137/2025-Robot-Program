@@ -352,7 +352,8 @@ public class RobotContainer {
             .alongWith(Commands.run(() -> {
                 if (drive.getPose().getX() > 7 && drive.getPose().getX() < 10.5) {
                     elevator.setPosition(ElevatorConstants.L4);
-                    if (elevator.isAtTarget()) algae.setPivotPositionRaw(AlgaeConstants.stow);
+                    if (elevator.isAtTarget() && elevator.getTargetPosition() == ElevatorConstants.L4)
+                        algae.setPivotPositionRaw(AlgaeConstants.stow);
                 }
             }, elevator, algae))
             .beforeStarting(AutoAlign.setTargetType(Target.NET))

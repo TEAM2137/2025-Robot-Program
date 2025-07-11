@@ -273,7 +273,7 @@ public class Autonomous {
             robot.coral.setVelocityCommand(CoralConstants.algaeGrabRadPerSec)
         ));
         toGroundAlgae.done().onTrue(new SequentialCommandGroup(
-            Commands.waitSeconds(2),
+            Commands.waitSeconds(0.5),
             new ParallelCommandGroup(
                 toNet2.cmd().asProxy(),
                 new SequentialCommandGroup(
