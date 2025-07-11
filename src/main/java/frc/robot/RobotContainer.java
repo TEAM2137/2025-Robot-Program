@@ -8,7 +8,6 @@ import org.littletonrobotics.junction.Logger;
 import org.littletonrobotics.junction.networktables.LoggedNetworkBoolean;
 
 import choreo.util.ChoreoAllianceFlipUtil;
-import edu.wpi.first.cameraserver.CameraServer;
 import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
@@ -220,7 +219,7 @@ public class RobotContainer {
         visualizer = new RobotVisualizer(elevator::getExtensionMeters, () -> Rotation2d.fromDegrees(45));
 
         // Setup webcam streaming
-        CameraServer.startAutomaticCapture();
+        // CameraServer.startAutomaticCapture();
 
         // Setup triggers
         hasNothing = coral.hasCoral.negate().and(algae.hasAlgae.negate());

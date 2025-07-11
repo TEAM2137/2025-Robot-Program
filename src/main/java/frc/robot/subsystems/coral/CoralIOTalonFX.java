@@ -43,8 +43,10 @@ public class CoralIOTalonFX implements CoralIO {
             rollers.getMotorVoltage(),
             rollers.getSupplyCurrent()
         );
-
-        rollers.getDeviceTemp().setUpdateFrequency(4);
+        BaseStatusSignal.setUpdateFrequencyForAll(Hertz.of(4),
+            rollers.getDeviceTemp(),
+            rollers.getFault_DeviceTemp()
+        );
 
         // Apply configurations
         rollers.getConfigurator().apply(config);
