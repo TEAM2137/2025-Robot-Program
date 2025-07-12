@@ -195,7 +195,7 @@ public class Autonomous {
             ),
             Commands.runOnce(() -> targetAlgae = false),
             toNet1.cmd().asProxy()
-        ));\
+        ));
 
         toNet1.atTime(0.7).onTrue(robot.elevator.setPositionCommand(ElevatorConstants.stow)
             .andThen(Commands.waitSeconds(0.5))
