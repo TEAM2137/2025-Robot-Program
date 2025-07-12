@@ -24,6 +24,7 @@ import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.ParallelCommandGroup;
+import edu.wpi.first.wpilibj2.command.ParallelRaceGroup;
 import edu.wpi.first.wpilibj2.command.SequentialCommandGroup;
 import edu.wpi.first.wpilibj2.command.button.RobotModeTriggers;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
@@ -188,7 +189,10 @@ public class Autonomous {
         backUp.done().onTrue(new SequentialCommandGroup(
             Commands.runOnce(() -> targetAlgae = true),
             Commands.runOnce(() -> highAlgae = false),
-            Commands.waitSeconds(1.2),
+            new ParallelRaceGroup(
+                Commands.waitUntil(robot.algae.hasAlgae).andThen(Commands.waitSeconds(0.5)),
+                Commands.waitSeconds(2.0)
+            ),
             Commands.runOnce(() -> targetAlgae = false),
             toNet1.cmd().asProxy()
         ));
@@ -203,9 +207,12 @@ public class Autonomous {
             .andThen(toReef2.cmd().asProxy()));
 
         toReef2.atTimeBeforeEnd(0.4).onTrue(new SequentialCommandGroup(
-            Commands.runOnce(() -> targetAlgae = true),
             Commands.runOnce(() -> highAlgae = true),
-            Commands.waitSeconds(1.2),
+            Commands.runOnce(() -> targetAlgae = true),
+            new ParallelRaceGroup(
+                Commands.waitUntil(robot.algae.hasAlgae).andThen(Commands.waitSeconds(0.5)),
+                Commands.waitSeconds(2.0)
+            ),
             Commands.runOnce(() -> targetAlgae = false),
             toNet2.cmd().asProxy()
         ));
