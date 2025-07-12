@@ -190,7 +190,7 @@ public class Autonomous {
             Commands.runOnce(() -> targetAlgae = true),
             Commands.runOnce(() -> highAlgae = false),
             new ParallelRaceGroup(
-                Commands.waitUntil(robot.algae.hasAlgae).andThen(Commands.waitSeconds(0.3)),
+                Commands.waitUntil(robot.algae.hasAlgae).andThen(Commands.waitSeconds(0.2)),
                 Commands.waitSeconds(2.0)
             ),
             Commands.runOnce(() -> targetAlgae = false),
@@ -210,7 +210,7 @@ public class Autonomous {
             Commands.runOnce(() -> highAlgae = true),
             Commands.runOnce(() -> targetAlgae = true),
             new ParallelRaceGroup(
-                Commands.waitUntil(robot.algae.hasAlgae).andThen(Commands.waitSeconds(0.5)),
+                Commands.waitUntil(robot.algae.hasAlgae).andThen(Commands.waitSeconds(0.2)),
                 Commands.waitSeconds(2.0)
             ),
             Commands.runOnce(() -> targetAlgae = false),
