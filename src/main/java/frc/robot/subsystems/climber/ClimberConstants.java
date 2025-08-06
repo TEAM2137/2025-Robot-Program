@@ -11,8 +11,8 @@ public class ClimberConstants {
     public static final double motorPositionToArmAngle = 360.0;
 
     public static final double stowPosition = 0.0;
-    public static final double deployPosition = -49.0;
-    public static final double climbPosition = -117.0;
+    public static final double deployPosition = -50.0;
+    public static final double climbPosition = -118.0;
 
     public static final double deployRollerVoltage = 10;
     public static final double climbRollerVoltage = 0;

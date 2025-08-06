@@ -171,8 +171,6 @@ public class DriveCommands {
                 ? drive.getRotation().plus(new Rotation2d(Math.PI))
                 : drive.getRotation())
             );
-
-            System.out.println("RUNNING ANGLE LOCK");
         }, drive)
         // Reset PID controller when command starts
         .beforeStarting(() -> angleController.reset(

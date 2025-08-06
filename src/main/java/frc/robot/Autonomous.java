@@ -119,10 +119,11 @@ public class Autonomous {
         sysIdCommandChooser.addOption("Drive SysId (Dynamic Reverse)", drive.sysIdDynamic(SysIdRoutine.Direction.kReverse));
 
         // Testing Autos
+        registerAuto("3 Coral KAS", this::threeCoral);
+        registerAuto("3 Coral KAS (OG Start)", this::threeCoral);
         registerAuto("3 Coral Left", this::threeCoral);
         registerAuto("3 Coral Right", this::threeCoral);
-        registerAuto("Algae Auto (Reef)", this::centerThreePiece);
-        registerAuto("Algae Auto (IRI)", this::iriThreePiece);
+        registerAuto("Algae Auto", this::centerThreePiece);
     }
 
     public void registerAuto(String name, Function<String, AutoRoutine> auto) {
@@ -302,7 +303,11 @@ public class Autonomous {
 
     public AutoRoutine threeCoral(String dashboardName) {
         boolean flipAligns = dashboardName.contains("Left");
-        String pathName = "3 Coral " + (flipAligns ? "Upper" : "Lower");
+        boolean ketteringAllStar = dashboardName.contains("KAS");
+        boolean originalStart = dashboardName.contains("OG Start");
+        String pathName = "3 Coral " + (ketteringAllStar
+                ? "KAS" + (originalStart ? " (OG Start)" : "")
+                : (flipAligns ? "Upper" : "Lower"));
         AutoRoutine routine = factory.newRoutine(pathName);
 
         // Load the routine's trajectories
@@ -346,7 +351,7 @@ public class Autonomous {
             flipAligns, scoreDuration, Target.LEFT_BRANCH, toReef3, toStation4.cmd(), robot));
 
         // Intake coral 4 from coral station
-        AutoCommands.createIntakeSequenceAutoAlign(intakeDelay, toStation4, null, robot);
+        if (!ketteringAllStar) AutoCommands.createIntakeSequenceAutoAlign(intakeDelay, toStation4, null, robot);
 
         return routine;
     }
