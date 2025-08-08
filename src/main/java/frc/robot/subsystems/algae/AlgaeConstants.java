@@ -15,7 +15,7 @@ public class AlgaeConstants {
     public static final double targetAccel = 15.0; // MM Acceleration
 
     // Setpoints
-    public static final double grab = 0.55;
+    public static final double grab = 0.58;
     public static final double hold = 0.2;
     public static final double stow = -0.01;
     public static final double intake = 0.1; // 0.06
