@@ -34,8 +34,8 @@ public class ElevatorConstants {
     public static final double L3 = 1.24;
     public static final double L4 = 1.97;
 
-    public static final double algaeHigh = 0.76;
-    public static final double algaeLow = 0.17;
+    public static final double algaeHigh = 0.90; // 0.76
+    public static final double algaeLow = 0.26; // 0.17
 
     public static final double net = 1.00;
 }
