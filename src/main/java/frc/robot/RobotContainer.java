@@ -89,8 +89,7 @@ public class RobotContainer {
 
     // "Nothing" state
     public final RisingEdgeTrigger targetCoralStation;
-    public final RisingEdgeTrigger algaeLow;
-    public final RisingEdgeTrigger algaeHigh;
+    public final RisingEdgeTrigger algaeGrab;
     public final Trigger autoIntake;
 
     // "Coral" state
@@ -237,8 +236,7 @@ public class RobotContainer {
         scoreAlgae = new RisingEdgeTrigger(driverController.rightTrigger(0.25), algae.hasAlgae);
 
         targetCoralStation = new RisingEdgeTrigger(driverController.leftBumper(), hasNothing);
-        algaeLow = new RisingEdgeTrigger(driverController.rightTrigger(0.25), hasNothing);
-        algaeHigh = new RisingEdgeTrigger(driverController.rightBumper(), hasNothing);
+        algaeGrab = new RisingEdgeTrigger(driverController.rightBumper(), hasNothing);
         groundIntake = new RisingEdgeTrigger(operatorController.leftTrigger(0.25), hasNothing);
         lollipopIntake = new RisingEdgeTrigger(operatorController.leftBumper(), hasNothing);
 
@@ -328,8 +326,9 @@ public class RobotContainer {
             .beforeStarting(() -> AutoAlign.setScheduledElevatorHeight(elevator.getScheduledPosition())).withName("Target Right Branch"));
 
         // Driver algae auto align
-        algaeHigh.whileTrue(createAlgaeAlign(true).withName("Algae Align High"));
-        algaeLow.whileTrue(createAlgaeAlign(false).withName("Algae Align Low"));
+        algaeGrab.whileTrue(createAlgaeAlign(() -> AutoAlign.getNewTargetPoseId(
+                drive, Target.ALGAE_ALIGN, joystickSupplier) % 2 == 0)
+            .withName("Algae Grab"));
 
         // Stow after grabbing algae and leaving reef zone
         leaveReefZone.and(RobotModeTriggers.autonomous().negate())
@@ -503,11 +502,11 @@ public class RobotContainer {
 
     public static RobotContainer getInstance() { return instance; }
 
-    public Command createAlgaeAlign(boolean high) {
+    public Command createAlgaeAlign(BooleanSupplier high) {
         return AutoAlign.autoAlignTo(Target.ALGAE_ALIGN, this, joystickSupplier)
             .beforeStarting(() -> {
                 // Schedule the proper elevator height
-                AutoAlign.setScheduledElevatorHeight(high ? ElevatorConstants.algaeHigh : ElevatorConstants.algaeLow);
+                AutoAlign.setScheduledElevatorHeight(high.getAsBoolean() ? ElevatorConstants.algaeHigh : ElevatorConstants.algaeLow);
             })
             .deadlineFor(Commands.waitSeconds(0.25).andThen(algae.setPivotPosition(AlgaeConstants.grab)))
             .until(new Trigger(AutoAlign.isAtTarget(Target.ALGAE_ALIGN,
