@@ -350,11 +350,8 @@ public class RobotContainer {
         targetNet.whileTrue(DriveCommands.joystickDriveAtAngle(drive, joystickSupplier, slowMode, () ->
                 (drive.getPose().getX() > 8.77) ? Rotation2d.kZero : Rotation2d.k180deg)
             .alongWith(Commands.run(() -> {
-                if (drive.getPose().getX() > 7 && drive.getPose().getX() < 10.5) {
+                if (drive.getPose().getX() > 7 && drive.getPose().getX() < 10.5)
                     elevator.setPosition(ElevatorConstants.L4);
-                    if (elevator.isAtTarget() && elevator.getTargetPosition() == ElevatorConstants.L4)
-                        ;
-                }
             }, elevator, algae))
             .beforeStarting(AutoAlign.setTargetType(Target.NET))
             .withName("Target Net"));
