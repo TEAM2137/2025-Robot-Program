@@ -441,24 +441,27 @@ public class RobotContainer {
 
         // Climber deploy
         climberDeploy.onTrue(climber.setPivotPosition(ClimberConstants.deployPosition)
-            .andThen(climber.setRollersVoltage(ClimberConstants.deployRollerVoltage)));
+            .andThen(climber.setRollersVoltage(ClimberConstants.deployRollerVoltage))
+            .withName("Climber Deploy"));
 
         // Climber stow
         climberStow.onTrue(climber.setPivotPosition(ClimberConstants.stowPosition)
-            .andThen(climber.setRollersVoltage(0)));
+            .andThen(climber.setRollersVoltage(0))
+            .withName("Climber Stow"));
 
         // Climber climb
         climberClimb.whileTrue(climber.setPivotPosition(ClimberConstants.climbPosition)
             .andThen(climber.setRollersVoltage(ClimberConstants.climbRollerVoltage))
             .andThen(algae.setPivotPosition(AlgaeConstants.hold))
-            .andThen(coral.setVoltageCommand(0)).repeatedly());
+            .andThen(coral.setVoltageCommand(0)).repeatedly()
+            .withName("Climber Climb"));
         climberClimb.onFalse(coral.setVoltageCommand(0)
             .andThen(algae.setPivotPosition(AlgaeConstants.hold))
             .andThen(climber.setPivotVoltage(() -> 0)));
 
         // Manual elevator pivot
-        climbManual.whileTrue(climber.setPivotVoltage(() ->
-            MathUtil.applyDeadband(-operatorController.getLeftY(), 0.1) * 6).ignoringDisable(true));
+        climbManual.whileTrue(climber.setPivotVoltage(() -> MathUtil.applyDeadband(-operatorController.getLeftY(), 0.1) * 6)
+            .ignoringDisable(true).withName("Climb Manual"));
         climbManual.onFalse(climber.setPivotVoltage(() -> 0).ignoringDisable(true));
 
         // Zero climber
