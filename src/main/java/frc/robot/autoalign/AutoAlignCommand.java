@@ -155,10 +155,12 @@ public class AutoAlignCommand extends Command {
         Logger.recordOutput("AutoAlign/vy", vy);
 
         // sets the path time to the total time of the longest-lasting profile
-        // TODO: profile.totalTime() fails with initial and final velocity, don't use
-        double xTime = (Math.abs(dxRemaining) > 0.02) ? xProfile.totalTime() : 0.0;
-        double yTime = (Math.abs(dyRemaining) > 0.02) ? yProfile.totalTime() : 0.0;
-        if (totalPathTime == 0) this.totalPathTime = Math.max(xTime, yTime);
+        // TODO: sometimes broken with nonzero initial velocity
+        double xTime = trapezoidTimeRemaining(dxRemaining, vxCurrent, vxGoal,
+                speedLimit * scaleX, accelerationLimit * scaleX);
+        double yTime = trapezoidTimeRemaining(dyRemaining, vyCurrent, vyGoal,
+                speedLimit * scaleY, accelerationLimit * scaleY);
+        this.totalPathTime = Math.max(totalPathTime, Math.max(xTime, yTime));
 
         Logger.recordOutput("AutoAlign/xTime", xTime);
         Logger.recordOutput("AutoAlign/yTime", yTime);
@@ -211,6 +213,32 @@ public class AutoAlignCommand extends Command {
                     }
                 }
             }
+        }
+    }
+
+    // thanks chatgpt lol
+    public static double trapezoidTimeRemaining(double dst, double v0, double vf,
+                                                double vMax, double aMax) {
+        if (Math.abs(dst) < 0.005) return 0.0;
+        if (dst < 0) {
+            dst = -dst;
+            v0 = -v0;
+            vf = -vf;
+        }
+        v0 = Math.max(0, v0);
+        vf = Math.max(0, vf);
+        double dAccel = (vMax * vMax - v0 * v0) / (2.0 * aMax);
+        double dDecel = (vMax * vMax - vf * vf) / (2.0 * aMax);
+        if (dst > dAccel + dDecel) {
+            double tAccel = (vMax - v0) / aMax;
+            double tDecel = (vMax - vf) / aMax;
+            double tCruise = (dst - dAccel - dDecel) / vMax;
+            return tAccel + tCruise + tDecel;
+        } else {
+            double vPeak = Math.sqrt(aMax * dst + 0.5 * (v0 * v0 + vf * vf));
+            double tAccel = (vPeak - v0) / aMax;
+            double tDecel = (vPeak - vf) / aMax;
+            return tAccel + tDecel;
         }
     }
 
