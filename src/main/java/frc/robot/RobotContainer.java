@@ -121,15 +121,11 @@ public class RobotContainer {
 
     // Manual subsystem controls
     public final Trigger elevatorManual = operatorController.back();
-    public final Trigger climbManual = new Trigger(() -> shouldManualClimb.get());
+    public final Trigger climbManual = new Trigger(shouldManualClimb::get);
 
     // Utilities
     public final Trigger stopAll = driverController.y();
     public final Trigger resetGyro = driverController.start();
-
-    // Operator utilities
-    public final Trigger slowEject = operatorController.povRight();
-    public final Trigger reverseRollers = operatorController.povLeft();
 
     public final Command netPlaceCommand;
     public final Command intakeCommand;
@@ -278,8 +274,7 @@ public class RobotContainer {
         RisingEdgeTrigger scoreLs234 = scoreCoral.and(isL1Selected.negate());
 
         // Default command, normal field-relative drive
-        drive.setDefaultCommand(DriveCommands.joystickDrive(drive,
-                () -> joystickSupplier.get(),
+        drive.setDefaultCommand(DriveCommands.joystickDrive(drive, joystickSupplier,
                 slowMode, () -> -driverController.getRightX() * 0.75).withName("Default Drive"));
 
         // Stop all active subsystems
@@ -413,7 +408,7 @@ public class RobotContainer {
         elevatorManual.whileTrue(elevator.setVoltage(() ->
             MathUtil.applyDeadband(-operatorController.getRightY(), 0.1) * 8)
                 .withName("Manual Elevator"));
-        elevatorManual.onFalse(elevator.setPositionCommand(() -> elevator.getExtensionMeters()));
+        elevatorManual.onFalse(elevator.setPositionCommand(elevator::getExtensionMeters));
         elevatorManual.and(operatorController.rightStick()).onTrue(elevator.resetPositionCommand().ignoringDisable(true));
 
         // Schedule different reef heights
@@ -487,15 +482,6 @@ public class RobotContainer {
         Logger.recordOutput("Triggers/AutoAlignAtTarget", AutoAlign.isAtTarget(AutoAlign.getTargetType(), 0.1, 2.0));
     }
 
-    /**
-     * Use this to pass the autonomous command to the main {@link Robot} class.
-     *
-     * @return the command to run in autonomous
-     */
-    public Command getAutonomousCommand() {
-        return autonomous.getSelectedAuto();
-    }
-
     public Supplier<Translation2d> joystickMotionSupplier() {
         return joystickSupplier;
     }
@@ -510,7 +496,7 @@ public class RobotContainer {
             })
             .deadlineFor(Commands.waitSeconds(0.25).andThen(algae.setPivotPosition(AlgaeConstants.grab)))
             .until(new Trigger(AutoAlign.isAtTarget(Target.ALGAE_ALIGN,
-                0.1, 2.0)).and(() -> algae.isAtTarget()))
+                0.1, 2.0)).and(algae::isAtTarget))
             .andThen(new ParallelCommandGroup(
                 AutoAlign.autoAlignTo(Target.ALGAE_GRAB, this, joystickSupplier),
                 algae.setPivotPosition(AlgaeConstants.grab)
@@ -518,7 +504,6 @@ public class RobotContainer {
             )).finallyDo(() -> algae.setPivotPosition(AlgaeConstants.hold).schedule());
     }
 
-    @Deprecated
     public void netTossWhen(Trigger trigger) {
         trigger.onTrue(new SequentialCommandGroup(
             elevator.setPositionCommand(ElevatorConstants.net),

@@ -8,7 +8,6 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.function.Function;
-import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 import org.littletonrobotics.junction.Logger;
@@ -23,7 +22,6 @@ import edu.wpi.first.math.trajectory.Trajectory;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
-import edu.wpi.first.wpilibj2.command.ParallelCommandGroup;
 import edu.wpi.first.wpilibj2.command.ParallelRaceGroup;
 import edu.wpi.first.wpilibj2.command.SequentialCommandGroup;
 import edu.wpi.first.wpilibj2.command.button.RobotModeTriggers;
@@ -56,28 +54,26 @@ public class Autonomous {
 
         // Configure Choreo AutoFactory
         this.factory = new AutoFactory(
-            drive::getPose, // A function that returns the current robot pose
-            drive::setPose, // A function that resets the current robot pose to the provided Pose2d
-            drive::followTrajectory, // The drive subsystem trajectory follower
-            true, // If alliance flipping should be enabled
-            drive, // The drive subsystem
-            (trajectory, starting) -> {
-                // Log the supplied trajectory
-                drive.fieldTrajectory.setTrajectory(new Trajectory(trajectory.samples().stream()
-                    .map(sample -> new Trajectory.State(
-                        sample.getTimestamp(),
-                        new Translation2d(sample.vx, sample.vy).getNorm(),
-                        new Translation2d(sample.ax, sample.ay).getNorm(),
-                        AutoAlign.flipIfRed(sample.getPose()),
-                        sample.omega
-                    )).collect(Collectors.toList())
-                ));
-                Logger.recordOutput("Autonomous/AutoTrajectory", Arrays.stream(trajectory.getPoses())
-                    .map(pose -> AutoAlign.flipIfRed(pose).getTranslation())
-                    .collect(Collectors.toList())
-                    .toArray(new Translation2d[0])
-                );
-            }
+                drive::getPose, // A function that returns the current robot pose
+                drive::setPose, // A function that resets the current robot pose to the provided Pose2d
+                drive::followTrajectory, // The drive subsystem trajectory follower
+                true, // If alliance flipping should be enabled
+                drive, // The drive subsystem
+                (trajectory, starting) -> {
+                    // Log the supplied trajectory
+                    drive.fieldTrajectory.setTrajectory(new Trajectory(trajectory.samples().stream()
+                            .map(sample -> new Trajectory.State(
+                                sample.getTimestamp(),
+                                new Translation2d(sample.vx, sample.vy).getNorm(),
+                                new Translation2d(sample.ax, sample.ay).getNorm(),
+                                AutoAlign.flipIfRed(sample.getPose()),
+                                sample.omega)
+                            )
+                            .collect(Collectors.toList())
+                    ));
+                    Logger.recordOutput("Autonomous/AutoTrajectory", Arrays.stream(trajectory.getPoses())
+                            .map(pose -> AutoAlign.flipIfRed(pose).getTranslation()).toArray(Translation2d[]::new));
+                }
         );
 
         // Create the sysId command chooser
@@ -130,23 +126,6 @@ public class Autonomous {
         autoChooser.addOption(name, auto.apply(name));
     }
 
-    public void registerAuto(String name, Supplier<AutoRoutine> auto) {
-        autoChooser.addOption(name, auto.get());
-    }
-
-    public AutoRoutine driveStraight() {
-        String pathName = "Drive Straight";
-        AutoRoutine routine = factory.newRoutine(pathName);
-        AutoTrajectory first = routine.trajectory(pathName, 0);
-
-        routine.active().onTrue(Commands.sequence(
-            first.resetOdometry(),
-            first.cmd()
-        ));
-
-        return routine;
-    }
-
     // Seconds that the coral rollers should run for when scoring
     private static final double scoreDuration = 0.4;
 
@@ -154,11 +133,10 @@ public class Autonomous {
     private boolean highAlgae = false;
     private boolean scoreNet = false;
 
-    private Trigger targetAlgaeTrigger = new Trigger(() -> targetAlgae).and(RobotModeTriggers.autonomous());
-    private Trigger highAlgaeTrigger = new Trigger(() -> highAlgae);
-    private Trigger scoreNetTrigger = new Trigger(() -> scoreNet).and(RobotModeTriggers.autonomous());
+    private final Trigger targetAlgaeTrigger = new Trigger(() -> targetAlgae).and(RobotModeTriggers.autonomous());
+    private final Trigger highAlgaeTrigger = new Trigger(() -> highAlgae);
+    private final Trigger scoreNetTrigger = new Trigger(() -> scoreNet).and(RobotModeTriggers.autonomous());
 
-    @SuppressWarnings("deprecation")
     public AutoRoutine centerThreePiece(String dashboardName) {
         String pathName = "Center Coral Algae";
         AutoRoutine routine = factory.newRoutine(pathName);
@@ -230,77 +208,6 @@ public class Autonomous {
         return routine;
     }
 
-    @SuppressWarnings("deprecation")
-    public AutoRoutine iriThreePiece(String dashboardName) {
-        String pathName = "IRI Algae";
-        AutoRoutine routine = factory.newRoutine(pathName);
-
-        List<AutoTrajectory> splits = loadSplits(routine, pathName, 8);
-        AutoTrajectory toReef1 = splits.get(0);
-        AutoTrajectory backUp = splits.get(1);
-        AutoTrajectory toNet1 = splits.get(3);
-        AutoTrajectory toGroundAlgae = splits.get(4);
-        AutoTrajectory toNet2 = splits.get(5);
-        AutoTrajectory offLine = splits.get(6);
-
-        // Add start pose to map
-        dsAttached.onTrue(Commands.runOnce(() -> toReef1.getInitialPose()
-            .ifPresent(pose -> startPoses.put(dashboardName, pose))).ignoringDisable(true));
-
-        targetAlgaeTrigger.and(highAlgaeTrigger).onTrue(robot.createAlgaeAlign(() -> true));
-        targetAlgaeTrigger.and(highAlgaeTrigger.negate()).onTrue(robot.createAlgaeAlign(() -> false));
-        robot.netTossWhen(scoreNetTrigger);
-
-        routine.active().onTrue(robot.elevator.resetPositionCommand().andThen(robot.algae.setPivotPosition(AlgaeConstants.stow)));
-        routine.active().onTrue(toReef1.resetOdometry().andThen(toReef1.cmd()));
-
-        toReef1.atTimeBeforeEnd(0.7).onTrue(
-            robot.elevator.setPositionCommand(ElevatorConstants.L4));
-
-        AutoCommands.createScoringSequence(scoreDuration, toReef1, backUp, robot);
-
-        backUp.done().onTrue(new SequentialCommandGroup(
-            Commands.runOnce(() -> targetAlgae = true),
-            Commands.runOnce(() -> highAlgae = false),
-            Commands.waitSeconds(1.2),
-            Commands.runOnce(() -> targetAlgae = false),
-            toNet1.cmd().asProxy()
-        ));
-
-        toNet1.atTime(0.7).onTrue(robot.elevator.setPositionCommand(ElevatorConstants.stow)
-            .andThen(Commands.waitSeconds(0.5))
-            .andThen(robot.coral.setVoltageCommand(CoralConstants.algaeHoldVoltage)));
-
-        toNet1.done().onTrue(Commands.runOnce(() -> scoreNet = true)
-            .andThen(Commands.waitSeconds(1.0))
-            .andThen(Commands.runOnce(() -> scoreNet = false))
-            .andThen(toGroundAlgae.cmd().asProxy()));
-
-        toGroundAlgae.atTimeBeforeEnd(1).onTrue(new SequentialCommandGroup(
-            robot.algae.setPivotPosition(AlgaeConstants.groundIntake),
-            robot.coral.setVelocityCommand(CoralConstants.algaeGrabRadPerSec)
-        ));
-        toGroundAlgae.done().onTrue(new SequentialCommandGroup(
-            Commands.waitSeconds(0.5),
-            new ParallelCommandGroup(
-                toNet2.cmd().asProxy(),
-                new SequentialCommandGroup(
-                    Commands.waitSeconds(0.2),
-                    robot.algae.setPivotPosition(AlgaeConstants.hold),
-                    Commands.waitSeconds(1.0),
-                    robot.coral.setVoltageCommand(CoralConstants.algaeHoldVoltage)
-                )
-            )
-        ));
-
-        toNet2.done().onTrue(Commands.runOnce(() -> scoreNet = true)
-            .andThen(Commands.waitSeconds(1.0))
-            .andThen(Commands.runOnce(() -> scoreNet = false))
-            .andThen(offLine.cmd().asProxy()));
-
-        return routine;
-    }
-
     public AutoRoutine threeCoral(String dashboardName) {
         boolean flipAligns = dashboardName.contains("Left");
         boolean ketteringAllStar = dashboardName.contains("KAS");
@@ -356,6 +263,8 @@ public class Autonomous {
         return routine;
     }
 
+    // it would never have worked out
+    // :(
     public AutoRoutine fourCoral(String dashboardName) {
         boolean flipAligns = dashboardName.contains("Left");
         String pathName = "4 Coral " + (flipAligns ? "Upper" : "Lower");
@@ -427,10 +336,15 @@ public class Autonomous {
         Logger.recordOutput("Autonomous/Setup/PosError", positionError);
         Logger.recordOutput("Autonomous/Setup/RotError", rotationError);
 
-        double rawScore = 100 * Math.exp(-(1.0 * positionError + 0.008 * rotationError));
+        double rawScore = 100 * Math.exp(-(positionError + 0.008 * rotationError));
         int scoreRounded = (int) Math.round(rawScore);
-        double scoreNearestHundreth = ((int) (rawScore * 10.0)) / 10.0;
+        double scoreNearestHundredth = ((int) (rawScore * 10.0)) / 10.0;
 
+        String letterGrade = getLetterGradeFor(scoreRounded);
+        return letterGrade + ": " + scoreNearestHundredth + "%";
+    }
+
+    private static String getLetterGradeFor(int scoreRounded) {
         String letterGrade = "F";
         if (scoreRounded >= 97) letterGrade = "A+";
         else if (scoreRounded >= 93) letterGrade = "A";
@@ -444,7 +358,6 @@ public class Autonomous {
         else if (scoreRounded >= 67) letterGrade = "D+";
         else if (scoreRounded >= 63) letterGrade = "D";
         else if (scoreRounded >= 60) letterGrade = "D-";
-
-        return letterGrade + ": " + scoreNearestHundreth + "%";
+        return letterGrade;
     }
 }

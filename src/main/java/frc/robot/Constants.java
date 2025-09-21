@@ -29,7 +29,7 @@ public final class Constants {
         return RobotType.SIM;
     }
 
-    public static enum Mode {
+    public enum Mode {
         /** Running on a real robot. */
         REAL,
 
@@ -40,7 +40,7 @@ public final class Constants {
         REPLAY
     }
 
-    public static enum RobotType {
+    public enum RobotType {
         /** Running the competition robot */
         COMP,
 

@@ -196,9 +196,8 @@ public class DriveCommands {
             }),
 
             // Allow modules to orient
-            Commands.run(() -> {
-                drive.runCharacterization(0.0);
-            }, drive).withTimeout(FF_START_DELAY),
+            Commands.run(() -> drive.runCharacterization(0.0), drive)
+                    .withTimeout(FF_START_DELAY),
 
             // Start timer
             Commands.runOnce(timer::restart),
@@ -308,18 +307,17 @@ public class DriveCommands {
 
     public static Command alignToCoralStation(Drive drive, Supplier<Translation2d> joystickSupplier, BooleanSupplier slowMode) {
         // Construct command
-        return joystickDriveAtAngle(drive, joystickSupplier, slowMode, () -> {
-            return (drive.getPose().getY() < 8.19912 / 2.0 == !ChoreoAllianceFlipUtil.shouldFlip())
-                    ? AutoAlign.flipIfRed(FieldPOIs.CORAL_STATION_BOTTOM).getRotation()
-                    : AutoAlign.flipIfRed(FieldPOIs.CORAL_STATION_TOP).getRotation();
-        });
+        return joystickDriveAtAngle(drive, joystickSupplier, slowMode,
+                () -> (drive.getPose().getY() < 8.19912 / 2.0 == !ChoreoAllianceFlipUtil.shouldFlip())
+                ? AutoAlign.flipIfRed(FieldPOIs.CORAL_STATION_BOTTOM).getRotation()
+                : AutoAlign.flipIfRed(FieldPOIs.CORAL_STATION_TOP).getRotation());
     }
 
-    private static StructPublisher<Translation2d> currentVelocityPublisher = NetworkTableInstance.getDefault()
+    private static final StructPublisher<Translation2d> currentVelocityPublisher = NetworkTableInstance.getDefault()
         .getStructTopic("AccelLimiting/CurrentVelocity", Translation2d.struct).publish();
-        private static StructPublisher<Translation2d> finalVelocityPublisher = NetworkTableInstance.getDefault()
+        private static final StructPublisher<Translation2d> finalVelocityPublisher = NetworkTableInstance.getDefault()
         .getStructTopic("AccelLimiting/FinalVelocity", Translation2d.struct).publish();
-    private static StructPublisher<Translation2d> wantedVelocityPublisher = NetworkTableInstance.getDefault()
+    private static final StructPublisher<Translation2d> wantedVelocityPublisher = NetworkTableInstance.getDefault()
         .getStructTopic("AccelLimiting/WantedVelocity", Translation2d.struct).publish();
 
     public static Translation2d limitAccelerationFor(Translation2d currentVelocity, Translation2d wantedVelocity, double maxAcceleration) {

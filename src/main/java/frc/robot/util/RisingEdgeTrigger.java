@@ -6,67 +6,57 @@ import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
 import edu.wpi.first.wpilibj2.command.Commands;
 
-public class RisingEdgeTrigger {
-    private BooleanSupplier risingEdge;
-    private BooleanSupplier otherCondition;
-    private boolean stopOnOtherFalse;
-
+public record RisingEdgeTrigger(BooleanSupplier risingEdge, BooleanSupplier otherCondition, boolean stopOnOtherFalse) {
     public RisingEdgeTrigger(BooleanSupplier risingEdge, BooleanSupplier otherCondition) {
         this(risingEdge, otherCondition, false);
     }
 
-    public RisingEdgeTrigger(BooleanSupplier risingEdge, BooleanSupplier otherCondition, boolean stopOnOtherFalse) {
-        this.risingEdge = risingEdge;
-        this.otherCondition = otherCondition;
-        this.stopOnOtherFalse = stopOnOtherFalse;
-    }
-
     public void whileTrue(Command command) {
         CommandScheduler.getInstance().getDefaultButtonLoop().bind(
-            new Runnable() {
-                private boolean previousEdge = risingEdge.getAsBoolean();
-                // private boolean previousOther = otherCondition.getAsBoolean();
+                new Runnable() {
+                    private boolean previousEdge = risingEdge.getAsBoolean();
+                    // private boolean previousOther = otherCondition.getAsBoolean();
 
-                @Override
-                public void run() {
-                    boolean currentEdge = risingEdge.getAsBoolean();
-                    boolean currentOther = otherCondition.getAsBoolean();
+                    @Override
+                    public void run() {
+                        boolean currentEdge = risingEdge.getAsBoolean();
+                        boolean currentOther = otherCondition.getAsBoolean();
 
-                    if (!previousEdge && currentEdge && currentOther) {
-                        command.schedule();
-                    } else if (!currentEdge || (!currentOther && stopOnOtherFalse)) {
-                        command.cancel();
+                        if (!previousEdge && currentEdge && currentOther) {
+                            command.schedule();
+                        } else if (!currentEdge || (!currentOther && stopOnOtherFalse)) {
+                            command.cancel();
+                        }
+
+                        previousEdge = currentEdge;
+                        // previousOther = currentOther;
                     }
-
-                    previousEdge = currentEdge;
-                    // previousOther = currentOther;
                 }
-            }
         );
     }
 
     /**
-     * @param onTrue The command to run when the trigger is true
+     * @param onTrue  The command to run when the trigger is true
      * @param onFalse The command to run when the trigger is false
      */
     public void onTrueOnFalse(Command onTrue, Command onFalse) {
         CommandScheduler.getInstance().getDefaultButtonLoop().bind(
-            new Runnable() {
-                private boolean previousEdge = risingEdge.getAsBoolean();
-                private boolean previousOther = otherCondition.getAsBoolean();
+                new Runnable() {
+                    private boolean previousEdge = risingEdge.getAsBoolean();
+                    private boolean previousOther = otherCondition.getAsBoolean();
 
-                @Override
-                public void run() {
-                    boolean currentEdge = risingEdge.getAsBoolean();
-                    boolean currentOther = otherCondition.getAsBoolean();
+                    @Override
+                    public void run() {
+                        boolean currentEdge = risingEdge.getAsBoolean();
+                        boolean currentOther = otherCondition.getAsBoolean();
 
-                    if (!previousEdge && currentEdge && currentOther) onTrue.schedule();
-                    if ((previousEdge && previousOther) && (!currentEdge || !currentOther)) onFalse.schedule();
+                        if (!previousEdge && currentEdge && currentOther) onTrue.schedule();
+                        if ((previousEdge && previousOther) && (!currentEdge || !currentOther)) onFalse.schedule();
 
-                    previousEdge = currentEdge;
-                    previousOther = currentOther;
+                        previousEdge = currentEdge;
+                        previousOther = currentOther;
+                    }
                 }
-            }
         );
     }
 

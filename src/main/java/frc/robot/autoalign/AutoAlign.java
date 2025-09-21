@@ -77,7 +77,7 @@ public class AutoAlign {
     );
 
     private static Pose2d targetPose; // The currently targeted position (can be null)
-    private static AutoAlign.Target targetType = Target.LEFT_BRANCH; // The most recently targeted target type
+    private static AutoAlign.Target targetType = Target.LEFT_BRANCH; // The most recently targeted type
     private static double scheduledElevatorHeight = 0.0;
 
     public static Pose2d getTargetPose() {
@@ -116,12 +116,8 @@ public class AutoAlign {
         return targetToPoseData.get(targetType);
     }
 
-    public static Command autoAlignTo(Target targetType, RobotContainer robot) {
-        return autoAlignTo(targetType, robot, () -> new Translation2d());
-    }
-
     /**
-     * Returns a command for auto aligning to the nearest avaliable pose
+     * Returns a command for auto aligning to the nearest available pose
      * @param targetType The pose group to target
      * @param robot The robot container instance
      * @param motionSupplier A supplier for the joystick vector
@@ -384,7 +380,7 @@ public class AutoAlign {
             boolean translationSatisfied = RobotContainer.getInstance().drive.getPose().getTranslation()
                 .getDistance(targetPose.getTranslation()) < translationTolerance;
             boolean rotationSatisfied = RobotContainer.getInstance().drive.getPose().getRotation()
-                .minus(targetPose.getRotation()).getDegrees() < translationTolerance;
+                .minus(targetPose.getRotation()).getDegrees() < rotationTolerance;
             return translationSatisfied && rotationSatisfied;
         };
     }
