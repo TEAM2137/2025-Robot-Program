@@ -276,6 +276,7 @@ public class RobotContainer {
 
         driverController.a().whileTrue(new AutoAlignCommand.Builder()
                 .withFinalPose(new Pose2d(0, 0, Rotation2d.kZero))
+                .withFinalVelocity(new Translation2d(0.0, 0.0))
                 .build());
 
         // Default command, normal field-relative drive

@@ -10,6 +10,7 @@ import edu.wpi.first.wpilibj2.command.Command;
 import frc.robot.RobotContainer;
 import frc.robot.generated.TunerConstants;
 import frc.robot.subsystems.drive.Drive;
+import frc.robot.util.ConstantsUtil;
 import org.littletonrobotics.junction.Logger;
 
 import java.util.ArrayList;
@@ -68,7 +69,7 @@ public class AutoAlignCommand extends Command {
     @Override
     public void execute() {
         // loop cycle is 0.02, but use a little extra to "look ahead" in the profile
-        double dt = 0.04;
+        double dt = ConstantsUtil.getRealOrSimConstant(0.11, 0.04);
 
         // calculate current progress
         Translation2d robotPos = drive.getPose().getTranslation();
@@ -89,9 +90,11 @@ public class AutoAlignCommand extends Command {
         );
 
         // advance 1 step from current state
-        pState = sProfile.calculate(dt, // how far to advance in the profile
+        double dpGoal = dot(finalVelocity, pathDir) / pathLength;
+        pState = sProfile.calculate(
+                dt, // how far to advance in the profile
                 new TrapezoidProfile.State(pCurrent, dpCurrent), // current (start)
-                new TrapezoidProfile.State(1.0, 0.0) // goal
+                new TrapezoidProfile.State(1.0, dpGoal) // goal
         );
 
         double p = pState.position;
@@ -109,10 +112,13 @@ public class AutoAlignCommand extends Command {
         double commandedSpeed = dp * pathLength;
         Translation2d commandedVel = pathDir.times(commandedSpeed);
 
+        Translation2d lateral = finalVelocity.minus(pathDir.times(dpGoal * pathLength));
+        Translation2d blendedVel = commandedVel.plus(lateral.times(p));
+
         // set velocity of the drivetrain
         drive.runVelocity(new ChassisSpeeds(
-                commandedVel.getX(),
-                commandedVel.getY(),
+                blendedVel.getX(),
+                blendedVel.getY(),
                 0.0
         ));
     }
