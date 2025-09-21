@@ -1,8 +1,8 @@
 package frc.robot.commands;
 
 import frc.robot.RobotContainer;
-import frc.robot.autoalign.AutoAlign;
-import frc.robot.autoalign.AutoAlign.Target;
+import frc.robot.autoalign.LegacyAutoAlign;
+import frc.robot.autoalign.LegacyAutoAlign.Target;
 import frc.robot.subsystems.coral.CoralConstants;
 import frc.robot.subsystems.elevator.ElevatorConstants;
 import frc.robot.util.FieldPOIs;
@@ -28,10 +28,10 @@ public class AutoCommands {
         base.atTimeBeforeEnd(beforeEnd).onTrue(new SequentialCommandGroup(
             robot.algae.setPivotPosition(AlgaeConstants.intake),
             robot.coral.intakeUntilFunnelEnter().andThen(Commands.waitSeconds(0.25)).deadlineFor(
-                AutoAlign.driveToTargetCommand(robot).beforeStarting(() -> AutoAlign.setTargetPose(
+                LegacyAutoAlign.driveToTargetCommand(robot).beforeStarting(() -> LegacyAutoAlign.setTargetPose(
                     (robot.drive.getPose().getY() < 8.19912 / 2.0 == !ChoreoAllianceFlipUtil.shouldFlip())
-                        ? AutoAlign.flipIfRed(FieldPOIs.CORAL_STATION_BOTTOM)
-                        : AutoAlign.flipIfRed(FieldPOIs.CORAL_STATION_TOP)
+                        ? LegacyAutoAlign.flipIfRed(FieldPOIs.CORAL_STATION_BOTTOM)
+                        : LegacyAutoAlign.flipIfRed(FieldPOIs.CORAL_STATION_TOP)
                 ))
             ),
             (onComplete != null)
@@ -80,10 +80,10 @@ public class AutoCommands {
                 Commands.waitSeconds(alignDelay + 0.4),
                 robot.coral.setVelocityCommand(CoralConstants.l4RadPerSec).repeatedly().withTimeout(duration)
             ).deadlineFor(
-                AutoAlign.driveToTargetWithElevatorCommand(robot).beforeStarting(() -> {
-                    AutoAlign.setTargetPose(AutoAlign.flipIfRed(AutoAlign.fromPoseId(
-                        AutoAlign.getNearestPose(base.getFinalPose().orElse(new Pose2d()),
-                            new Translation2d(), AutoAlign.getPosesFor(flippedTarget), flippedTarget), flippedTarget)
+                LegacyAutoAlign.driveToTargetWithElevatorCommand(robot).beforeStarting(() -> {
+                    LegacyAutoAlign.setTargetPose(LegacyAutoAlign.flipIfRed(LegacyAutoAlign.fromPoseId(
+                        LegacyAutoAlign.getNearestPose(base.getFinalPose().orElse(new Pose2d()),
+                            new Translation2d(), LegacyAutoAlign.getPosesFor(flippedTarget), flippedTarget), flippedTarget)
                     ));
                 })
             ),

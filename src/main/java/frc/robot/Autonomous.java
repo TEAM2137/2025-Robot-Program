@@ -27,8 +27,8 @@ import edu.wpi.first.wpilibj2.command.SequentialCommandGroup;
 import edu.wpi.first.wpilibj2.command.button.RobotModeTriggers;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
-import frc.robot.autoalign.AutoAlign;
-import frc.robot.autoalign.AutoAlign.Target;
+import frc.robot.autoalign.LegacyAutoAlign;
+import frc.robot.autoalign.LegacyAutoAlign.Target;
 import frc.robot.commands.AutoCommands;
 import frc.robot.commands.DriveCommands;
 import frc.robot.subsystems.algae.AlgaeConstants;
@@ -66,13 +66,13 @@ public class Autonomous {
                                 sample.getTimestamp(),
                                 new Translation2d(sample.vx, sample.vy).getNorm(),
                                 new Translation2d(sample.ax, sample.ay).getNorm(),
-                                AutoAlign.flipIfRed(sample.getPose()),
+                                LegacyAutoAlign.flipIfRed(sample.getPose()),
                                 sample.omega)
                             )
                             .collect(Collectors.toList())
                     ));
                     Logger.recordOutput("Autonomous/AutoTrajectory", Arrays.stream(trajectory.getPoses())
-                            .map(pose -> AutoAlign.flipIfRed(pose).getTranslation()).toArray(Translation2d[]::new));
+                            .map(pose -> LegacyAutoAlign.flipIfRed(pose).getTranslation()).toArray(Translation2d[]::new));
                 }
         );
 

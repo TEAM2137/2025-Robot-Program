@@ -4,6 +4,7 @@ package frc.robot;
 import java.util.function.BooleanSupplier;
 import java.util.function.Supplier;
 
+import frc.robot.autoalign.AutoAlignCommand;
 import org.littletonrobotics.junction.Logger;
 import org.littletonrobotics.junction.networktables.LoggedNetworkBoolean;
 
@@ -57,8 +58,8 @@ import frc.robot.subsystems.vision.VisionIO;
 import frc.robot.subsystems.vision.VisionIOLimelight;
 import frc.robot.util.FieldPOIs;
 import frc.robot.util.RisingEdgeTrigger;
-import frc.robot.autoalign.AutoAlign;
-import frc.robot.autoalign.AutoAlign.Target;
+import frc.robot.autoalign.LegacyAutoAlign;
+import frc.robot.autoalign.LegacyAutoAlign.Target;
 
 public class RobotContainer {
     private static RobotContainer instance;
@@ -220,7 +221,7 @@ public class RobotContainer {
         hasNothing = coral.hasCoral.negate().and(algae.hasAlgae.negate());
 
         leaveReefZone = new Trigger(() -> drive.getPose().getTranslation().getDistance(
-            AutoAlign.flipIfRed(FieldPOIs.REEF_CENTER).getTranslation()) > FieldPOIs.REEF_ZONE_DISTANCE);
+            LegacyAutoAlign.flipIfRed(FieldPOIs.REEF_CENTER).getTranslation()) > FieldPOIs.REEF_ZONE_DISTANCE);
 
         targetRight = new RisingEdgeTrigger(driverController.rightBumper(), coral.hasCoral, true);
         targetLeft = new RisingEdgeTrigger(driverController.leftBumper(), coral.hasCoral, true);
@@ -264,7 +265,7 @@ public class RobotContainer {
         BooleanSupplier slowMode = () -> driverController.getLeftTriggerAxis() > 0.25;
 
         // Scoring and utility triggers
-        Trigger isTargetingNet = new Trigger(() -> AutoAlign.getTargetType().name().contains("NET"));
+        Trigger isTargetingNet = new Trigger(() -> LegacyAutoAlign.getTargetType().name().contains("NET"));
         Trigger isL1Selected = new Trigger(() -> elevator.getScheduledPosition() == ElevatorConstants.L1);
         Trigger isAtL4Height = new Trigger(() -> elevator.isAtTarget() && elevator.getTargetPosition() == ElevatorConstants.L4);
         Trigger enterReefZone = leaveReefZone.negate();
@@ -272,6 +273,10 @@ public class RobotContainer {
         RisingEdgeTrigger scoreNet = scoreAlgae.and(isTargetingNet);
         RisingEdgeTrigger scoreL1 = scoreCoral.and(isL1Selected);
         RisingEdgeTrigger scoreLs234 = scoreCoral.and(isL1Selected.negate());
+
+        driverController.a().whileTrue(new AutoAlignCommand.Builder()
+                .withFinalPose(new Pose2d(0, 0, Rotation2d.kZero))
+                .build());
 
         // Default command, normal field-relative drive
         drive.setDefaultCommand(DriveCommands.joystickDrive(drive, joystickSupplier,
@@ -315,13 +320,13 @@ public class RobotContainer {
         driverController.povDown().onFalse(coral.setVoltageCommand(0).withName("Manual Coral Stop"));
 
         // Driver coral auto align
-        targetLeft.whileTrue(AutoAlign.autoAlignTo(Target.LEFT_BRANCH, this, joystickSupplier)
-            .beforeStarting(() -> AutoAlign.setScheduledElevatorHeight(elevator.getScheduledPosition())).withName("Target Left Branch"));
-        targetRight.whileTrue(AutoAlign.autoAlignTo(Target.RIGHT_BRANCH, this, joystickSupplier)
-            .beforeStarting(() -> AutoAlign.setScheduledElevatorHeight(elevator.getScheduledPosition())).withName("Target Right Branch"));
+        targetLeft.whileTrue(LegacyAutoAlign.autoAlignTo(Target.LEFT_BRANCH, this, joystickSupplier)
+            .beforeStarting(() -> LegacyAutoAlign.setScheduledElevatorHeight(elevator.getScheduledPosition())).withName("Target Left Branch"));
+        targetRight.whileTrue(LegacyAutoAlign.autoAlignTo(Target.RIGHT_BRANCH, this, joystickSupplier)
+            .beforeStarting(() -> LegacyAutoAlign.setScheduledElevatorHeight(elevator.getScheduledPosition())).withName("Target Right Branch"));
 
         // Driver algae auto align
-        algaeGrab.whileTrue(createAlgaeAlign(() -> AutoAlign.getNewTargetPoseId(
+        algaeGrab.whileTrue(createAlgaeAlign(() -> LegacyAutoAlign.getNewTargetPoseId(
                 drive, Target.ALGAE_ALIGN, joystickSupplier) % 2 == 0)
             .withName("Algae Grab"));
 
@@ -329,7 +334,7 @@ public class RobotContainer {
         leaveReefZone.and(RobotModeTriggers.autonomous().negate())
                 .and(algae.hasAlgae).and(isTargetingNet.negate())
                 .and(driverController.rightTrigger(0.25).negate())
-            .onTrue(AutoAlign.clearTargetType()
+            .onTrue(LegacyAutoAlign.clearTargetType()
             .andThen(elevator.setPositionCommand(ElevatorConstants.stow))
             .andThen(Commands.waitSeconds(0.5))
             .andThen(coral.setVoltageCommand(CoralConstants.algaeHoldVoltage))
@@ -348,7 +353,7 @@ public class RobotContainer {
                 if (drive.getPose().getX() > 7 && drive.getPose().getX() < 10.5)
                     elevator.setPosition(ElevatorConstants.L4);
             }, elevator, algae))
-            .beforeStarting(AutoAlign.setTargetType(Target.NET))
+            .beforeStarting(LegacyAutoAlign.setTargetType(Target.NET))
             .withName("Target Net"));
 
         isAtL4Height.and(algae.hasAlgae).onTrue(algae.setPivotPosition(AlgaeConstants.stow));
@@ -357,7 +362,7 @@ public class RobotContainer {
         scoreNet.onTrue(netPlaceCommand.withName("Place in Net"));
 
         // Driver processor auto align
-        targetProcessor.onTrue(AutoAlign.setTargetType(AutoAlign.Target.PROCESSOR)
+        targetProcessor.onTrue(LegacyAutoAlign.setTargetType(LegacyAutoAlign.Target.PROCESSOR)
             .andThen(coral.setVelocityCommand(CoralConstants.algaeGrabRadPerSec))
             .andThen(algae.setPivotPosition(AlgaeConstants.processor))
             .andThen(Commands.waitSeconds(0.5))
@@ -412,7 +417,7 @@ public class RobotContainer {
         elevatorManual.and(operatorController.rightStick()).onTrue(elevator.resetPositionCommand().ignoringDisable(true));
 
         // Schedule different reef heights
-        l1.onTrue(elevator.schedulePositionCommand(ElevatorConstants.L1).andThen(AutoAlign.clearTargetType()));
+        l1.onTrue(elevator.schedulePositionCommand(ElevatorConstants.L1).andThen(LegacyAutoAlign.clearTargetType()));
         l2.onTrue(elevator.schedulePositionCommand(ElevatorConstants.L2).ignoringDisable(true));
         l3.onTrue(elevator.schedulePositionCommand(ElevatorConstants.L3).ignoringDisable(true));
         l4.onTrue(elevator.schedulePositionCommand(ElevatorConstants.L4).ignoringDisable(true));
@@ -479,7 +484,7 @@ public class RobotContainer {
         if (coralCommand != null) Logger.recordOutput("Triggers/CoralCommand", coralCommand.getName());
         else Logger.recordOutput("Triggers/CoralCommand", "No Command");
 
-        Logger.recordOutput("Triggers/AutoAlignAtTarget", AutoAlign.isAtTarget(AutoAlign.getTargetType(), 0.1, 2.0));
+        Logger.recordOutput("Triggers/AutoAlignAtTarget", LegacyAutoAlign.isAtTarget(LegacyAutoAlign.getTargetType(), 0.1, 2.0));
     }
 
     public Supplier<Translation2d> joystickMotionSupplier() {
@@ -489,16 +494,16 @@ public class RobotContainer {
     public static RobotContainer getInstance() { return instance; }
 
     public Command createAlgaeAlign(BooleanSupplier high) {
-        return AutoAlign.autoAlignTo(Target.ALGAE_ALIGN, this, joystickSupplier)
+        return LegacyAutoAlign.autoAlignTo(Target.ALGAE_ALIGN, this, joystickSupplier)
             .beforeStarting(() -> {
                 // Schedule the proper elevator height
-                AutoAlign.setScheduledElevatorHeight(high.getAsBoolean() ? ElevatorConstants.algaeHigh : ElevatorConstants.algaeLow);
+                LegacyAutoAlign.setScheduledElevatorHeight(high.getAsBoolean() ? ElevatorConstants.algaeHigh : ElevatorConstants.algaeLow);
             })
             .deadlineFor(Commands.waitSeconds(0.25).andThen(algae.setPivotPosition(AlgaeConstants.grab)))
-            .until(new Trigger(AutoAlign.isAtTarget(Target.ALGAE_ALIGN,
+            .until(new Trigger(LegacyAutoAlign.isAtTarget(Target.ALGAE_ALIGN,
                 0.1, 2.0)).and(algae::isAtTarget))
             .andThen(new ParallelCommandGroup(
-                AutoAlign.autoAlignTo(Target.ALGAE_GRAB, this, joystickSupplier),
+                LegacyAutoAlign.autoAlignTo(Target.ALGAE_GRAB, this, joystickSupplier),
                 algae.setPivotPosition(AlgaeConstants.grab)
                     .andThen(coral.setVelocityCommand(CoralConstants.algaeGrabRadPerSec))
             )).finallyDo(() -> algae.setPivotPosition(AlgaeConstants.hold).schedule());

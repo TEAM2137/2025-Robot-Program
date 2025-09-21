@@ -18,7 +18,7 @@ import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import frc.robot.RobotContainer;
-import frc.robot.autoalign.AutoAlign;
+import frc.robot.autoalign.LegacyAutoAlign;
 import frc.robot.subsystems.drive.Drive;
 import frc.robot.util.FieldPOIs;
 
@@ -309,8 +309,8 @@ public class DriveCommands {
         // Construct command
         return joystickDriveAtAngle(drive, joystickSupplier, slowMode,
                 () -> (drive.getPose().getY() < 8.19912 / 2.0 == !ChoreoAllianceFlipUtil.shouldFlip())
-                ? AutoAlign.flipIfRed(FieldPOIs.CORAL_STATION_BOTTOM).getRotation()
-                : AutoAlign.flipIfRed(FieldPOIs.CORAL_STATION_TOP).getRotation());
+                ? LegacyAutoAlign.flipIfRed(FieldPOIs.CORAL_STATION_BOTTOM).getRotation()
+                : LegacyAutoAlign.flipIfRed(FieldPOIs.CORAL_STATION_TOP).getRotation());
     }
 
     private static final StructPublisher<Translation2d> currentVelocityPublisher = NetworkTableInstance.getDefault()
@@ -327,7 +327,7 @@ public class DriveCommands {
         Translation2d flippedVelocity = ChoreoAllianceFlipUtil.shouldFlip() ? new Translation2d().minus(currentVelocity) : currentVelocity;
         Translation2d desiredAccel = wantedVelocity.minus(flippedVelocity);
         if (desiredAccel.getNorm() > maxAcceleration * 0.04)
-            return flippedVelocity.plus(AutoAlign.normalize(desiredAccel).times(maxAcceleration * 0.04));
+            return flippedVelocity.plus(LegacyAutoAlign.normalize(desiredAccel).times(maxAcceleration * 0.04));
         else return wantedVelocity;
     }
 }

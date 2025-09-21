@@ -193,7 +193,7 @@ public class Drive extends SubsystemBase {
         gyroDisconnectedAlert.set(!gyroInputs.connected && Constants.currentMode != Mode.SIM);
 
         // Post auto align debug displays in NetworkTables
-        Logger.recordOutput("AutoAlign/TargetPose", AutoAlign.getTargetPose());
+        Logger.recordOutput("AutoAlign/TargetPose", LegacyAutoAlign.getTargetPose());
         Logger.recordOutput("AutoAlign/JoystickVector", createTrajectoryTo(getPose().getTranslation()
             .minus(RobotContainer.getInstance().joystickMotionSupplier().get().times(1.5))));
 

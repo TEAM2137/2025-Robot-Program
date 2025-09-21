@@ -26,7 +26,7 @@ import frc.robot.commands.DriveCommands;
 import frc.robot.subsystems.drive.Drive;
 import frc.robot.util.FieldPOIs;
 
-public class AutoAlign {
+public class LegacyAutoAlign {
     private static final double DRIVE_MAX_VELOCITY = 3.5; // Meters/Sec
     private static final double DRIVE_MAX_ACCELERATION = 10.0; // Meters/Sec^2
 
@@ -77,14 +77,14 @@ public class AutoAlign {
     );
 
     private static Pose2d targetPose; // The currently targeted position (can be null)
-    private static AutoAlign.Target targetType = Target.LEFT_BRANCH; // The most recently targeted type
+    private static LegacyAutoAlign.Target targetType = Target.LEFT_BRANCH; // The most recently targeted type
     private static double scheduledElevatorHeight = 0.0;
 
     public static Pose2d getTargetPose() {
         return targetPose;
     }
 
-    public static AutoAlign.Target getTargetType() {
+    public static LegacyAutoAlign.Target getTargetType() {
         return targetType;
     }
 
@@ -128,7 +128,7 @@ public class AutoAlign {
             Commands.runOnce(() -> {
                 Logger.recordOutput("AutoAlign/TargetType", targetType);
                 targetPose = getFlippedPose(robot.drive, targetType, motionSupplier);
-                AutoAlign.targetType = targetType;
+                LegacyAutoAlign.targetType = targetType;
             }),
             driveToTargetWithElevatorCommand(robot)
         );
@@ -150,7 +150,7 @@ public class AutoAlign {
             Translation2d adjustedTranslation = new Translation2d(robotTranslation.getX(), targetType.allowYMovement() ? (ChoreoAllianceFlipUtil.shouldFlip() ? ChoreoAllianceFlipUtil.flipY(0.0) : 0.0) : robotTranslation.getY());
             if (targetPose != null && targetPose.getTranslation().getDistance(adjustedTranslation) < ELEVATOR_RAISE_DISTANCE_METERS * (targetType == Target.NET ? 0.3 : 1.0)) {
                 if (targetType.name().contains("BRANCH")) setScheduledElevatorHeight(robot.elevator.getScheduledPosition());
-                robot.elevator.setPosition(AutoAlign.scheduledElevatorHeight);
+                robot.elevator.setPosition(LegacyAutoAlign.scheduledElevatorHeight);
             }
         }));
     }
@@ -291,7 +291,7 @@ public class AutoAlign {
 
         for (int i = 0; i < locations.size(); i++) {
             // Calculate the distance from the robot to the current reef pole
-            Pose2d targetPose = AutoAlign.flipIfRed(locations.get(i));
+            Pose2d targetPose = LegacyAutoAlign.flipIfRed(locations.get(i));
             if (targetType.allowYMovement()) targetPose = new Pose2d(targetPose.getX(), pose.getY(), targetPose.getRotation());
             double dst = pose.getTranslation().getDistance(targetPose.getTranslation());
 
@@ -301,7 +301,7 @@ public class AutoAlign {
             }
 
             // Calculate the additional weighting based on joystick angle
-            double addition = AutoAlign.calculateBestPoseAddition(
+            double addition = LegacyAutoAlign.calculateBestPoseAddition(
                 targetPose.minus(pose).getTranslation(), motionVector);
 
             // Apply addition and assign new best result if applicable
@@ -359,24 +359,24 @@ public class AutoAlign {
     }
 
     public static void setScheduledElevatorHeight(double elevatorHeight) {
-        AutoAlign.scheduledElevatorHeight = elevatorHeight;
+        LegacyAutoAlign.scheduledElevatorHeight = elevatorHeight;
     }
 
     public static Command clearTargetType() {
-        return Commands.runOnce(() -> AutoAlign.targetType = Target.LEFT_BRANCH);
+        return Commands.runOnce(() -> LegacyAutoAlign.targetType = Target.LEFT_BRANCH);
     }
 
     public static Command setTargetType(Target target) {
-        return Commands.runOnce(() -> AutoAlign.targetType = target);
+        return Commands.runOnce(() -> LegacyAutoAlign.targetType = target);
     }
 
     public static void setTargetPose(Pose2d pose) {
-        AutoAlign.targetPose = pose;
+        LegacyAutoAlign.targetPose = pose;
     }
 
     public static BooleanSupplier isAtTarget(Target target, double translationTolerance, double rotationTolerance) {
         return () -> {
-            if (targetPose == null || AutoAlign.targetType != target) return false;
+            if (targetPose == null || LegacyAutoAlign.targetType != target) return false;
             boolean translationSatisfied = RobotContainer.getInstance().drive.getPose().getTranslation()
                 .getDistance(targetPose.getTranslation()) < translationTolerance;
             boolean rotationSatisfied = RobotContainer.getInstance().drive.getPose().getRotation()
