@@ -275,14 +275,19 @@ public class RobotContainer {
         RisingEdgeTrigger scoreLs234 = scoreCoral.and(isL1Selected.negate());
 
         // test auto align command (remove at some point)
-        driverController.a().whileTrue(elevator.setPositionCommand(0).asProxy()
-                .andThen(AutoAlignCommand.builder()
-                        .withTargetPose(new Pose2d(-1, 0, Rotation2d.kZero))
-                        .withFinalVelocity(new Translation2d(0.0, 0.0))
-                        .runCommandAtDistance(0.5, elevator.setPositionCommand(1))
-                        .build()
-                )
-        );
+
+        AutoAlignCommand testAlign = AutoAlignCommand.builder()
+                .withTargetPose(new Pose2d(2.0, 4.0, Rotation2d.kZero))
+                .withFinalVelocity(new Translation2d(0.0, 0.0))
+                .endWhenFinished()
+                .build();
+
+        AutoAlignCommand testAlign2 = AutoAlignCommand.builder()
+                .withTargetPose(new Pose2d(0.0, 4.0, Rotation2d.kZero))
+                .endWhenFinished()
+                .build();
+
+        driverController.a().whileTrue(testAlign.andThen(testAlign2));
 
         // Default command, normal field-relative drive
         drive.setDefaultCommand(DriveCommands.joystickDrive(drive, joystickSupplier,

@@ -1,6 +1,5 @@
 package frc.robot.autoalign;
 
-import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
@@ -58,104 +57,143 @@ public class AutoAlignCommand extends Command {
 
     private ArrayList<CommandMarker> pendingCommandMarkers;
 
-    private Pose2d startPose;
-    private Translation2d pathDir;
-    private TrapezoidProfile.State pState;
-
     private double pathLength;
-    private double positionError;
+    private double error;
+    private double progress;
 
     private Timer timer;
     private double totalPathTime;
 
     @Override
     public void initialize() {
-        startPose = drive.getPose();
+        Pose2d startPose = drive.getPose();
 
         Translation2d delta = finalPose.getTranslation().minus(startPose.getTranslation());
-        pathLength = delta.getNorm(); // in meters
-        pathDir = delta.div(pathLength); // normalized direction
-        totalPathTime = calculateTotalPathTime();
+        pathLength = delta.getNorm();
+        totalPathTime = 0; // gets updated in execute()
 
         Logger.recordOutput("AutoAlign/startPose", startPose);
         Logger.recordOutput("AutoAlign/pathLength", pathLength);
-
-        pState = new TrapezoidProfile.State(0.0, 0.0); // p = 0, dp = 0
 
         pendingCommandMarkers = new ArrayList<>(markers);
 
         timer = new Timer();
         timer.start();
+
+        Logger.recordOutput("AutoAlign/running", true);
     }
 
     @Override
     public void execute() {
-        // loop cycle is 0.02, but use a little extra to "look ahead" in the profile
+        // "delta time" for the trapezoidal motion profiles.
+        // loop cycle is 0.02s, but any extra allows you to "look ahead" in the profile.
+        // more dt reduces oscillation around the target pose, but too much dt
+        // messes with acceleration limits. look at log outputs and find a balance.
+        // from what I've seen, you want both sides of the velocity trapezoid to have
+        // similar steepness for the smoothest results.
+        // simulation generally needs a lower dt than the real robot
         double dt = ConstantsUtil.getRealOrSimConstant(0.11, 0.04);
 
-        // calculate current progress
+        // current pose + velocity
         Translation2d robotPos = drive.getPose().getTranslation();
-        double alongPath = dot(robotPos.minus(startPose.getTranslation()), pathDir);
-        double pCurrent = MathUtil.clamp(alongPath / pathLength, 0.0, 1.0);
-
         Translation2d robotVel = drive.getLinearSpeedsVector();
-        double dpCurrent = dot(robotVel, pathDir) / pathLength;
-        positionError = robotPos.getDistance(finalPose.getTranslation());
 
-        Logger.recordOutput("AutoAlign/alongPath", alongPath);
-        Logger.recordOutput("AutoAlign/positionError", alongPath);
+        // calculate deltas to goal
+        double dxRemaining = finalPose.getX() - robotPos.getX();
+        double dyRemaining = finalPose.getY() - robotPos.getY();
 
-        // rebuild trapezoid each cycle to allow for error correction
-        TrapezoidProfile sProfile = new TrapezoidProfile(
-                new TrapezoidProfile.Constraints(
-                        speedLimit / pathLength,
-                        accelerationLimit / pathLength
-                )
+        Logger.recordOutput("AutoAlign/x", dxRemaining);
+        Logger.recordOutput("AutoAlign/y", dyRemaining);
+
+        // calculate position error and progress along path
+        this.error = Math.hypot(dxRemaining, dyRemaining);
+        this.progress = (pathLength - error) / pathLength;
+
+        Logger.recordOutput("AutoAlign/error", error);
+        Logger.recordOutput("AutoAlign/progress", progress);
+
+        // get current velocity
+        double vxCurrent = robotVel.getX();
+        double vyCurrent = robotVel.getY();
+
+        // scale constraints so combined speed is under the limit.
+        // this is necessary because x and y act independently, and ensures
+        // that we don't move at sqrt(2) times the speed when moving diagonally
+        double totalRemaining = Math.hypot(dxRemaining, dyRemaining);
+        double scaleX = (totalRemaining > 1e-6) ? Math.abs(dxRemaining) / totalRemaining : 0.0;
+        double scaleY = (totalRemaining > 1e-6) ? Math.abs(dyRemaining) / totalRemaining : 0.0;
+
+        // create trapezoidal velocity profiles for x and y components.
+        // creating a new profile each cycle ensures that we won't get off
+        TrapezoidProfile xProfile = new TrapezoidProfile(new TrapezoidProfile.Constraints(
+                speedLimit * scaleX, accelerationLimit * scaleX));
+        TrapezoidProfile yProfile = new TrapezoidProfile(new TrapezoidProfile.Constraints(
+                speedLimit * scaleY, accelerationLimit * scaleY));
+
+        // target velocity for each axis
+        double vxGoal = finalVelocity.getX();
+        double vyGoal = finalVelocity.getY();
+
+        // advance the profiles
+        TrapezoidProfile.State xState = xProfile.calculate(
+                dt, // delta time
+                new TrapezoidProfile.State(0.0, vxCurrent), // current
+                new TrapezoidProfile.State(dxRemaining, vxGoal) // goal
+        );
+        TrapezoidProfile.State yState = yProfile.calculate(
+                dt, // delta time
+                new TrapezoidProfile.State(0.0, vyCurrent), // current
+                new TrapezoidProfile.State(dyRemaining, vyGoal) // goal
         );
 
-        // advance 1 step from current state
-        double dpGoal = Math.max(0, dot(finalVelocity, pathDir) / pathLength);
-        pState = sProfile.calculate(
-                dt, // how far to advance in the profile
-                new TrapezoidProfile.State(pCurrent, dpCurrent), // current (start)
-                new TrapezoidProfile.State(1.0, dpGoal) // goal
-        );
+        // apply resulting x and y velocities to drivetrain
+        double vx = xState.velocity;
+        double vy = yState.velocity;
+        drive.runVelocity(new ChassisSpeeds(vx, vy, 0.0));
 
-        // grab progress and delta progress from profile
-        double p = pState.position;
-        double dp = pState.velocity;
+        Logger.recordOutput("AutoAlign/vx", vx);
+        Logger.recordOutput("AutoAlign/vy", vy);
 
-        Logger.recordOutput("AutoAlign/p", p);
-        Logger.recordOutput("AutoAlign/dp", dp);
+        // sets the path time to the total time of the longest-lasting profile
+        // TODO: profile.totalTime() fails with initial and final velocity, don't use
+        double xTime = (Math.abs(dxRemaining) > 0.02) ? xProfile.totalTime() : 0.0;
+        double yTime = (Math.abs(dyRemaining) > 0.02) ? yProfile.totalTime() : 0.0;
+        if (totalPathTime == 0) this.totalPathTime = Math.max(xTime, yTime);
 
-        // get desired velocity
-        double commandedSpeed = dp * pathLength;
-        Translation2d commandedVel = pathDir.times(commandedSpeed);
+        Logger.recordOutput("AutoAlign/xTime", xTime);
+        Logger.recordOutput("AutoAlign/yTime", yTime);
+        Logger.recordOutput("AutoAlign/totalPathTime", totalPathTime);
 
-        // blend velocity with final velocity (bad solution, should revisit)
-        Translation2d lateral = finalVelocity.minus(pathDir.times(dpGoal * pathLength));
-        Translation2d blendedVel = commandedVel.plus(lateral.times(p));
+        // run pending commands (if applicable)
+        checkPendingCommands();
+    }
 
-        // set velocity of the drivetrain
-        drive.runVelocity(new ChassisSpeeds(
-                blendedVel.getX(),
-                blendedVel.getY(),
-                0.0
-        ));
+    @Override
+    public void end(boolean interrupted) {
+        Logger.recordOutput("AutoAlign/running", false);
+        super.end(interrupted);
+    }
 
-        // execute commands along path
+    @Override
+    public boolean isFinished() {
+        return error < endTolerance || (timeout < 0
+                ? timer.hasElapsed(totalPathTime)
+                : timer.hasElapsed(timeout));
+    }
+
+    private void checkPendingCommands() {
         Iterator<CommandMarker> it = pendingCommandMarkers.iterator();
         while (it.hasNext()) {
             CommandMarker marker = it.next();
             switch (marker.type) {
                 case PROGRESS -> {
-                    if (p > marker.value) {
+                    if (progress > marker.value) {
                         marker.command.schedule();
                         it.remove();
                     }
                 }
                 case DISTANCE -> {
-                    if (positionError < marker.value) {
+                    if (error < marker.value) {
                         marker.command.schedule();
                         it.remove();
                     }
@@ -176,122 +214,115 @@ public class AutoAlignCommand extends Command {
         }
     }
 
-    @Override
-    public boolean isFinished() {
-        if (timeout < 0 && timer.hasElapsed(totalPathTime)) return true;
-        return timer.hasElapsed(timeout) || positionError < endTolerance;
-    }
-
-    private double calculateTotalPathTime() {
-        TrapezoidProfile profile = new TrapezoidProfile(
-                new TrapezoidProfile.Constraints(
-                        speedLimit / pathLength,
-                        accelerationLimit / pathLength
-                )
-        );
-        double dpGoal = Math.max(0, dot(finalVelocity, pathDir) / pathLength);
-        profile.calculate(0,
-                new TrapezoidProfile.State(0.0, 0.0),
-                new TrapezoidProfile.State(1.0, dpGoal)
-        );
-        return profile.totalTime();
-    }
-
-    private static double dot(Translation2d a, Translation2d b) {
-        return a.getX() * b.getX() + a.getY() * b.getY();
-    }
-
     public record CommandMarker(TriggerType type, double value, Command command) {
         public enum TriggerType { PROGRESS, DISTANCE, TIME_AFTER_START, TIME_BEFORE_END }
     }
 
     public static class Builder {
+        // default values
         private Pose2d finalPose = new Pose2d();
         private Translation2d finalVelocity = new Translation2d();
         private double speedLimit = TunerConstants.kSpeedAt12Volts.in(MetersPerSecond); // m/s
         private double accelerationLimit = 7.5; // m/s^2
         private double endTolerance = -1; // meters
         private double timeout = Double.POSITIVE_INFINITY; // seconds
-
         private final List<CommandMarker> markers = new ArrayList<>();
 
+        /** use {@code AutoAlignCommand.builder()} instead */
         private Builder() {}
 
         /**
-         * Decorates this command to end at a pose
+         * Sets this command's target position and rotation of the robot
          */
         public Builder withTargetPose(Pose2d pose) {
             this.finalPose = pose;
             return this;
         }
 
-        /** Decorates this command to roughly end with the given velocity (meters/second) */
+        /** Decorates this command to roughly end with the given velocity
+         * (meters/second) */
         public Builder withFinalVelocity(Translation2d velocity) {
             this.finalVelocity = velocity;
             return this;
         }
 
-        /** Decorates this command to not drive faster than the given limit (meters/second) */
+        /**
+         * decorates this command to not drive faster than the given limit
+         * (meters/second)
+         */
         public Builder withSpeedLimit(double speed) {
             this.speedLimit = speed;
             return this;
         }
 
-        /** Decorates this command to not accelerate faster than the given limit (meters/second^2) */
+        /**
+         * decorates this command to not accelerate faster than the given limit
+         * (meters/second^2)
+         */
         public Builder withAccelerationLimit(double accel) {
             this.accelerationLimit = accel;
             return this;
         }
 
-        /** Decorates this command to end when the robot is within a given distance (meters) to the target */
+        /**
+         * decorates this command to end when the robot is within a given distance
+         * (meters) to the target
+         */
         public Builder withEndTolerance(double tolerance) {
             this.endTolerance = tolerance;
             return this;
         }
 
-        /** Decorates this command to end after a given amount of time has passed */
+        /** decorates this command to end after a given amount of time has passed */
         public Builder withTimeout(double seconds) {
             this.timeout = seconds;
             return this;
         }
 
+        /** decorates this command to end after it's total estimated time expires */
+        public Builder endWhenFinished() {
+            this.timeout = -1;
+            return this;
+        }
+
         /**
-         * Decorates this command to run another command once the robot has completed
+         * decorates this command to run another command once the robot has completed
          * a given percent of the path (0.0 - 1.0)
          */
         public Builder runCommandAt(double progress, Command command) {
-            markers.add(new CommandMarker(CommandMarker.TriggerType.PROGRESS, progress, command));
-            return this;
+            return runCommand(CommandMarker.TriggerType.PROGRESS, progress, command);
         }
 
         /**
-         * Decorates this command to run another command once the robot is a given
+         * decorates this command to run another command once the robot is a given
          * distance from the target (meters)
          */
         public Builder runCommandAtDistance(double distance, Command command) {
-            markers.add(new CommandMarker(CommandMarker.TriggerType.DISTANCE, distance, command));
-            return this;
+            return runCommand(CommandMarker.TriggerType.DISTANCE, distance, command);
         }
 
         /**
-         * Decorates this command to run another command once a given amount of
+         * decorates this command to run another command once a given amount of
          * time has passed (seconds)
          * */
         public Builder runCommandAtTime(double seconds, Command command) {
-            markers.add(new CommandMarker(CommandMarker.TriggerType.TIME_AFTER_START, seconds, command));
-            return this;
+            return runCommand(CommandMarker.TriggerType.TIME_AFTER_START, seconds, command);
         }
 
         /**
-         * Decorates this command to run another command a given amount of time
+         * decorates this command to run another command a given amount of time
          * before the path ends (seconds)
          */
         public Builder runCommandAtTimeBeforeEnd(double seconds, Command command) {
-            markers.add(new CommandMarker(CommandMarker.TriggerType.TIME_BEFORE_END, seconds, command));
+            return runCommand(CommandMarker.TriggerType.TIME_BEFORE_END, seconds, command);
+        }
+
+        private Builder runCommand(CommandMarker.TriggerType type, double seconds, Command command) {
+            markers.add(new CommandMarker(type, seconds, command));
             return this;
         }
 
-        /** Creates an {@code AutoAlignCommand} from this builder */
+        /** creates an {@code AutoAlignCommand} from this builder */
         public AutoAlignCommand build() {
             return new AutoAlignCommand(this);
         }
