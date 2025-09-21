@@ -29,14 +29,5 @@
         null
     ],
     "java.test.defaultConfig": "WPIlibUnitTests",
-    "spotlessGradle.format.enable": true,
-    "spotlessGradle.diagnostics.enable": false,
-    "java.import.gradle.annotationProcessing.enabled": false,
-    "editor.defaultFormatter": "richardwillis.vscode-spotless-gradle",
-    "[json]": {
-        "editor.defaultFormatter": "richardwillis.vscode-spotless-gradle"
-    },
-    "[java]": {
-        "editor.defaultFormatter": "richardwillis.vscode-spotless-gradle"
-    }
+    "java.import.gradle.annotationProcessing.enabled": false
 }
