@@ -1,12 +1,16 @@
 package frc.robot.autoalign;
 
+import choreo.util.ChoreoAllianceFlipUtil;
+import edu.wpi.first.math.controller.ProfiledPIDController;
 import edu.wpi.first.math.geometry.Pose2d;
+import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.math.trajectory.TrapezoidProfile;
 import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj2.command.Command;
 import frc.robot.RobotContainer;
+import frc.robot.commands.DriveCommands;
 import frc.robot.generated.TunerConstants;
 import frc.robot.subsystems.drive.Drive;
 import frc.robot.util.ConstantsUtil;
@@ -32,8 +36,10 @@ public class AutoAlignCommand extends Command {
     private final double accelerationLimit;
     private final double endTolerance;
     private final double timeout;
+    private final boolean ignoreRotation;
     private final List<CommandMarker> markers;
     private final Drive drive;
+    private final ProfiledPIDController angleController;
 
     private ArrayList<CommandMarker> pendingCommandMarkers;
 
@@ -60,10 +66,14 @@ public class AutoAlignCommand extends Command {
         this.accelerationLimit = builder.accelerationLimit;
         this.endTolerance = builder.endTolerance;
         this.timeout = builder.timeout;
+        this.ignoreRotation = builder.ignoreRotation;
         this.markers = builder.markers;
 
         this.drive = RobotContainer.getInstance().drive;
         this.addRequirements(drive);
+
+        this.angleController = DriveCommands.getAngleController();
+        this.angleController.enableContinuousInput(-Math.PI, Math.PI);
     }
 
     @Override
@@ -71,16 +81,21 @@ public class AutoAlignCommand extends Command {
         this.startPose = drive.getPose();
         if (targetSelector != null) targetPose = targetSelector.getPose(drive.getTargetingContext());
 
-        pathLength = getPathLength(targetPose);
-        totalPathTime = 0; // gets updated in execute()
+        this.pathLength = getPathLength(targetPose);
+        this.totalPathTime = 0; // gets updated in execute()
 
         Logger.recordOutput("AutoAlign/startPose", startPose);
         Logger.recordOutput("AutoAlign/pathLength", pathLength);
 
-        pendingCommandMarkers = new ArrayList<>(markers);
+        this.angleController.reset(
+                drive.getRotation().getRadians(),
+                drive.getAngularSpeedRadsPerSec()
+        );
 
-        timer = new Timer();
-        timer.start();
+        this.pendingCommandMarkers = new ArrayList<>(markers);
+
+        this.timer = new Timer();
+        this.timer.start();
 
         Logger.recordOutput("AutoAlign/running", true);
     }
@@ -153,13 +168,24 @@ public class AutoAlignCommand extends Command {
                 new TrapezoidProfile.State(dyRemaining, vyGoal) // goal
         );
 
-        // apply resulting x and y velocities to drivetrain
+        // get x and y velocities from the trapezoid state
         double vx = xState.velocity;
         double vy = yState.velocity;
-        drive.runVelocity(new ChassisSpeeds(vx, vy, 0.0));
+
+        // get rotational velocity from the angle controller
+        double omega = angleController.calculate(drive.getRotation().getRadians(), targetPose.getRotation().getRadians());
+        if (ignoreRotation || Math.abs(angleController.getPositionError()) < DriveCommands.ANGLE_DEADBAND) omega = 0.0;
+
+        // create ChassisSpeeds, convert them to robot-relative, and apply to drivetrain
+        ChassisSpeeds speeds = new ChassisSpeeds(vx, vy, omega);
+        Rotation2d gyroAngle = ChoreoAllianceFlipUtil.shouldFlip()
+                ? drive.getRotation().plus(new Rotation2d(Math.PI))
+                : drive.getRotation();
+        drive.runVelocity(ChassisSpeeds.fromFieldRelativeSpeeds(speeds, gyroAngle));
 
         Logger.recordOutput("AutoAlign/vx", vx);
         Logger.recordOutput("AutoAlign/vy", vy);
+        Logger.recordOutput("AutoAlign/omega", omega);
 
         // sets the path time to the total time of the longest-lasting profile
         // TODO: sometimes broken with nonzero initial velocity
@@ -266,6 +292,7 @@ public class AutoAlignCommand extends Command {
         private double accelerationLimit = 7.5; // m/s^2
         private double endTolerance = -1; // meters
         private double timeout = Double.POSITIVE_INFINITY; // seconds
+        private boolean ignoreRotation = false;
         private final List<CommandMarker> markers = new ArrayList<>();
 
         /** Use {@code AutoAlignCommand.builder()} instead */
@@ -328,9 +355,18 @@ public class AutoAlignCommand extends Command {
             return this;
         }
 
-        /** Decorates this command to end after it's total estimated time expires */
-        public Builder endWhenFinished() {
-            this.timeout = -1;
+        /** Decorates this command to not rotate the robot while aligning */
+        public Builder ignoringRotation() {
+            this.ignoreRotation = true;
+            return this;
+        }
+
+        /**
+         * Decorates this command to not rotate the robot while aligning
+         * only if {@code ignoreRotation} is set to true
+         */
+        public Builder ignoringRotation(boolean ignoreRotation) {
+            this.ignoreRotation = ignoreRotation;
             return this;
         }
 

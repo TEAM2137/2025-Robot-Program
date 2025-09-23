@@ -280,7 +280,8 @@ public class RobotContainer {
         AutoAlignCommand testAlign = AutoAlignCommand.builder()
                 .withTargetPose(new Pose2d(2.0, 4.0, Rotation2d.kZero))
                 .withFinalVelocity(new Translation2d(0.0, 0.0))
-                .withEndTolerance(0.5)
+                .withEndTolerance(0.1)
+                .ignoringRotation()
                 .build();
 
         AutoAlignCommand testAlign2 = AutoAlignCommand.builder()
