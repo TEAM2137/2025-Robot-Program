@@ -51,7 +51,6 @@ public class AutoAlignCommand extends Command {
     private double progress;
 
     private Timer timer;
-    private double totalPathTime;
 
     /** Creates a new auto align command builder */
     public static Builder builder() {
@@ -82,7 +81,6 @@ public class AutoAlignCommand extends Command {
         if (targetSelector != null) targetPose = targetSelector.getPose(drive.getTargetingContext());
 
         this.pathLength = getPathLength(targetPose);
-        this.totalPathTime = 0; // gets updated in execute()
 
         Logger.recordOutput("AutoAlign/startPose", startPose);
         Logger.recordOutput("AutoAlign/pathLength", pathLength);
@@ -187,18 +185,6 @@ public class AutoAlignCommand extends Command {
         Logger.recordOutput("AutoAlign/vy", vy);
         Logger.recordOutput("AutoAlign/omega", omega);
 
-        // sets the path time to the total time of the longest-lasting profile
-        // TODO: sometimes broken with nonzero initial velocity
-        double xTime = trapezoidTimeRemaining(dxRemaining, vxCurrent, vxGoal,
-                speedLimit * scaleX, accelerationLimit * scaleX);
-        double yTime = trapezoidTimeRemaining(dyRemaining, vyCurrent, vyGoal,
-                speedLimit * scaleY, accelerationLimit * scaleY);
-        this.totalPathTime = Math.max(totalPathTime, Math.max(xTime, yTime));
-
-        Logger.recordOutput("AutoAlign/xTime", xTime);
-        Logger.recordOutput("AutoAlign/yTime", yTime);
-        Logger.recordOutput("AutoAlign/totalPathTime", totalPathTime);
-
         // run pending commands (if applicable)
         checkPendingCommands();
     }
@@ -211,9 +197,7 @@ public class AutoAlignCommand extends Command {
 
     @Override
     public boolean isFinished() {
-        return error < endTolerance || (timeout < 0
-                ? timer.hasElapsed(totalPathTime)
-                : timer.hasElapsed(timeout));
+        return error < endTolerance || timer.hasElapsed(timeout);
     }
 
     private void checkPendingCommands() {
@@ -235,12 +219,6 @@ public class AutoAlignCommand extends Command {
                 }
                 case TIME_AFTER_START -> {
                     if (timer.hasElapsed(marker.value)) {
-                        marker.command.schedule();
-                        it.remove();
-                    }
-                }
-                case TIME_BEFORE_END -> {
-                    if (timer.hasElapsed(totalPathTime - marker.value)) {
                         marker.command.schedule();
                         it.remove();
                     }
@@ -280,7 +258,7 @@ public class AutoAlignCommand extends Command {
     }
 
     public record CommandMarker(TriggerType type, double value, Command command) {
-        public enum TriggerType { PROGRESS, DISTANCE, TIME_AFTER_START, TIME_BEFORE_END }
+        public enum TriggerType { PROGRESS, DISTANCE, TIME_AFTER_START }
     }
 
     public static class Builder {
@@ -392,14 +370,6 @@ public class AutoAlignCommand extends Command {
          * */
         public Builder runCommandAtTime(double seconds, Command command) {
             return runCommand(CommandMarker.TriggerType.TIME_AFTER_START, seconds, command);
-        }
-
-        /**
-         * Decorates this command to run another command a given amount of time
-         * before the path ends (seconds)
-         */
-        public Builder runCommandAtTimeBeforeEnd(double seconds, Command command) {
-            return runCommand(CommandMarker.TriggerType.TIME_BEFORE_END, seconds, command);
         }
 
         private Builder runCommand(CommandMarker.TriggerType type, double seconds, Command command) {
