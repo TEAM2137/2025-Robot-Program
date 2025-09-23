@@ -26,16 +26,26 @@ import static edu.wpi.first.units.Units.MetersPerSecond;
  * @since 2025
  */
 public class AutoAlignCommand extends Command {
-    private final Pose2d finalPose;
+    private final TargetSelector targetSelector;
     private final Translation2d finalVelocity;
     private final double speedLimit;
     private final double accelerationLimit;
     private final double endTolerance;
     private final double timeout;
-
     private final List<CommandMarker> markers;
-
     private final Drive drive;
+
+    private ArrayList<CommandMarker> pendingCommandMarkers;
+
+    private Pose2d targetPose;
+    private Pose2d startPose;
+
+    private double pathLength;
+    private double error;
+    private double progress;
+
+    private Timer timer;
+    private double totalPathTime;
 
     /** Creates a new auto align command builder */
     public static Builder builder() {
@@ -43,7 +53,8 @@ public class AutoAlignCommand extends Command {
     }
 
     private AutoAlignCommand(Builder builder) {
-        this.finalPose = builder.finalPose;
+        this.targetSelector = builder.targetSelector;
+        this.targetPose = builder.targetPose;
         this.finalVelocity = builder.finalVelocity;
         this.speedLimit = builder.speedLimit;
         this.accelerationLimit = builder.accelerationLimit;
@@ -55,21 +66,12 @@ public class AutoAlignCommand extends Command {
         this.addRequirements(drive);
     }
 
-    private ArrayList<CommandMarker> pendingCommandMarkers;
-
-    private double pathLength;
-    private double error;
-    private double progress;
-
-    private Timer timer;
-    private double totalPathTime;
-
     @Override
     public void initialize() {
-        Pose2d startPose = drive.getPose();
+        this.startPose = drive.getPose();
+        if (targetSelector != null) targetPose = targetSelector.getPose(drive.getTargetingContext());
 
-        Translation2d delta = finalPose.getTranslation().minus(startPose.getTranslation());
-        pathLength = delta.getNorm();
+        pathLength = getPathLength(targetPose);
         totalPathTime = 0; // gets updated in execute()
 
         Logger.recordOutput("AutoAlign/startPose", startPose);
@@ -98,14 +100,19 @@ public class AutoAlignCommand extends Command {
         Translation2d robotPos = drive.getPose().getTranslation();
         Translation2d robotVel = drive.getLinearSpeedsVector();
 
+        // update target pose (if applicable)
+        if (targetSelector != null && targetSelector.isDynamic())
+            this.targetPose = targetSelector.getPose(drive.getTargetingContext());
+
         // calculate deltas to goal
-        double dxRemaining = finalPose.getX() - robotPos.getX();
-        double dyRemaining = finalPose.getY() - robotPos.getY();
+        double dxRemaining = targetPose.getX() - robotPos.getX();
+        double dyRemaining = targetPose.getY() - robotPos.getY();
 
         Logger.recordOutput("AutoAlign/x", dxRemaining);
         Logger.recordOutput("AutoAlign/y", dyRemaining);
 
         // calculate position error and progress along path
+        this.pathLength = getPathLength(targetPose);
         this.error = Math.hypot(dxRemaining, dyRemaining);
         this.progress = (pathLength - error) / pathLength;
 
@@ -216,6 +223,10 @@ public class AutoAlignCommand extends Command {
         }
     }
 
+    private double getPathLength(Pose2d target) {
+        return target.getTranslation().minus(startPose.getTranslation()).getNorm();
+    }
+
     // thanks chatgpt lol
     public static double trapezoidTimeRemaining(double dst, double v0, double vf,
                                                 double vMax, double aMax) {
@@ -248,7 +259,8 @@ public class AutoAlignCommand extends Command {
 
     public static class Builder {
         // default values
-        private Pose2d finalPose = new Pose2d();
+        private TargetSelector targetSelector;
+        private Pose2d targetPose = new Pose2d();
         private Translation2d finalVelocity = new Translation2d();
         private double speedLimit = TunerConstants.kSpeedAt12Volts.in(MetersPerSecond); // m/s
         private double accelerationLimit = 7.5; // m/s^2
@@ -256,14 +268,23 @@ public class AutoAlignCommand extends Command {
         private double timeout = Double.POSITIVE_INFINITY; // seconds
         private final List<CommandMarker> markers = new ArrayList<>();
 
-        /** use {@code AutoAlignCommand.builder()} instead */
+        /** Use {@code AutoAlignCommand.builder()} instead */
         private Builder() {}
+
+        /**
+         * Sets the {@code TargetSelector} responsible for selecting a Pose2D to target.
+         * For situations with only one possible target, use {@code builder.withTargetPose()}
+         */
+        public Builder withTargetSelector(TargetSelector selector) {
+            this.targetSelector = selector;
+            return this;
+        }
 
         /**
          * Sets this command's target position and rotation of the robot
          */
         public Builder withTargetPose(Pose2d pose) {
-            this.finalPose = pose;
+            this.targetPose = pose;
             return this;
         }
 
@@ -275,7 +296,7 @@ public class AutoAlignCommand extends Command {
         }
 
         /**
-         * decorates this command to not drive faster than the given limit
+         * Decorates this command to not drive faster than the given limit
          * (meters/second)
          */
         public Builder withSpeedLimit(double speed) {
@@ -284,7 +305,7 @@ public class AutoAlignCommand extends Command {
         }
 
         /**
-         * decorates this command to not accelerate faster than the given limit
+         * Decorates this command to not accelerate faster than the given limit
          * (meters/second^2)
          */
         public Builder withAccelerationLimit(double accel) {
@@ -293,7 +314,7 @@ public class AutoAlignCommand extends Command {
         }
 
         /**
-         * decorates this command to end when the robot is within a given distance
+         * Decorates this command to end when the robot is within a given distance
          * (meters) to the target
          */
         public Builder withEndTolerance(double tolerance) {
@@ -301,20 +322,20 @@ public class AutoAlignCommand extends Command {
             return this;
         }
 
-        /** decorates this command to end after a given amount of time has passed */
+        /** Decorates this command to end after a given amount of time has passed */
         public Builder withTimeout(double seconds) {
             this.timeout = seconds;
             return this;
         }
 
-        /** decorates this command to end after it's total estimated time expires */
+        /** Decorates this command to end after it's total estimated time expires */
         public Builder endWhenFinished() {
             this.timeout = -1;
             return this;
         }
 
         /**
-         * decorates this command to run another command once the robot has completed
+         * Decorates this command to run another command once the robot has completed
          * a given percent of the path (0.0 - 1.0)
          */
         public Builder runCommandAt(double progress, Command command) {
@@ -322,7 +343,7 @@ public class AutoAlignCommand extends Command {
         }
 
         /**
-         * decorates this command to run another command once the robot is a given
+         * Decorates this command to run another command once the robot is a given
          * distance from the target (meters)
          */
         public Builder runCommandAtDistance(double distance, Command command) {
@@ -330,7 +351,7 @@ public class AutoAlignCommand extends Command {
         }
 
         /**
-         * decorates this command to run another command once a given amount of
+         * Decorates this command to run another command once a given amount of
          * time has passed (seconds)
          * */
         public Builder runCommandAtTime(double seconds, Command command) {
@@ -338,7 +359,7 @@ public class AutoAlignCommand extends Command {
         }
 
         /**
-         * decorates this command to run another command a given amount of time
+         * Decorates this command to run another command a given amount of time
          * before the path ends (seconds)
          */
         public Builder runCommandAtTimeBeforeEnd(double seconds, Command command) {
@@ -350,9 +371,19 @@ public class AutoAlignCommand extends Command {
             return this;
         }
 
-        /** creates an {@code AutoAlignCommand} from this builder */
+        /** Creates an {@code AutoAlignCommand} from this builder */
         public AutoAlignCommand build() {
             return new AutoAlignCommand(this);
+        }
+
+        /**
+         * Creates an {@code AutoAlignCommand} from this builder
+         * @param name the internal name to give to the newly created command
+         */
+        public AutoAlignCommand build(String name) {
+            AutoAlignCommand command = build();
+            command.setName(name);
+            return command;
         }
     }
 }

@@ -423,4 +423,11 @@ public class Drive extends SubsystemBase {
             for (Module module : modules) module.setCoastMode(coast);
         });
     }
+
+    public TargetSelector.Context getTargetingContext() {
+        return new TargetSelector.Context(
+                this.getPose(),
+                RobotContainer.getInstance().joystickMotionSupplier().get()
+        );
+    }
 }

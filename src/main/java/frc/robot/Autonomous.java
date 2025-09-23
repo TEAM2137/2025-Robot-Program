@@ -10,6 +10,7 @@ import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
+import frc.robot.autoalign.TargetSelector;
 import org.littletonrobotics.junction.Logger;
 import org.littletonrobotics.junction.networktables.LoggedDashboardChooser;
 
@@ -27,7 +28,6 @@ import edu.wpi.first.wpilibj2.command.SequentialCommandGroup;
 import edu.wpi.first.wpilibj2.command.button.RobotModeTriggers;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
-import frc.robot.autoalign.LegacyAutoAlign;
 import frc.robot.autoalign.LegacyAutoAlign.Target;
 import frc.robot.commands.AutoCommands;
 import frc.robot.commands.DriveCommands;
@@ -66,13 +66,13 @@ public class Autonomous {
                                 sample.getTimestamp(),
                                 new Translation2d(sample.vx, sample.vy).getNorm(),
                                 new Translation2d(sample.ax, sample.ay).getNorm(),
-                                LegacyAutoAlign.flipIfRed(sample.getPose()),
+                                    TargetSelector.flipIfRed(sample.getPose()),
                                 sample.omega)
                             )
                             .collect(Collectors.toList())
                     ));
                     Logger.recordOutput("Autonomous/AutoTrajectory", Arrays.stream(trajectory.getPoses())
-                            .map(pose -> LegacyAutoAlign.flipIfRed(pose).getTranslation()).toArray(Translation2d[]::new));
+                            .map(pose -> TargetSelector.flipIfRed(pose).getTranslation()).toArray(Translation2d[]::new));
                 }
         );
 

@@ -3,6 +3,7 @@ package frc.robot.commands;
 import frc.robot.RobotContainer;
 import frc.robot.autoalign.LegacyAutoAlign;
 import frc.robot.autoalign.LegacyAutoAlign.Target;
+import frc.robot.autoalign.TargetSelector;
 import frc.robot.subsystems.coral.CoralConstants;
 import frc.robot.subsystems.elevator.ElevatorConstants;
 import frc.robot.util.FieldPOIs;
@@ -30,8 +31,8 @@ public class AutoCommands {
             robot.coral.intakeUntilFunnelEnter().andThen(Commands.waitSeconds(0.25)).deadlineFor(
                 LegacyAutoAlign.driveToTargetCommand(robot).beforeStarting(() -> LegacyAutoAlign.setTargetPose(
                     (robot.drive.getPose().getY() < 8.19912 / 2.0 == !ChoreoAllianceFlipUtil.shouldFlip())
-                        ? LegacyAutoAlign.flipIfRed(FieldPOIs.CORAL_STATION_BOTTOM)
-                        : LegacyAutoAlign.flipIfRed(FieldPOIs.CORAL_STATION_TOP)
+                        ? TargetSelector.flipIfRed(FieldPOIs.CORAL_STATION_BOTTOM)
+                        : TargetSelector.flipIfRed(FieldPOIs.CORAL_STATION_TOP)
                 ))
             ),
             (onComplete != null)
@@ -81,7 +82,7 @@ public class AutoCommands {
                 robot.coral.setVelocityCommand(CoralConstants.l4RadPerSec).repeatedly().withTimeout(duration)
             ).deadlineFor(
                 LegacyAutoAlign.driveToTargetWithElevatorCommand(robot).beforeStarting(() -> {
-                    LegacyAutoAlign.setTargetPose(LegacyAutoAlign.flipIfRed(LegacyAutoAlign.fromPoseId(
+                    LegacyAutoAlign.setTargetPose(TargetSelector.flipIfRed(LegacyAutoAlign.fromPoseId(
                         LegacyAutoAlign.getNearestPose(base.getFinalPose().orElse(new Pose2d()),
                             new Translation2d(), LegacyAutoAlign.getPosesFor(flippedTarget), flippedTarget), flippedTarget)
                     ));

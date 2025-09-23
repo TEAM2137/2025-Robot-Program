@@ -159,7 +159,7 @@ public class LegacyAutoAlign {
      * Grabs a new pose to target
      */
     public static Pose2d getFlippedPose(Drive drive, Target targetType, Supplier<Translation2d> motionSupplier) {
-        return flipIfRed(fromPoseId(getNewTargetPoseId(drive, targetType, motionSupplier), targetType));
+        return TargetSelector.flipIfRed(fromPoseId(getNewTargetPoseId(drive, targetType, motionSupplier), targetType));
     }
 
     /**
@@ -291,7 +291,7 @@ public class LegacyAutoAlign {
 
         for (int i = 0; i < locations.size(); i++) {
             // Calculate the distance from the robot to the current reef pole
-            Pose2d targetPose = LegacyAutoAlign.flipIfRed(locations.get(i));
+            Pose2d targetPose = TargetSelector.flipIfRed(locations.get(i));
             if (targetType.allowYMovement()) targetPose = new Pose2d(targetPose.getX(), pose.getY(), targetPose.getRotation());
             double dst = pose.getTranslation().getDistance(targetPose.getTranslation());
 
@@ -313,7 +313,7 @@ public class LegacyAutoAlign {
     }
 
     public static int getReefFace(Pose2d pose) {
-        Translation2d center = flipIfRed(FieldPOIs.REEF_CENTER).getTranslation();
+        Translation2d center = TargetSelector.flipIfRed(FieldPOIs.REEF_CENTER).getTranslation();
         Translation2d robot = pose.getTranslation();
 
         // Calculate the angle between the reef and the robot
@@ -349,13 +349,6 @@ public class LegacyAutoAlign {
      */
     public static double dot(Translation2d a, Translation2d b) {
         return (a.getX() * b.getX() + a.getY() * b.getY());
-    }
-
-    /**
-     * Uses choreo utility methods to flip the given pose if on red alliance
-     */
-    public static Pose2d flipIfRed(Pose2d pose) {
-        return ChoreoAllianceFlipUtil.shouldFlip() ? ChoreoAllianceFlipUtil.flip(pose) : pose;
     }
 
     public static void setScheduledElevatorHeight(double elevatorHeight) {

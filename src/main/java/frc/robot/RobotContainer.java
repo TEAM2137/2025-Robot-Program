@@ -5,6 +5,7 @@ import java.util.function.BooleanSupplier;
 import java.util.function.Supplier;
 
 import frc.robot.autoalign.AutoAlignCommand;
+import frc.robot.autoalign.TargetSelector;
 import org.littletonrobotics.junction.Logger;
 import org.littletonrobotics.junction.networktables.LoggedNetworkBoolean;
 
@@ -221,7 +222,7 @@ public class RobotContainer {
         hasNothing = coral.hasCoral.negate().and(algae.hasAlgae.negate());
 
         leaveReefZone = new Trigger(() -> drive.getPose().getTranslation().getDistance(
-            LegacyAutoAlign.flipIfRed(FieldPOIs.REEF_CENTER).getTranslation()) > FieldPOIs.REEF_ZONE_DISTANCE);
+                TargetSelector.flipIfRed(FieldPOIs.REEF_CENTER).getTranslation()) > FieldPOIs.REEF_ZONE_DISTANCE);
 
         targetRight = new RisingEdgeTrigger(driverController.rightBumper(), coral.hasCoral, true);
         targetLeft = new RisingEdgeTrigger(driverController.leftBumper(), coral.hasCoral, true);
@@ -279,12 +280,11 @@ public class RobotContainer {
         AutoAlignCommand testAlign = AutoAlignCommand.builder()
                 .withTargetPose(new Pose2d(2.0, 4.0, Rotation2d.kZero))
                 .withFinalVelocity(new Translation2d(0.0, 0.0))
-                .endWhenFinished()
+                .withEndTolerance(0.5)
                 .build();
 
         AutoAlignCommand testAlign2 = AutoAlignCommand.builder()
                 .withTargetPose(new Pose2d(0.0, 4.0, Rotation2d.kZero))
-                .endWhenFinished()
                 .build();
 
         driverController.a().whileTrue(testAlign.andThen(testAlign2));
@@ -330,11 +330,19 @@ public class RobotContainer {
         driverController.povDown().onTrue(coral.setVoltageCommand(-12).withName("Manual Coral"));
         driverController.povDown().onFalse(coral.setVoltageCommand(0).withName("Manual Coral Stop"));
 
+        AutoAlignCommand alignLeft = AutoAlignCommand.builder()
+                .withTargetSelector(TargetSelector.LEFT_BRANCHES)
+                //.runCommandAtDistance(1.0, elevator.applyScheduledPositionCommand())
+                .build("Align to Left Branch");
+
+        AutoAlignCommand alignRight = AutoAlignCommand.builder()
+                .withTargetSelector(TargetSelector.RIGHT_BRANCHES)
+                //.runCommandAtDistance(1.0, elevator.applyScheduledPositionCommand())
+                .build("Align to Right Branch");
+
         // Driver coral auto align
-        targetLeft.whileTrue(LegacyAutoAlign.autoAlignTo(Target.LEFT_BRANCH, this, joystickSupplier)
-            .beforeStarting(() -> LegacyAutoAlign.setScheduledElevatorHeight(elevator.getScheduledPosition())).withName("Target Left Branch"));
-        targetRight.whileTrue(LegacyAutoAlign.autoAlignTo(Target.RIGHT_BRANCH, this, joystickSupplier)
-            .beforeStarting(() -> LegacyAutoAlign.setScheduledElevatorHeight(elevator.getScheduledPosition())).withName("Target Right Branch"));
+        targetLeft.whileTrue(alignLeft);
+        targetRight.whileTrue(alignRight);
 
         // Driver algae auto align
         algaeGrab.whileTrue(createAlgaeAlign(() -> LegacyAutoAlign.getNewTargetPoseId(

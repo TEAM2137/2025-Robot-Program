@@ -19,6 +19,7 @@ import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import frc.robot.RobotContainer;
 import frc.robot.autoalign.LegacyAutoAlign;
+import frc.robot.autoalign.TargetSelector;
 import frc.robot.subsystems.drive.Drive;
 import frc.robot.util.FieldPOIs;
 
@@ -309,8 +310,8 @@ public class DriveCommands {
         // Construct command
         return joystickDriveAtAngle(drive, joystickSupplier, slowMode,
                 () -> (drive.getPose().getY() < 8.19912 / 2.0 == !ChoreoAllianceFlipUtil.shouldFlip())
-                ? LegacyAutoAlign.flipIfRed(FieldPOIs.CORAL_STATION_BOTTOM).getRotation()
-                : LegacyAutoAlign.flipIfRed(FieldPOIs.CORAL_STATION_TOP).getRotation());
+                ? TargetSelector.flipIfRed(FieldPOIs.CORAL_STATION_BOTTOM).getRotation()
+                : TargetSelector.flipIfRed(FieldPOIs.CORAL_STATION_TOP).getRotation());
     }
 
     private static final StructPublisher<Translation2d> currentVelocityPublisher = NetworkTableInstance.getDefault()
