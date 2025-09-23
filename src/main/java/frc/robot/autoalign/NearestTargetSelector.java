@@ -6,6 +6,10 @@ import edu.wpi.first.math.geometry.Pose2d;
 import java.util.List;
 
 public record NearestTargetSelector(List<Pose2d> pool, double joystickInfluence) implements TargetSelector {
+    public NearestTargetSelector(List<Pose2d> pool) {
+        this(pool, 0.0);
+    }
+
     @Override
     public Pose2d getPose(Context context) {
         Pair<Pose2d, Double> bestResult = new Pair<>(new Pose2d(), 1000.0);

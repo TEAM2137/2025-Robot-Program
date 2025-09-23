@@ -5,6 +5,8 @@ import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Translation2d;
 import frc.robot.util.FieldPOIs;
 
+import java.util.List;
+
 /**
  * This interface handles the selection of target poses during the auto align process.
  * Inheritors must choose what pose to output given a {@code TargetSelector.Context} instance.
@@ -15,6 +17,9 @@ import frc.robot.util.FieldPOIs;
 public interface TargetSelector {
     TargetSelector LEFT_BRANCHES = new ReefFaceTargetSelector(FieldPOIs.REEF_BRANCHES_LEFT);
     TargetSelector RIGHT_BRANCHES = new ReefFaceTargetSelector(FieldPOIs.REEF_BRANCHES_RIGHT);
+    TargetSelector ALGAE_ALIGN = new ReefFaceTargetSelector(FieldPOIs.ALGAE_ALIGN_LOCATIONS);
+    TargetSelector ALGAE_GRAB = new ReefFaceTargetSelector(FieldPOIs.ALGAE_GRAB_LOCATIONS);
+    TargetSelector NET = new NearestTargetSelector(List.of(FieldPOIs.NET, FieldPOIs.NET_OPPOSITE));
 
     /**
      * @return the pose to target for the given context of the situation

@@ -9,6 +9,7 @@ import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.math.trajectory.TrapezoidProfile;
 import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj2.command.Command;
+import edu.wpi.first.wpilibj2.command.button.Trigger;
 import frc.robot.RobotContainer;
 import frc.robot.commands.DriveCommands;
 import frc.robot.generated.TunerConstants;
@@ -48,6 +49,7 @@ public class AutoAlignCommand extends Command {
 
     private double pathLength;
     private double error;
+    private double rotationError;
     private double progress;
 
     private Timer timer;
@@ -231,30 +233,8 @@ public class AutoAlignCommand extends Command {
         return target.getTranslation().minus(startPose.getTranslation()).getNorm();
     }
 
-    // thanks chatgpt lol
-    public static double trapezoidTimeRemaining(double dst, double v0, double vf,
-                                                double vMax, double aMax) {
-        if (Math.abs(dst) < 0.005) return 0.0;
-        if (dst < 0) {
-            dst = -dst;
-            v0 = -v0;
-            vf = -vf;
-        }
-        v0 = Math.max(0, v0);
-        vf = Math.max(0, vf);
-        double dAccel = (vMax * vMax - v0 * v0) / (2.0 * aMax);
-        double dDecel = (vMax * vMax - vf * vf) / (2.0 * aMax);
-        if (dst > dAccel + dDecel) {
-            double tAccel = (vMax - v0) / aMax;
-            double tDecel = (vMax - vf) / aMax;
-            double tCruise = (dst - dAccel - dDecel) / vMax;
-            return tAccel + tCruise + tDecel;
-        } else {
-            double vPeak = Math.sqrt(aMax * dst + 0.5 * (v0 * v0 + vf * vf));
-            double tAccel = (vPeak - v0) / aMax;
-            double tDecel = (vPeak - vf) / aMax;
-            return tAccel + tDecel;
-        }
+    public Trigger isAtTarget(double tolerance) {
+        return new Trigger(() -> error < tolerance);
     }
 
     public record CommandMarker(TriggerType type, double value, Command command) {
