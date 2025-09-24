@@ -4,6 +4,7 @@ package frc.robot;
 import java.util.function.BooleanSupplier;
 import java.util.function.Supplier;
 
+import frc.robot.subsystems.vision.*;
 import org.littletonrobotics.junction.Logger;
 import org.littletonrobotics.junction.networktables.LoggedNetworkBoolean;
 
@@ -51,10 +52,6 @@ import frc.robot.subsystems.elevator.ElevatorConstants;
 import frc.robot.subsystems.elevator.ElevatorIO;
 import frc.robot.subsystems.elevator.ElevatorIOSim;
 import frc.robot.subsystems.elevator.ElevatorIOTalonFX;
-import frc.robot.subsystems.vision.Vision;
-import frc.robot.subsystems.vision.VisionConstants;
-import frc.robot.subsystems.vision.VisionIO;
-import frc.robot.subsystems.vision.VisionIOLimelight;
 import frc.robot.util.FieldPOIs;
 import frc.robot.util.RisingEdgeTrigger;
 import frc.robot.autoalign.AutoAlign;
@@ -150,8 +147,7 @@ public class RobotContainer {
 
             vision = new Vision(
                 drive::addVisionMeasurement,
-                new VisionIOLimelight(VisionConstants.cam0, drive::getRotation),
-                new VisionIOLimelight(VisionConstants.cam1, drive::getRotation)
+                new VisionIOPhotonVision(VisionConstants.cam1, VisionConstants.robotToCamera1)
             );
 
             elevator = new Elevator(new ElevatorIOTalonFX());
