@@ -13,10 +13,11 @@ public class VisionConstants {
     public static String cam0 = "cam-l";
     public static String cam1 = "cam-r";
 
-    // Robot to camera transforms
+    // Robot to camera transforms for Photon Vision
     // (Not used by Limelight, configure in web UI instead)
-    public static Transform3d robotToCamera0 = new Transform3d(0.2, 0.0, 0.2, new Rotation3d(0.0, -0.4, 0.0));
-    public static Transform3d robotToCamera1 = new Transform3d(-0.2, 0.0, 0.2, new Rotation3d(0.0, -0.4, 0.0));
+    // in meters, positive to negative: (forward/back, left/right, up/down)
+    public static Transform3d robotToCamera0 = new Transform3d(0.5, 0.23495, 0.2159, new Rotation3d(0.0, Math.toRadians(23.0), 0.0));
+    public static Transform3d robotToCamera1 = new Transform3d(0.5, -0.23495, 0.2159, new Rotation3d(0.0, Math.toRadians(23.0), Math.toRadians(20.0)));
 
     // Basic filtering thresholds
     public static double maxAmbiguity = 0.3;
