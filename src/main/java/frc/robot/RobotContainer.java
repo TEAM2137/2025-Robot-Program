@@ -320,15 +320,13 @@ public class RobotContainer {
         driverController.povDown().onTrue(coral.setVoltageCommand(-12).withName("Manual Coral"));
         driverController.povDown().onFalse(coral.setVoltageCommand(0).withName("Manual Coral Stop"));
 
-        AutoAlignCommand alignLeft = AutoAlignCommand.builder()
+        AutoAlignCommand alignLeft = new AutoAlignCommand("Align to Left Branch")
                 .withTargetSelector(TargetSelector.LEFT_BRANCHES)
-                .runCommandAtDistance(1.0, elevator.applyScheduledPositionCommand())
-                .build("Align to Left Branch");
+                .runCommandAtDistance(1.0, elevator.applyScheduledPositionCommand());
 
-        AutoAlignCommand alignRight = AutoAlignCommand.builder()
+        AutoAlignCommand alignRight = new AutoAlignCommand("Align to Right Branch")
                 .withTargetSelector(TargetSelector.RIGHT_BRANCHES)
-                .runCommandAtDistance(1.0, elevator.applyScheduledPositionCommand())
-                .build("Align to Right Branch");
+                .runCommandAtDistance(1.0, elevator.applyScheduledPositionCommand());
 
         // Driver coral auto align
         targetLeft.whileTrue(alignLeft);
@@ -495,17 +493,15 @@ public class RobotContainer {
     public static RobotContainer getInstance() { return instance; }
 
     public Command createAlgaeAlign(BooleanSupplier high) {
-        AutoAlignCommand algaeAlign = AutoAlignCommand.builder()
+        AutoAlignCommand algaeAlign = new AutoAlignCommand("Algae Align")
                 .withTargetSelector(TargetSelector.ALGAE_ALIGN)
                 .runCommandAtDistance(1.0, elevator.setPositionCommand(() ->
-                        high.getAsBoolean() ? ElevatorConstants.algaeHigh : ElevatorConstants.algaeLow))
-                .build("Algae Align");
+                        high.getAsBoolean() ? ElevatorConstants.algaeHigh : ElevatorConstants.algaeLow));
 
         Trigger atTargetPosition = algaeAlign.isAtTarget(0.1);
 
-        AutoAlignCommand algaeGrab = AutoAlignCommand.builder()
-                .withTargetSelector(TargetSelector.ALGAE_GRAB)
-                .build("Algae Grab");
+        AutoAlignCommand algaeGrab = new AutoAlignCommand("Algae Grab")
+                .withTargetSelector(TargetSelector.ALGAE_GRAB);
 
         return algaeAlign.deadlineFor(Commands.waitSeconds(0.25).andThen(algae.setPivotPosition(AlgaeConstants.grab)))
                 .until(atTargetPosition.and(algae::isAtTarget))

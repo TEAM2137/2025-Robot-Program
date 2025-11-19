@@ -25,51 +25,41 @@ import static edu.wpi.first.units.Units.MetersPerSecond;
 
 /**
  * A versatile command class for automatically driving the robot to a point
- * on the field. Use {@code AutoAlignCommand.builder()} to create an instance.
+ * on the field.
  *
  * @author Avery Gardner
  * @since 2025
  */
+@SuppressWarnings("unused")
 public class AutoAlignCommand extends Command {
-    private final TargetSelector targetSelector;
-    private final Translation2d finalVelocity;
-    private final double speedLimit;
-    private final double accelerationLimit;
-    private final double endTolerance;
-    private final double timeout;
-    private final boolean ignoreRotation;
-    private final List<CommandMarker> markers;
     private final Drive drive;
     private final ProfiledPIDController angleController;
 
-    private ArrayList<CommandMarker> pendingCommandMarkers;
+    private TargetSelector targetSelector;
+    private Translation2d finalVelocity = new Translation2d(); // m/s
+    private double speedLimit = TunerConstants.kSpeedAt12Volts.in(MetersPerSecond); // m/s
+    private double accelerationLimit = 7.5; // m/s^2
+    private double endTolerance = -1; // meters;
+    private boolean ignoreRotation = false;
 
-    private Pose2d targetPose;
+    private Pose2d targetPose = new Pose2d();
     private Pose2d startPose;
+
+    private final List<CommandMarker> markers = new ArrayList<>();
+    private ArrayList<CommandMarker> pendingCommandMarkers;
 
     private double pathLength;
     private double error;
-    private double rotationError;
     private double progress;
 
     private Timer timer;
 
-    /** Creates a new auto align command builder */
-    public static Builder builder() {
-        return new AutoAlignCommand.Builder();
+    public AutoAlignCommand(String name) {
+        this();
+        this.setName(name);
     }
 
-    private AutoAlignCommand(Builder builder) {
-        this.targetSelector = builder.targetSelector;
-        this.targetPose = builder.targetPose;
-        this.finalVelocity = builder.finalVelocity;
-        this.speedLimit = builder.speedLimit;
-        this.accelerationLimit = builder.accelerationLimit;
-        this.endTolerance = builder.endTolerance;
-        this.timeout = builder.timeout;
-        this.ignoreRotation = builder.ignoreRotation;
-        this.markers = builder.markers;
-
+    public AutoAlignCommand() {
         this.drive = RobotContainer.getInstance().drive;
         this.addRequirements(drive);
 
@@ -199,7 +189,7 @@ public class AutoAlignCommand extends Command {
 
     @Override
     public boolean isFinished() {
-        return error < endTolerance || timer.hasElapsed(timeout);
+        return error < endTolerance;
     }
 
     private void checkPendingCommands() {
@@ -241,135 +231,98 @@ public class AutoAlignCommand extends Command {
         public enum TriggerType { PROGRESS, DISTANCE, TIME_AFTER_START }
     }
 
-    public static class Builder {
-        // default values
-        private TargetSelector targetSelector;
-        private Pose2d targetPose = new Pose2d();
-        private Translation2d finalVelocity = new Translation2d();
-        private double speedLimit = TunerConstants.kSpeedAt12Volts.in(MetersPerSecond); // m/s
-        private double accelerationLimit = 7.5; // m/s^2
-        private double endTolerance = -1; // meters
-        private double timeout = Double.POSITIVE_INFINITY; // seconds
-        private boolean ignoreRotation = false;
-        private final List<CommandMarker> markers = new ArrayList<>();
+    /**
+     * Sets the {@code TargetSelector} responsible for selecting a Pose2D to target.
+     * For situations with only one possible target, use {@code builder.withTargetPose()}
+     */
+    public AutoAlignCommand withTargetSelector(TargetSelector selector) {
+        this.targetSelector = selector;
+        return this;
+    }
 
-        /** Use {@code AutoAlignCommand.builder()} instead */
-        private Builder() {}
+    /**
+     * Sets this command's target position and rotation of the robot
+     */
+    public AutoAlignCommand withTargetPose(Pose2d pose) {
+        this.targetPose = pose;
+        return this;
+    }
 
-        /**
-         * Sets the {@code TargetSelector} responsible for selecting a Pose2D to target.
-         * For situations with only one possible target, use {@code builder.withTargetPose()}
-         */
-        public Builder withTargetSelector(TargetSelector selector) {
-            this.targetSelector = selector;
-            return this;
-        }
+    /** Decorates this command to roughly end with the given velocity
+     * (meters/second) */
+    public AutoAlignCommand withFinalVelocity(Translation2d velocity) {
+        this.finalVelocity = velocity;
+        return this;
+    }
 
-        /**
-         * Sets this command's target position and rotation of the robot
-         */
-        public Builder withTargetPose(Pose2d pose) {
-            this.targetPose = pose;
-            return this;
-        }
+    /**
+     * Decorates this command to not drive faster than the given limit
+     * (meters/second)
+     */
+    public AutoAlignCommand withSpeedLimit(double speed) {
+        this.speedLimit = speed;
+        return this;
+    }
 
-        /** Decorates this command to roughly end with the given velocity
-         * (meters/second) */
-        public Builder withFinalVelocity(Translation2d velocity) {
-            this.finalVelocity = velocity;
-            return this;
-        }
+    /**
+     * Decorates this command to not accelerate faster than the given limit
+     * (meters/second^2)
+     */
+    public AutoAlignCommand withAccelerationLimit(double accel) {
+        this.accelerationLimit = accel;
+        return this;
+    }
 
-        /**
-         * Decorates this command to not drive faster than the given limit
-         * (meters/second)
-         */
-        public Builder withSpeedLimit(double speed) {
-            this.speedLimit = speed;
-            return this;
-        }
+    /**
+     * Decorates this command to end when the robot is within a given distance
+     * (meters) to the target
+     */
+    public AutoAlignCommand withEndTolerance(double tolerance) {
+        this.endTolerance = tolerance;
+        return this;
+    }
 
-        /**
-         * Decorates this command to not accelerate faster than the given limit
-         * (meters/second^2)
-         */
-        public Builder withAccelerationLimit(double accel) {
-            this.accelerationLimit = accel;
-            return this;
-        }
+    /** Decorates this command to not rotate the robot while aligning */
+    public AutoAlignCommand ignoringRotation() {
+        this.ignoreRotation = true;
+        return this;
+    }
 
-        /**
-         * Decorates this command to end when the robot is within a given distance
-         * (meters) to the target
-         */
-        public Builder withEndTolerance(double tolerance) {
-            this.endTolerance = tolerance;
-            return this;
-        }
+    /**
+     * Decorates this command to not rotate the robot while aligning
+     * only if {@code ignoreRotation} is set to true
+     */
+    public AutoAlignCommand ignoringRotation(boolean ignoreRotation) {
+        this.ignoreRotation = ignoreRotation;
+        return this;
+    }
 
-        /** Decorates this command to end after a given amount of time has passed */
-        public Builder withTimeout(double seconds) {
-            this.timeout = seconds;
-            return this;
-        }
+    /**
+     * Decorates this command to run another command once the robot has completed
+     * a given percent of the path (0.0 - 1.0)
+     */
+    public AutoAlignCommand runCommandAt(double progress, Command command) {
+        return addCommand(CommandMarker.TriggerType.PROGRESS, progress, command);
+    }
 
-        /** Decorates this command to not rotate the robot while aligning */
-        public Builder ignoringRotation() {
-            this.ignoreRotation = true;
-            return this;
-        }
+    /**
+     * Decorates this command to run another command once the robot is a given
+     * distance from the target (meters)
+     */
+    public AutoAlignCommand runCommandAtDistance(double distance, Command command) {
+        return addCommand(CommandMarker.TriggerType.DISTANCE, distance, command);
+    }
 
-        /**
-         * Decorates this command to not rotate the robot while aligning
-         * only if {@code ignoreRotation} is set to true
-         */
-        public Builder ignoringRotation(boolean ignoreRotation) {
-            this.ignoreRotation = ignoreRotation;
-            return this;
-        }
+    /**
+     * Decorates this command to run another command once a given amount of
+     * time has passed (seconds)
+     * */
+    public AutoAlignCommand runCommandAtTime(double seconds, Command command) {
+        return addCommand(CommandMarker.TriggerType.TIME_AFTER_START, seconds, command);
+    }
 
-        /**
-         * Decorates this command to run another command once the robot has completed
-         * a given percent of the path (0.0 - 1.0)
-         */
-        public Builder runCommandAt(double progress, Command command) {
-            return runCommand(CommandMarker.TriggerType.PROGRESS, progress, command);
-        }
-
-        /**
-         * Decorates this command to run another command once the robot is a given
-         * distance from the target (meters)
-         */
-        public Builder runCommandAtDistance(double distance, Command command) {
-            return runCommand(CommandMarker.TriggerType.DISTANCE, distance, command);
-        }
-
-        /**
-         * Decorates this command to run another command once a given amount of
-         * time has passed (seconds)
-         * */
-        public Builder runCommandAtTime(double seconds, Command command) {
-            return runCommand(CommandMarker.TriggerType.TIME_AFTER_START, seconds, command);
-        }
-
-        private Builder runCommand(CommandMarker.TriggerType type, double seconds, Command command) {
-            markers.add(new CommandMarker(type, seconds, command));
-            return this;
-        }
-
-        /** Creates an {@code AutoAlignCommand} from this builder */
-        public AutoAlignCommand build() {
-            return new AutoAlignCommand(this);
-        }
-
-        /**
-         * Creates an {@code AutoAlignCommand} from this builder
-         * @param name the internal name to give to the newly created command
-         */
-        public AutoAlignCommand build(String name) {
-            AutoAlignCommand command = build();
-            command.setName(name);
-            return command;
-        }
+    private AutoAlignCommand addCommand(CommandMarker.TriggerType type, double seconds, Command command) {
+        markers.add(new CommandMarker(type, seconds, command));
+        return this;
     }
 }
